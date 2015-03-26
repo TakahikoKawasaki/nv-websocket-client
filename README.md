@@ -34,7 +34,7 @@ Source Download
 JavaDoc
 -------
 
-[JavaDoc of nv-bluetooth](http://TakahikoKawasaki.github.io/nv-websocket-client/)
+[JavaDoc of nv-websocket-client](http://TakahikoKawasaki.github.io/nv-websocket-client/)
 
 
 Note
