@@ -109,8 +109,8 @@ class OpeningHandshakeBuilder
             .append("Sec-WebSocket-Version: 13").append(RN)
             .append("Sec-WebSocket-Key: ").append(mKey).append(RN);
 
-        append(builder, "Sec-WebSocket-Procotol", mProtocols);
-        append(builder, "Sec-WebSocket-Extension", mExtensions);
+        append(builder, "Sec-WebSocket-Protocol", mProtocols);
+        append(builder, "Sec-WebSocket-Extensions", mExtensions);
         append(builder, mHeaders);
 
         if (mUserInfo != null && mUserInfo.length() != 0)

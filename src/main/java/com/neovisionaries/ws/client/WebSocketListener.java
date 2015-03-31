@@ -16,7 +16,11 @@
 package com.neovisionaries.ws.client;
 
 
+import java.util.List;
+import java.util.Map;
+
+
 public interface WebSocketListener
 {
-
+    void onOpen(WebSocket websocket, Map<String, List<String>> headers);
 }

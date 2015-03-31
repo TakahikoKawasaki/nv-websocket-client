@@ -38,6 +38,7 @@ public class WebSocket implements Closeable
     private final List<WebSocketListener> mListeners = new ArrayList<WebSocketListener>();
     private WebSocketInputStream mInput;
     private WebSocketOutputStream mOutput;
+    private Thread mWebSocketThread;
 
 
     WebSocket(String userInfo, String host, String path, Socket socket)
@@ -109,7 +110,37 @@ public class WebSocket implements Closeable
     }
 
 
-    public void connect() throws WebSocketException
+    /**
+     * Send an opening handshake to the server and receive the response.
+     *
+     * <p>
+     * On success, {@link WebSocketListener#onOpen(WebSocket, Map)} is called
+     * and then an internal thread is started.
+     * </p>
+     *
+     * <p>
+     * As necessary, {@link #addProtocol(String)}, {@link #addExtension(String)}
+     * {@link #addHeader(String, String)} should be called before you call this
+     * method. It is because the parameters set by these methods are used in an
+     * opening handshake.
+     * </p>
+     *
+     * <p>
+     * Also, as necessary, {@link #getSocket()} should be used to set up socket
+     * parameters before you call this method. For example, you can set the
+     * socket timeout like the following.
+     * </p>
+     *
+     * <pre>
+     * WebSocket websocket = ......;
+     * websocket.{@link #getSocket() getSocket()}.{@link Socket#setSoTimeout(int)
+     * setSoTimeout}(5000);
+     * </pre>
+     *
+     * @throws WebSocketException
+     *         The opening handshake failed.
+     */
+    public void open() throws WebSocketException
     {
         // Get the input stream of the socket.
         openInputStream();
@@ -125,6 +156,9 @@ public class WebSocket implements Closeable
 
         // Read the response from the server.
         readOpeningHandshake(key);
+
+        // Start a thread that monitors the input stream of the socket.
+        startThread();
     }
 
 
@@ -221,7 +255,7 @@ public class WebSocket implements Closeable
         readStatusLine();
 
         // Read HTTP headers.
-        Map<String, List<String>> headers = readHttpHeaders();
+        final Map<String, List<String>> headers = readHttpHeaders();
 
         // Get the values of Sec-WebSocket-Accept.
         List<String> values = headers.get("SEC-WEBSOCKET-ACCEPT");
@@ -238,6 +272,15 @@ public class WebSocket implements Closeable
         validateAccept(key, values.get(0));
 
         // OK. The server has accepted the web socket request.
+
+        // Notify listeners of the success.
+        callListenerMethod(new ListenerMethodCaller() {
+            @Override
+            public void call(WebSocket websocket, WebSocketListener listener)
+            {
+                listener.onOpen(websocket, headers);
+            }
+        });
     }
 
 
@@ -278,12 +321,12 @@ public class WebSocket implements Closeable
         }
 
         // The status code must be 101 (Switching Protocols).
-        if ("101".equals(elements[1]))
+        if ("101".equals(elements[1]) == false)
         {
             // The status code of the opening handshake response is not Switching Protocols.
             throw new WebSocketException(
                 WebSocketError.NOT_SWITCHING_PROTOCOLS,
-                "The status code of the opening handshake response is not Switching Protocols.");
+                "The status code of the opening handshake response is not Switching Protocols. The status line is: " + line);
         }
 
         // OK. The server can speak the WebSocket protocol.
@@ -425,5 +468,53 @@ public class WebSocket implements Closeable
     public void close() throws IOException
     {
         // TODO
+    }
+
+
+    private interface ListenerMethodCaller
+    {
+        void call(WebSocket websocket, WebSocketListener listener);
+    }
+
+
+    private void callListenerMethod(ListenerMethodCaller caller)
+    {
+        synchronized (mListeners)
+        {
+            for (WebSocketListener listener : mListeners)
+            {
+                try
+                {
+                    caller.call(this, listener);
+                }
+                catch (Exception e)
+                {
+                }
+            }
+        }
+    }
+
+
+    private void startThread()
+    {
+        Thread thread = new Thread() {
+            @Override
+            public void run()
+            {
+                webSocketThreadMain();
+            }
+        };
+
+        synchronized (this)
+        {
+            mWebSocketThread = thread;
+            thread.start();
+        }
+    }
+
+
+    private void webSocketThreadMain()
+    {
+
     }
 }
