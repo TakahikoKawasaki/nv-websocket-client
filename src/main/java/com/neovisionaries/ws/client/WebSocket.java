@@ -34,7 +34,7 @@ public class WebSocket implements Closeable
     private static final String ACCEPT_MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
     private static final SecureRandom sRandom = new SecureRandom();
     private final Socket mSocket;
-    private final OpeningHandshakeBuilder mOpeningHandshakeBuilder;
+    private final HandshakeBuilder mHandshakeBuilder;
     private final List<WebSocketListener> mListeners = new ArrayList<WebSocketListener>();
     private WebSocketInputStream mInput;
     private WebSocketOutputStream mOutput;
@@ -44,28 +44,28 @@ public class WebSocket implements Closeable
     WebSocket(String userInfo, String host, String path, Socket socket)
     {
         mSocket = socket;
-        mOpeningHandshakeBuilder =
-            new OpeningHandshakeBuilder(userInfo, host, path);
+        mHandshakeBuilder =
+            new HandshakeBuilder(userInfo, host, path);
     }
 
 
     /**
-     * Add a value for Sec-WebSocket-Protocol.
+     * Add a value for {@code Sec-WebSocket-Protocol}.
      */
     public WebSocket addProtocol(String protocol)
     {
-        mOpeningHandshakeBuilder.addProtocol(protocol);
+        mHandshakeBuilder.addProtocol(protocol);
 
         return this;
     }
 
 
     /**
-     * Add a value for Sec-WebSocket-Extension.
+     * Add a value for {@code Sec-WebSocket-Extension}.
      */
     public WebSocket addExtension(String extension)
     {
-        mOpeningHandshakeBuilder.addExtension(extension);
+        mHandshakeBuilder.addExtension(extension);
 
         return this;
     }
@@ -76,9 +76,55 @@ public class WebSocket implements Closeable
      */
     public WebSocket addHeader(String name, String value)
     {
-        mOpeningHandshakeBuilder.addHeader(name, value);
+        mHandshakeBuilder.addHeader(name, value);
 
         return this;
+    }
+
+
+    /**
+     * Set the credentials to connect to the web socket endpoint.
+     *
+     * @param userInfo
+     *         The credentials for Basic Authentication. The format
+     *         should be <code><i>id</i>:<i>password</i></code>.
+     *
+     * @return
+     *         {@code this} instance.
+     */
+    public WebSocket setUserInfo(String userInfo)
+    {
+        return this;
+    }
+
+
+    /**
+     * Set the credentials to connect to the web socket endpoint.
+     *
+     * @param id
+     *         The ID.
+     *
+     * @param password
+     *         The password.
+     *
+     * @return
+     *         {@code this} instance.
+     */
+    public WebSocket setUserInfo(String id, String password)
+    {
+        if (id == null)
+        {
+            id = "";
+        }
+
+        if (password == null)
+        {
+            password = "";
+        }
+
+        String userInfo = String.format("%s:%s", id, password);
+
+        return setUserInfo(userInfo);
     }
 
 
@@ -111,7 +157,8 @@ public class WebSocket implements Closeable
 
 
     /**
-     * Send an opening handshake to the server and receive the response.
+     * Send an opening handshake to the server, receive the response and then
+     * start a thread to handle messages from the server.
      *
      * <p>
      * On success, {@link WebSocketListener#onOpen(WebSocket, Map)} is called
@@ -121,7 +168,7 @@ public class WebSocket implements Closeable
      * <p>
      * As necessary, {@link #addProtocol(String)}, {@link #addExtension(String)}
      * {@link #addHeader(String, String)} should be called before you call this
-     * method. It is because the parameters set by these methods are used in an
+     * method. It is because the parameters set by these methods are used in the
      * opening handshake.
      * </p>
      *
@@ -136,6 +183,16 @@ public class WebSocket implements Closeable
      * websocket.{@link #getSocket() getSocket()}.{@link Socket#setSoTimeout(int)
      * setSoTimeout}(5000);
      * </pre>
+     *
+     * <p>
+     * If the web socket endpoint requires Basic Authentication, you can set
+     * credentials by {@link #setUserInfo(String) setUserInfo(userInfo)} or
+     * {@link #setUserInfo(String, String) setUserInfo(id, password)} before
+     * you call this method.
+     * Note that if the URI passed to {@link WebSocketFactory}{@link
+     * .createSocket} method contains the user-info part, you don't have to
+     * call {@code setUserInfo} method.
+     * </p>
      *
      * @throws WebSocketException
      *         The opening handshake failed.
@@ -230,8 +287,8 @@ public class WebSocket implements Closeable
     private void writeOpeningHandshake(String key) throws WebSocketException
     {
         // Generate an opening handshake sent to the server from this client.
-        mOpeningHandshakeBuilder.setKey(key);
-        String handshake = mOpeningHandshakeBuilder.build();
+        mHandshakeBuilder.setKey(key);
+        String handshake = mHandshakeBuilder.build();
 
         try
         {

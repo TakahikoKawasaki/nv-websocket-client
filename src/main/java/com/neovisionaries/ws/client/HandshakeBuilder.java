@@ -20,10 +20,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-class OpeningHandshakeBuilder
+class HandshakeBuilder
 {
     private static final String RN = "\r\n";
-    private final String mUserInfo;
+    private String mUserInfo;
     private final String mHost;
     private final String mPath;
     private String mKey;
@@ -32,7 +32,7 @@ class OpeningHandshakeBuilder
     private List<String[]> mHeaders;
 
 
-    public OpeningHandshakeBuilder(String userInfo, String host, String path)
+    public HandshakeBuilder(String userInfo, String host, String path)
     {
         mUserInfo = userInfo;
         mHost     = host;
@@ -90,6 +90,12 @@ class OpeningHandshakeBuilder
         }
 
         mHeaders.add(new String[] { name, value });
+    }
+
+
+    public void setUserInfo(String userInfo)
+    {
+        mUserInfo = userInfo;
     }
 
 
