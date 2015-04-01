@@ -66,14 +66,38 @@ public enum WebSocketError
 
 
     /**
-     * The opening handshake response does not contain Sec-WebSocket-Accept.
+     * The opening handshake response does not contain 'Upgrade' header.
      */
-    NO_SEC_WEBSOCKET_ACCEPT,
+    NO_UPGRADE_HEADER,
 
 
     /**
-     * The value of Sec-WebSocket-Accept is different from the expected one.
+     * The value of 'Upgrade' header is not 'websocket'.
      */
-    UNEXPECTED_SEC_WEBSOCKET_ACCEPT,
+    UNEXPECTED_UPGRADE_HEADER,
+
+
+    /**
+     * The opening handshake response does not contain 'Connection' header.
+     */
+    NO_CONNECTION_HEADER,
+
+
+    /**
+     * The value of 'Connection' header is not 'Upgrade'.
+     */
+    UNEXPECTED_CONNECTION_HEADER,
+
+
+    /**
+     * The opening handshake response does not contain 'Sec-WebSocket-Accept' header.
+     */
+    NO_SEC_WEBSOCKET_ACCEPT_HEADER,
+
+
+    /**
+     * The value of 'Sec-WebSocket-Accept' header is different from the expected one.
+     */
+    UNEXPECTED_SEC_WEBSOCKET_ACCEPT_HEADER,
     ;
 }

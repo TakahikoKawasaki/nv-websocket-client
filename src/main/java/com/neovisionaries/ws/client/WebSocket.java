@@ -38,7 +38,7 @@ public class WebSocket implements Closeable
     private final List<WebSocketListener> mListeners = new ArrayList<WebSocketListener>();
     private WebSocketInputStream mInput;
     private WebSocketOutputStream mOutput;
-    private Thread mWebSocketThread;
+    private WebSocketThread mWebSocketThread;
 
 
     WebSocket(String userInfo, String host, String path, Socket socket)
@@ -158,12 +158,7 @@ public class WebSocket implements Closeable
 
     /**
      * Send an opening handshake to the server, receive the response and then
-     * start a thread to handle messages from the server.
-     *
-     * <p>
-     * On success, {@link WebSocketListener#onOpen(WebSocket, Map)} is called
-     * and then an internal thread is started.
-     * </p>
+     * start a thread to communicate with the server.
      *
      * <p>
      * As necessary, {@link #addProtocol(String)}, {@link #addExtension(String)}
@@ -199,34 +194,41 @@ public class WebSocket implements Closeable
      */
     public void open() throws WebSocketException
     {
+        // The raw socket created by WebSocketFactory.
+        Socket socket = mSocket;
+
         // Get the input stream of the socket.
-        openInputStream();
+        WebSocketInputStream input = openInputStream(socket);
 
         // Get the output stream of the socket.
-        openOutputStream();
+        WebSocketOutputStream output = openOutputStream(socket);
 
         // Generate a value for Sec-WebSocket-Key.
         String key = generateWebSocketKey();
 
         // Send an opening handshake to the server.
-        writeOpeningHandshake(key);
+        writeHandshake(output, key);
 
         // Read the response from the server.
-        readOpeningHandshake(key);
+        Map<String, List<String>> headers = readHandshake(input, key);
 
-        // Start a thread that monitors the input stream of the socket.
-        startThread();
+        // The handshake succeeded.
+        mInput  = input;
+        mOutput = output;
+
+        // Start a thread that communicate with the server.
+        startThread(headers);
     }
 
 
-    private void openInputStream() throws WebSocketException
+    private WebSocketInputStream openInputStream(Socket socket) throws WebSocketException
     {
         try
         {
             // Get the input stream of the raw socket through which
             // this client receives data from the server.
-            mInput = new WebSocketInputStream(
-                new BufferedInputStream(mSocket.getInputStream()));
+            return new WebSocketInputStream(
+                new BufferedInputStream(socket.getInputStream()));
         }
         catch (IOException e)
         {
@@ -238,14 +240,14 @@ public class WebSocket implements Closeable
     }
 
 
-    private void openOutputStream() throws WebSocketException
+    private WebSocketOutputStream openOutputStream(Socket socket) throws WebSocketException
     {
         try
         {
             // Get the output stream of the socket through which
             // this client sends data to the server.
-            mOutput = new WebSocketOutputStream(
-                new BufferedOutputStream(mSocket.getOutputStream()));
+            return new WebSocketOutputStream(
+                new BufferedOutputStream(socket.getOutputStream()));
         }
         catch (IOException e)
         {
@@ -284,7 +286,7 @@ public class WebSocket implements Closeable
     }
 
 
-    private void writeOpeningHandshake(String key) throws WebSocketException
+    private void writeHandshake(WebSocketOutputStream output, String key) throws WebSocketException
     {
         // Generate an opening handshake sent to the server from this client.
         mHandshakeBuilder.setKey(key);
@@ -293,8 +295,8 @@ public class WebSocket implements Closeable
         try
         {
             // Send the opening handshake to the server.
-            mOutput.write(handshake);
-            mOutput.flush();
+            output.write(handshake);
+            output.flush();
         }
         catch (IOException e)
         {
@@ -306,49 +308,42 @@ public class WebSocket implements Closeable
     }
 
 
-    private void readOpeningHandshake(String key) throws WebSocketException
+    private Map<String, List<String>> readHandshake(WebSocketInputStream input, String key) throws WebSocketException
     {
         // Read the status line.
-        readStatusLine();
+        readStatusLine(input);
 
         // Read HTTP headers.
-        final Map<String, List<String>> headers = readHttpHeaders();
+        Map<String, List<String>> headers = readHttpHeaders(input);
 
-        // Get the values of Sec-WebSocket-Accept.
-        List<String> values = headers.get("SEC-WEBSOCKET-ACCEPT");
+        // Validate the value of Upgrade.
+        validateUpgrade(headers);
 
-        if (values == null)
-        {
-            // The opening handshake response does not contain Sec-WebSocket-Accept.
-            throw new WebSocketException(
-                WebSocketError.NO_SEC_WEBSOCKET_ACCEPT,
-                "The opening handshake response does not contain Sec-WebSocket-Accept.");
-        }
+        // Validate the value of Connection.
+        validateConnection(headers);
 
         // Validate the value of Sec-WebSocket-Accept.
-        validateAccept(key, values.get(0));
+        validateAccept(headers, key);
+
+        // Validate the value of Sec-WebSocket-Extensions.
+        validateExtensions(headers);
+
+        // Validate the valeu of Sec-WebSocket-Protocol.
+        validateProtocol(headers);
 
         // OK. The server has accepted the web socket request.
-
-        // Notify listeners of the success.
-        callListenerMethod(new ListenerMethodCaller() {
-            @Override
-            public void call(WebSocket websocket, WebSocketListener listener)
-            {
-                listener.onOpen(websocket, headers);
-            }
-        });
+        return headers;
     }
 
 
-    private void readStatusLine() throws WebSocketException
+    private void readStatusLine(WebSocketInputStream input) throws WebSocketException
     {
         String line;
 
         try
         {
             // Read the status line.
-            line = mInput.readLine();
+            line = input.readLine();
         }
         catch (IOException e)
         {
@@ -390,7 +385,7 @@ public class WebSocket implements Closeable
     }
 
 
-    private Map<String, List<String>> readHttpHeaders() throws WebSocketException
+    private Map<String, List<String>> readHttpHeaders(WebSocketInputStream input) throws WebSocketException
     {
         Map<String, List<String>> headers = new HashMap<String, List<String>>();
         StringBuilder builder = null;
@@ -400,7 +395,7 @@ public class WebSocket implements Closeable
         {
             try
             {
-                line = mInput.readLine();
+                line = input.readLine();
             }
             catch (IOException e)
             {
@@ -484,8 +479,113 @@ public class WebSocket implements Closeable
     }
 
 
-    private void validateAccept(String key, String actual) throws WebSocketException
+    /**
+     * Validate the value of {@code Upgrade} header.
+     *
+     * <blockquote>
+     * <p>From RFC 6455, p19.</p>
+     * <p><i>
+     * If the response lacks an {@code Upgrade} header field or the {@code Upgrade}
+     * header field contains a value that is not an ASCII case-insensitive match for
+     * the value "websocket", the client MUST Fail the WebSocket Connection.
+     * </i></p>
+     * </blockquote>
+     */
+    private void validateUpgrade(Map<String, List<String>> headers) throws WebSocketException
     {
+        // Get the values of Upgrade.
+        List<String> values = headers.get("UPGRADE");
+
+        if (values == null)
+        {
+            // The opening handshake response does not contain 'Upgrade' header.
+            throw new WebSocketException(
+                WebSocketError.NO_UPGRADE_HEADER,
+                "The opening handshake response does not contain 'Upgrade' header.");
+        }
+
+        // The actual value of Upgrade.
+        String actual = values.get(0);
+
+        if ("websocket".equalsIgnoreCase(actual) == false)
+        {
+            // The value of 'Upgrade' header is not 'websocket'.
+            throw new WebSocketException(
+                WebSocketError.UNEXPECTED_UPGRADE_HEADER,
+                "The value of 'Upgrade' header is not 'websocket'.");
+        }
+    }
+
+
+    /**
+     * Validate the value of {@code Connection} header.
+     *
+     * <blockquote>
+     * <p>From RFC 6455, p19.</p>
+     * <p><i>
+     * If the response lacks a {@code Connection} header field or the {@code Connection}
+     * header field doesn't contain a token that is an ASCII case-insensitive match
+     * for the value "Upgrade", the client MUST Fail the WebSocket Connection.
+     * </i></p>
+     * </blockquote>
+     */
+    private void validateConnection(Map<String, List<String>> headers) throws WebSocketException
+    {
+        // Get the values of Upgrade.
+        List<String> values = headers.get("CONNECTION");
+
+        if (values == null)
+        {
+            // The opening handshake response does not contain 'Connection' header.
+            throw new WebSocketException(
+                WebSocketError.NO_CONNECTION_HEADER,
+                "The opening handshake response does not contain 'Connection' header.");
+        }
+
+        // The actual value of Connection.
+        String actual = values.get(0);
+
+        if ("Upgrade".equalsIgnoreCase(actual) == false)
+        {
+            // The value of 'Connection' header is not 'Upgrade'.
+            throw new WebSocketException(
+                WebSocketError.UNEXPECTED_CONNECTION_HEADER,
+                "The value of 'Connection' header is not 'Upgrade'.");
+        }
+    }
+
+
+    /**
+     * Validate the value of {@code Sec-WebSocket-Accept} header.
+     *
+     * <blockquote>
+     * <p>From RFC 6455, p19.</p>
+     * <p><i>
+     * If the response lacks a {@code Sec-WebSocket-Accept} header field or the
+     * {@code Sec-WebSocket-Accept} contains a value other than the base64-encoded
+     * SHA-1 of the concatenation of the {@code Sec-WebSocket-Key} (as a string,
+     * not base64-decoded) with the string "{@code 258EAFA5-E914-47DA-95CA-C5AB0DC85B11}"
+     * but ignoring any leading and trailing whitespace, the client MUST Fail the
+     * WebSocket Connection.
+     * </i></p>
+     * </blockquote>
+     */
+    private void validateAccept(Map<String, List<String>> headers, String key) throws WebSocketException
+    {
+        // Get the values of Sec-WebSocket-Accept.
+        List<String> values = headers.get("SEC-WEBSOCKET-ACCEPT");
+
+        if (values == null)
+        {
+            // The opening handshake response does not contain 'Sec-WebSocket-Accept' header.
+            throw new WebSocketException(
+                WebSocketError.NO_SEC_WEBSOCKET_ACCEPT_HEADER,
+                "The opening handshake response does not contain 'Sec-WebSocket-Accept' header.");
+        }
+
+        // The actual value of Sec-WebSocket-Accept.
+        String actual = values.get(0);
+
         // Concatenate.
         String input = key + ACCEPT_MAGIC;
 
@@ -511,13 +611,37 @@ public class WebSocket implements Closeable
 
         if (expected.equals(actual) == false)
         {
-            // The value of Sec-WebSocket-Accept is different from the expected one.
+            // The value of 'Sec-WebSocket-Accept' header is different from the expected one.
             throw new WebSocketException(
-                WebSocketError.UNEXPECTED_SEC_WEBSOCKET_ACCEPT,
-                "The value of Sec-WebSocket-Accept is different from the expected one.");
+                WebSocketError.UNEXPECTED_SEC_WEBSOCKET_ACCEPT_HEADER,
+                "The value of 'Sec-WebSocket-Accept' header is different from the expected one.");
         }
 
         // OK. The value of Sec-WebSocket-Accept is the same as the expected one.
+    }
+
+
+    private void validateExtensions(Map<String, List<String>> headers) throws WebSocketException
+    {
+        // TODO
+    }
+
+
+    private void validateProtocol(Map<String, List<String>> headers) throws WebSocketException
+    {
+        // TODO
+    }
+
+
+    private void startThread(Map<String, List<String>> headers)
+    {
+        WebSocketThread thread = new WebSocketThread(this, headers);
+
+        synchronized (this)
+        {
+            mWebSocketThread = thread;
+            thread.start();
+        }
     }
 
 
@@ -528,13 +652,19 @@ public class WebSocket implements Closeable
     }
 
 
-    private interface ListenerMethodCaller
+    WebSocketInputStream getInput()
     {
-        void call(WebSocket websocket, WebSocketListener listener);
+        return mInput;
     }
 
 
-    private void callListenerMethod(ListenerMethodCaller caller)
+    WebSocketOutputStream getOutput()
+    {
+        return mOutput;
+    }
+
+
+    void callListenerMethod(WebSocketListenerMethodCaller caller)
     {
         synchronized (mListeners)
         {
@@ -549,29 +679,5 @@ public class WebSocket implements Closeable
                 }
             }
         }
-    }
-
-
-    private void startThread()
-    {
-        Thread thread = new Thread() {
-            @Override
-            public void run()
-            {
-                webSocketThreadMain();
-            }
-        };
-
-        synchronized (this)
-        {
-            mWebSocketThread = thread;
-            thread.start();
-        }
-    }
-
-
-    private void webSocketThreadMain()
-    {
-
     }
 }
