@@ -17,7 +17,6 @@ package com.neovisionaries.ws.client;
 
 
 import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -100,7 +99,7 @@ class WebSocketInputStream extends FilterInputStream
     }
 
 
-    public WebSocketFrame readFrame() throws IOException
+    public WebSocketFrame readFrame() throws IOException, WebSocketException
     {
         // Buffer.
         byte[] buffer = new byte[8];
@@ -119,7 +118,11 @@ class WebSocketInputStream extends FilterInputStream
         // Opcode
         int opcode = (buffer[0] & 0x0F);
 
-        // Masked
+        // Mask flag. This should never be true because the specification
+        // (RFC 6455, 5. Data Framing, 5.1. Overview) says as follows:
+        //
+        //     A server MUST NOT mask any frames that it sends to the client.
+        //
         boolean masked = ((buffer[1] & 0x80) != 0);
 
         // The payload length. It is expressed in 7 bits.
@@ -141,6 +144,18 @@ class WebSocketInputStream extends FilterInputStream
             // It is expressed in 8 bytes in network byte order.
             readBytes(buffer, 8);
 
+            // From RFC 6455, p29.
+            //
+            //   the most significant bit MUST be 0
+            //
+            if ((buffer[0] & 0x80) != 0)
+            {
+                // The payload length in a frame is invalid.
+                throw new WebSocketException(
+                    WebSocketError.INVALID_PAYLOAD_LENGTH,
+                    "The payload length of a frame is invalid.");
+            }
+
             // Interpret the bytes as a number.
             payloadLength = (((buffer[0] & 0xFF) << 56) |
                              ((buffer[1] & 0xFF) << 48) |
@@ -152,28 +167,81 @@ class WebSocketInputStream extends FilterInputStream
                              ((buffer[7] & 0xFF)      ));
         }
 
-        // Masking-key
+        // Masking key
         byte[] mask = null;
 
         if (masked)
         {
+            // Read the masking key. (This should never happen.)
             mask = new byte[4];
             readBytes(mask, 4);
         }
 
-        // TODO
-        return null;
+        if (Integer.MAX_VALUE < payloadLength)
+        {
+            // In Java, the maximum array size is Integer.MAX_VALUE.
+            // Skip the payload and raise an exception.
+            skipQuietly(payloadLength);
+            throw new WebSocketException(
+                WebSocketError.TOO_LONG_PAYLOAD,
+                "The payload length of a frame exceeds the maximum array size in Java.");
+        }
+
+        byte[] payload;
+
+        try
+        {
+            // Allocate a memory area to hold the content of the payload.
+            payload = new byte[(int)payloadLength];
+        }
+        catch (OutOfMemoryError e)
+        {
+            // OutOfMemoryError occurred during a trial to allocate a memory area
+            // for a frame's payload. Skip the payload and raise an exception.
+            skipQuietly(payloadLength);
+            throw new WebSocketException(
+                WebSocketError.INSUFFICIENT_MEMORY_FOR_PAYLOAD,
+                "OutOfMemoryError occurred during a trial to allocate a memory area for a frame's payload.");
+        }
+
+        // Read the payload.
+        readBytes(payload, payload.length);
+
+        // Create a WebSocketFrame instance that represents a frame.
+        return new WebSocketFrame()
+            .setFin(fin)
+            .setRsv1(rsv1)
+            .setRsv2(rsv2)
+            .setRsv3(rsv3)
+            .setOpcode(opcode)
+            .setMask(mask)
+            .setPayload(payload);
     }
 
 
-    private void readBytes(byte[] buffer, int length) throws IOException
+    private void readBytes(byte[] buffer, int length) throws IOException, WebSocketException
     {
         // Read
         int count = super.read(buffer, 0, length);
 
         if (count != length)
         {
-            throw new EOFException("The end of the stream was reached unexpectedly.");
+            // The end of the stream has been reached unexpectedly.
+            throw new WebSocketException(
+                WebSocketError.INSUFFICENT_DATA,
+                "The end of the stream has been reached unexpectedly.");
+        }
+    }
+
+
+    private void skipQuietly(long length)
+    {
+        try
+        {
+            super.skip(length);
+        }
+        catch (IOException e)
+        {
         }
     }
 }

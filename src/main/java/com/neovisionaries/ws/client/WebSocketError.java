@@ -99,5 +99,29 @@ public enum WebSocketError
      * The value of 'Sec-WebSocket-Accept' header is different from the expected one.
      */
     UNEXPECTED_SEC_WEBSOCKET_ACCEPT_HEADER,
+
+
+    /**
+     * The end of the stream has been reached unexpectedly.
+     */
+    INSUFFICENT_DATA,
+
+
+    /**
+     * The payload length of a frame is invalid.
+     */
+    INVALID_PAYLOAD_LENGTH,
+
+
+    /**
+     * The payload length of a frame exceeds the maximum array size in Java.
+     */
+    TOO_LONG_PAYLOAD,
+
+
+    /**
+     * OutOfMemoryError occurred during a trial to allocate a memory area for a frame's payload.
+     */
+    INSUFFICIENT_MEMORY_FOR_PAYLOAD,
     ;
 }

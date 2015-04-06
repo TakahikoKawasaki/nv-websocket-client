@@ -18,4 +18,118 @@ package com.neovisionaries.ws.client;
 
 class WebSocketFrame
 {
+    private boolean mFin;
+    private boolean mRsv1;
+    private boolean mRsv2;
+    private boolean mRsv3;
+    private int mOpcode;
+    private byte[] mMask;
+    private byte[] mPayload;
+
+
+    public boolean getFin()
+    {
+        return mFin;
+    }
+
+
+    public WebSocketFrame setFin(boolean fin)
+    {
+        mFin = fin;
+
+        return this;
+    }
+
+
+    public boolean getRsv1()
+    {
+        return mRsv1;
+    }
+
+
+    public WebSocketFrame setRsv1(boolean rsv1)
+    {
+        mRsv1 = rsv1;
+
+        return this;
+    }
+
+
+    public boolean getRsv2()
+    {
+        return mRsv2;
+    }
+
+
+    public WebSocketFrame setRsv2(boolean rsv2)
+    {
+        mRsv2 = rsv2;
+
+        return this;
+    }
+
+
+    public boolean getRsv3()
+    {
+        return mRsv3;
+    }
+
+
+    public WebSocketFrame setRsv3(boolean rsv3)
+    {
+        mRsv3 = rsv3;
+
+        return this;
+    }
+
+
+    public int getOpcode()
+    {
+        return mOpcode;
+    }
+
+
+    public WebSocketFrame setOpcode(int opcode)
+    {
+        mOpcode = opcode;
+
+        return this;
+    }
+
+
+    public byte[] getMask()
+    {
+        return mMask;
+    }
+
+
+    public WebSocketFrame setMask(byte[] mask)
+    {
+        mMask = mask;
+
+        return this;
+    }
+
+
+    public byte[] getPayload()
+    {
+        return mPayload;
+    }
+
+
+    public WebSocketFrame setPayload(byte[] payload)
+    {
+        mPayload = payload;
+
+        return this;
+    }
+
+
+    static void mask(byte[] mask, byte[] payload)
+    {
+        for (int i = 0; i < payload.length; ++i)
+        {
+            payload[i] ^= mask[i%4];
+        }
+    }
 }
