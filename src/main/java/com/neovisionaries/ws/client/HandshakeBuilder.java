@@ -56,6 +56,25 @@ class HandshakeBuilder
     }
 
 
+    public boolean containsProtocol(String protocol)
+    {
+        if (mProtocols == null)
+        {
+            return false;
+        }
+
+        for (String value : mProtocols)
+        {
+            if (value.equals(protocol))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
     public void addExtension(String extension)
     {
         if (extension == null || extension.length() == 0)
@@ -69,6 +88,25 @@ class HandshakeBuilder
         }
 
         mExtensions.add(extension);
+    }
+
+
+    public boolean containsExtension(String extension)
+    {
+        if (mExtensions == null)
+        {
+            return false;
+        }
+
+        for (String value : mExtensions)
+        {
+            if (value.equals(extension))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 

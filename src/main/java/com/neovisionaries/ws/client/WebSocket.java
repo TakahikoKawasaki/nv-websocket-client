@@ -29,6 +29,75 @@ import java.util.List;
 import java.util.Map;
 
 
+/**
+ * Web socket.
+ *
+ * <p>
+ * Instances of {@code WebSocket} are created by calling one of {@code
+ * createSocket} methods of a {@link WebSocketFactory} instance. Below
+ * is the simplest example to create a {@code WebSocket} instance.
+ * </p>
+ *
+ * <blockquote>
+ * <pre> WebSocket ws = new {@link WebSocketFactory#WebSocketFactory()
+ * WebSocketFactory()}.{@link WebSocketFactory#createSocket(String)
+ * createWebSocket}("ws://localhost/endpoint");</pre>
+ * </blockquote>
+ *
+ * <p>
+ * After creating a {@code WebSocket} instance, you should call {@link
+ * #addListener(WebSocketListener)} method to register a {@link
+ * WebSocketListener} that receives web socket events. {@link
+ * WebSocketAdapter} is an empty implementation of {@link
+ * WebSocketListener} interface.
+ * </p>
+ *
+ * <blockquote>
+ * <pre> ws.{@link #addListener(WebSocketListener) addListener}(new {@link
+ * WebSocketAdapter#WebSocketAdapter() WebSocketAdapter()} {
+ *     {@code @}Override
+ *     public void {@link WebSocketListener#onTextMessage(WebSocket, String)
+ *     onTextMessage}(WebSocket websocket, String text) {
+ *         ......
+ *     }
+ * });</pre>
+ * </blockquote>
+ *
+ * <p>
+ * By calling {@link #open()} method, an actual connection to the server
+ * is made and the opening handshake is performed as described in "<a href=
+ * "https://tools.ietf.org/html/rfc6455#section-4">4. Opening Handshake</a>"
+ * in <a href="https://tools.ietf.org/html/rfc6455">RFC 6455</a>. Before
+ * calling {@code open()} method, you may call {@link #addProtocol(String)}
+ * method, {@link #addExtension(String)} method and {@link #addHeader(String,
+ * String)} method to adjust the opening handshake. {@link #setUserInfo(String,
+ * String)} method can be used to set credentials for Basic Authentication
+ * (<a href="https://tools.ietf.org/html/rfc2617">RFC 2617</a>).
+ * </p>
+ *
+ * <p>
+ * {@code open()} performs the opening handshake synchronously. When a
+ * connection could not be made or a protocol error was detected in the
+ * handshake, a {@link WebSocketException} exception is thrown. When the
+ * handshake succeeds, the {@code open()} implementation creates a thread
+ * and starts it to receive web socket frames from the server asynchronously.
+ * </p>
+ *
+ * <blockquote>
+ * <pre> try
+ * {
+ *     // Connect to the server and perform the handshake.
+ *     ws.{@link #open()};
+ * }
+ * catch ({@link WebSocketException} e)
+ * {
+ *     // The opening handshake failed.
+ * }</pre>
+ * </blockquote>
+ *
+ * @see <a href="https://tools.ietf.org/html/rfc6455">RFC 6455
+ *      (The WebSocket Protocol)</a>
+ */
 public class WebSocket implements Closeable
 {
     private static final String ACCEPT_MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
@@ -39,6 +108,8 @@ public class WebSocket implements Closeable
     private WebSocketInputStream mInput;
     private WebSocketOutputStream mOutput;
     private WebSocketThread mWebSocketThread;
+    private String[] mAgreedExtensions;
+    private String mAgreedProtocol;
 
 
     WebSocket(String userInfo, String host, String path, Socket socket)
@@ -221,6 +292,40 @@ public class WebSocket implements Closeable
     }
 
 
+    /**
+     * Get the agreed extensions.
+     *
+     * <p>
+     * This method works correctly only after {@link #open()} succeeds
+     * (= the opening handshake succeeds).
+     * </p>
+     *
+     * @return
+     *         The agreed extensions.
+     */
+    public String[] getAgreedExtensions()
+    {
+        return mAgreedExtensions;
+    }
+
+
+    /**
+     * Get the agreed protocol.
+     *
+     * <p>
+     * This method works correctly only after {@link #open()} succeeds
+     * (= the opening handshake succeeds).
+     * </p>
+     *
+     * @return
+     *         The agreed protocol.
+     */
+    public String getAgreedProtocol()
+    {
+        return mAgreedProtocol;
+    }
+
+
     private WebSocketInputStream openInputStream(Socket socket) throws WebSocketException
     {
         try
@@ -328,7 +433,7 @@ public class WebSocket implements Closeable
         // Validate the value of Sec-WebSocket-Extensions.
         validateExtensions(headers);
 
-        // Validate the valeu of Sec-WebSocket-Protocol.
+        // Validate the value of Sec-WebSocket-Protocol.
         validateProtocol(headers);
 
         // OK. The server has accepted the web socket request.
@@ -462,10 +567,10 @@ public class WebSocket implements Closeable
         }
 
         // Name. (Capitalize)
-        String name = pair[0].toUpperCase();
+        String name = pair[0].trim().toUpperCase();
 
-        // Value. (Remove leading spaces)
-        String value = pair[1].replaceAll("^[ \t]+", "");
+        // Value. (Remove leading and trailing spaces)
+        String value = pair[1].trim();
 
         List<String> list = headers.get(name);
 
@@ -621,15 +726,112 @@ public class WebSocket implements Closeable
     }
 
 
+    /**
+     * Validate the value of {@code Sec-WebSocket-Extensions} header.
+     *
+     * <blockquote>
+     * <p>From RFC 6455, p19.</p>
+     * <p><i>
+     * If the response includes a {@code Sec-WebSocket-Extensions} header
+     * field and this header field indicates the use of an extension
+     * that was not present in the client's handshake (the server has
+     * indicated an extension not requested by the client), the client
+     * MUST Fail the WebSocket Connection.
+     * </i></p>
+     * </blockquote>
+     */
     private void validateExtensions(Map<String, List<String>> headers) throws WebSocketException
     {
-        // TODO
+        // Get the values of Sec-WebSocket-Extensions.
+        List<String> values = headers.get("SEC-WEBSOCKET-EXTENSIONS");
+
+        if (values == null)
+        {
+            // Nothing to check.
+            return;
+        }
+
+        // Split the value of Sec-WebSocket-Extensions by commas.
+        String[] extensions = values.get(0).split("\\s*,\\s*");
+
+        if (extensions.length == 0)
+        {
+            // Ignore.
+            return;
+        }
+
+        // For each extension that the server presented.
+        for (String extension : extensions)
+        {
+            if (extension == null || extension.length() == 0)
+            {
+                // Ignore.
+                continue;
+            }
+
+            // Check if the extension is contained in the original request
+            // from this client.
+            if (mHandshakeBuilder.containsExtension(extension))
+            {
+                // OK. The extension is contained in the original request.
+                continue;
+            }
+
+            // The extension contained in the Sec-WebSocket-Extensions header is not supported.
+            throw new WebSocketException(
+                WebSocketError.UNSUPPORTED_EXTENSION,
+                "The extension contained in the Sec-WebSocket-Extensions header is not supported: " + extension);
+        }
+
+        mAgreedExtensions = extensions;
     }
 
 
+    /**
+     * Validate the value of {@code Sec-WebSocket-Protocol} header.
+     *
+     * <blockquote>
+     * <p>From RFC 6455, p20.</p>
+     * <p><i>
+     * If the response includes a {@code Sec-WebSocket-Protocol} header field
+     * and this header field indicates the use of a subprotocol that was
+     * not present in the client's handshake (the server has indicated a
+     * subprotocol not requested by the client), the client MUST Fail
+     * the WebSocket Connection.
+     * </i></p>
+     * </blockquote>
+     */
     private void validateProtocol(Map<String, List<String>> headers) throws WebSocketException
     {
-        // TODO
+        // Get the values of Sec-WebSocket-Protocol.
+        List<String> values = headers.get("SEC-WEBSOCKET-PROTOCOL");
+
+        if (values == null)
+        {
+            // Nothing to check.
+            return;
+        }
+
+        // Protocol
+        String protocol = values.get(0);
+
+        if (protocol == null || protocol.length() == 0)
+        {
+            // Ignore.
+            return;
+        }
+
+        // If the protocol is not contained in the original request
+        // from this client.
+        if (mHandshakeBuilder.containsProtocol(protocol) == false)
+        {
+            // The protocol contained in the Sec-WebSocket-Protocol header is not supported.
+            throw new WebSocketException(
+                WebSocketError.UNSUPPORTED_PROTOCOL,
+                "The protocol contained in the Sec-WebSocket-Protocol header is not supported: " + protocol);
+        }
+
+        mAgreedProtocol = protocol;
     }
 
 
@@ -645,10 +847,27 @@ public class WebSocket implements Closeable
     }
 
 
+    /**
+     * Close the web socket.
+     */
     @Override
-    public void close() throws IOException
+    public void close()
     {
-        // TODO
+        WebSocketThread thread;
+
+        synchronized (this)
+        {
+            if (mWebSocketThread == null)
+            {
+                // Not opened or already closed.
+                return;
+            }
+
+            thread = mWebSocketThread;
+            mWebSocketThread = null;
+        }
+
+        thread.close();
     }
 
 

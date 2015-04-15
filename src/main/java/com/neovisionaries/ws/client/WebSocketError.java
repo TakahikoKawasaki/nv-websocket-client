@@ -102,6 +102,18 @@ public enum WebSocketError
 
 
     /**
+     * The extension contained in the Sec-WebSocket-Extensions header is not supported.
+     */
+    UNSUPPORTED_EXTENSION,
+
+
+    /**
+     * The protocol contained in the Sec-WebSocket-Protocol header is not supported.
+     */
+    UNSUPPORTED_PROTOCOL,
+
+
+    /**
      * The end of the stream has been reached unexpectedly.
      */
     INSUFFICENT_DATA,
@@ -123,5 +135,17 @@ public enum WebSocketError
      * OutOfMemoryError occurred during a trial to allocate a memory area for a frame's payload.
      */
     INSUFFICIENT_MEMORY_FOR_PAYLOAD,
+
+
+    /**
+     * Interruption occurred while a frame was being read from the web socket.
+     */
+    INTERRUPTED_IN_READING,
+
+
+    /**
+     * An I/O error occurred while a frame was being read from the web socket.
+     */
+    IO_ERROR_IN_READING,
     ;
 }

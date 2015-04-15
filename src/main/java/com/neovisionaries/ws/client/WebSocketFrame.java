@@ -16,8 +16,19 @@
 package com.neovisionaries.ws.client;
 
 
-class WebSocketFrame
+public class WebSocketFrame
 {
+    public static class Opcode
+    {
+        public static final int CONTINUATION = 0x0;
+        public static final int TEXT         = 0x1;
+        public static final int BINARY       = 0x2;
+        public static final int CLOSE        = 0x8;
+        public static final int PING         = 0x9;
+        public static final int PONG         = 0xA;
+    }
+
+
     private boolean mFin;
     private boolean mRsv1;
     private boolean mRsv2;
@@ -83,6 +94,55 @@ class WebSocketFrame
     }
 
 
+    /**
+     * Get the opcode.
+     *
+     * <table border="1" cellpadding="5" style="table-collapse: collapse;">
+     *   <thead>
+     *     <tr>
+     *       <th>Value</th>
+     *       <th>Description</th>
+     *     </tr>
+     *   </thead>
+     *   <tbody>
+     *     <tr>
+     *       <td>0x0</td>
+     *       <td>Frame continuation</td>
+     *     </tr>
+     *     <tr>
+     *       <td>0x1</td>
+     *       <td>Text frame</td>
+     *     </tr>
+     *     <tr>
+     *       <td>0x2</td>
+     *       <td>Binary frame</td>
+     *     </tr>
+     *     <tr>
+     *       <td>0x3-0x7</td>
+     *       <td>Reserved</td>
+     *     </tr>
+     *     <tr>
+     *       <td>0x8</td>
+     *       <td>Connection close</td>
+     *     </tr>
+     *     <tr>
+     *       <td>0x9</td>
+     *       <td>Ping</td>
+     *     </tr>
+     *     <tr>
+     *       <td>0xA</td>
+     *       <td>Pong</td>
+     *     </tr>
+     *     <tr>
+     *       <td>0xB-0xF</td>
+     *       <td>Reserved</td>
+     *     </tr>
+     *   </tbody>
+     * </table>
+     *
+     * @return
+     *         The opecode.
+     */
     public int getOpcode()
     {
         return mOpcode;

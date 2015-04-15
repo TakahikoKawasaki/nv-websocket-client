@@ -22,5 +22,136 @@ import java.util.Map;
 
 public interface WebSocketListener
 {
+    /**
+     * Called after the opening handshake of the web socket connection succeeded.
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param headers
+     *         HTTP headers received from the server. Keys of the map are
+     *         capitalized HTTP header names such as "SEC-WEBSOCKET-ACCEPT".
+     */
     void onOpen(WebSocket websocket, Map<String, List<String>> headers);
+
+
+    /**
+     * Called when a frame failed to be read from the web socket.
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param frame
+     *         The socket frame. If this is not {@code null}, it means that
+     *         verification of the frame failed.
+     *
+     * @param exception
+     *         An exception that represents the error. When the error occurred
+     *         because of {@link java.io.InterruptedIOException InterruptedIOException},
+     *         {@code exception.getError()} returns {@link WebSocketError#INTERRUPTED_IN_READING}.
+     *         For other IO errors, {@code exception.getError()} returns {@link
+     *         WebSocketError#IO_ERROR_IN_READING}. Other error codes denote
+     *         protocol errors, which imply that some bugs may exist in either
+     *         or both of the client-side and the server-side implementations.
+     */
+    void onFrameError(WebSocket websocket, WebSocketFrame frame, WebSocketException exception);
+
+
+    void onFrame(WebSocket websocket, WebSocketFrame frame);
+
+
+    /**
+     * Called when a continuation frame (opcode = 0x0) was received.
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param frame
+     *         The frame.
+     */
+    void onContinuationFrame(WebSocket websocket, WebSocketFrame frame);
+
+
+    /**
+     * Called when a text frame (opcode = 0x1) was received.
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param frame
+     *         The frame.
+     */
+    void onTextFrame(WebSocket websocket, WebSocketFrame frame);
+
+
+    /**
+     * Called when a binary frame (opcode = 0x2) was received.
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param frame
+     *         The frame.
+     */
+    void onBinaryFrame(WebSocket websocket, WebSocketFrame frame);
+
+
+    /**
+     * Called when a close frame (opcode = 0x8) was received.
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param frame
+     *         The frame.
+     */
+    void onCloseFrame(WebSocket websocket, WebSocketFrame frame);
+
+
+    /**
+     * Called when a ping frame (opcode = 0x9) was received.
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param frame
+     *         The frame.
+     */
+    void onPingFrame(WebSocket websocket, WebSocketFrame frame);
+
+
+    /**
+     * Called when a pong frame (opcode = 0xA) was received.
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param frame
+     *         The frame.
+     */
+    void onPongFrame(WebSocket websocket, WebSocketFrame frame);
+
+
+    /**
+     * Called when a text message was received.
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param text
+     *         The text message.
+     */
+    void onTextMessage(WebSocket websocket, String text);
+
+
+    /**
+     * Called when a binary message was received.
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param binary
+     *         The binary message.
+     */
+    void onBinaryMessage(WebSocket websocket, byte[] binary);
 }
