@@ -164,7 +164,7 @@ public class WebSocketFactory
      * (url.}{@link URL#toURI() toURI()}{@code ))}.
      * </p>
      *
-     * @param uri
+     * @param url
      *         The URL of the web socket endpoint on the server side.
      *
      * @return

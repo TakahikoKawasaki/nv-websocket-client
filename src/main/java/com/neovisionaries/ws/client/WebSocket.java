@@ -255,7 +255,7 @@ public class WebSocket implements Closeable
      * credentials by {@link #setUserInfo(String) setUserInfo(userInfo)} or
      * {@link #setUserInfo(String, String) setUserInfo(id, password)} before
      * you call this method.
-     * Note that if the URI passed to {@link WebSocketFactory}{@link
+     * Note that if the URI passed to {@link WebSocketFactory}{@code
      * .createSocket} method contains the user-info part, you don't have to
      * call {@code setUserInfo} method.
      * </p>

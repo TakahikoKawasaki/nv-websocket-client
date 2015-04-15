@@ -98,7 +98,7 @@ class WebSocketThread extends Thread
      * Call {@link WebSocketListener#onFrameError(WebSocket, WebSocketFrame,
      * WebSocketException) onFrameError} method of the listeners.
      */
-    private void callOnFrameError(WebSocketFrame frame, WebSocketException exception)
+    private void callOnFrameError(final WebSocketFrame frame, final WebSocketException exception)
     {
         mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
             @Override
@@ -114,7 +114,7 @@ class WebSocketThread extends Thread
      * Call {@link WebSocketListener#onFrame(WebSocket, WebSocketFrame) onFrame}
      * method of the listeners.
      */
-    private void callOnFrame(WebSocketFrame frame)
+    private void callOnFrame(final WebSocketFrame frame)
     {
         mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
             @Override
@@ -130,7 +130,7 @@ class WebSocketThread extends Thread
      * Call {@link WebSocketListener#onContinuationFrame(WebSocket, WebSocketFrame)
      * onContinuationFrame} method of the listeners.
      */
-    private void callOnContinuationFrame(WebSocketFrame frame)
+    private void callOnContinuationFrame(final WebSocketFrame frame)
     {
         mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
             @Override
@@ -146,7 +146,7 @@ class WebSocketThread extends Thread
      * Call {@link WebSocketListener#onTextFrame(WebSocket, WebSocketFrame)
      * onTextFrame} method of the listeners.
      */
-    private void callOnTextFrame(WebSocketFrame frame)
+    private void callOnTextFrame(final WebSocketFrame frame)
     {
         mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
             @Override
@@ -162,7 +162,7 @@ class WebSocketThread extends Thread
      * Call {@link WebSocketListener#onBinaryFrame(WebSocket, WebSocketFrame)
      * onBinaryFrame} method of the listeners.
      */
-    private void callOnBinaryFrame(WebSocketFrame frame)
+    private void callOnBinaryFrame(final WebSocketFrame frame)
     {
         mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
             @Override
@@ -178,7 +178,7 @@ class WebSocketThread extends Thread
      * Call {@link WebSocketListener#onCloseFrame(WebSocket, WebSocketFrame)
      * onCloseFrame} method of the listeners.
      */
-    private void callOnCloseFrame(WebSocketFrame frame)
+    private void callOnCloseFrame(final WebSocketFrame frame)
     {
         mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
             @Override
@@ -194,7 +194,7 @@ class WebSocketThread extends Thread
      * Call {@link WebSocketListener#onPingFrame(WebSocket, WebSocketFrame)
      * onPingFrame} method of the listeners.
      */
-    private void callOnPingFrame(WebSocketFrame frame)
+    private void callOnPingFrame(final WebSocketFrame frame)
     {
         mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
             @Override
@@ -210,7 +210,7 @@ class WebSocketThread extends Thread
      * Call {@link WebSocketListener#onPongFrame(WebSocket, WebSocketFrame)
      * onPongFrame} method of the listeners.
      */
-    private void callOnPongFrame(WebSocketFrame frame)
+    private void callOnPongFrame(final WebSocketFrame frame)
     {
         mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
             @Override
