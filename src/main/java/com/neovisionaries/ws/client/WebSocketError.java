@@ -72,9 +72,9 @@ public enum WebSocketError
 
 
     /**
-     * The value of 'Upgrade' header is not 'websocket'.
+     * 'websocket' was not found in 'Upgrade' header.
      */
-    UNEXPECTED_UPGRADE_HEADER,
+    NO_WEBSOCKET_IN_UPGRADE_HEADER,
 
 
     /**
@@ -84,9 +84,9 @@ public enum WebSocketError
 
 
     /**
-     * The value of 'Connection' header is not 'Upgrade'.
+     * 'Upgrade' was not found in 'Connection' header.
      */
-    UNEXPECTED_CONNECTION_HEADER,
+    NO_UPGRADE_IN_CONNECTION_HEADER,
 
 
     /**
@@ -99,6 +99,12 @@ public enum WebSocketError
      * The value of 'Sec-WebSocket-Accept' header is different from the expected one.
      */
     UNEXPECTED_SEC_WEBSOCKET_ACCEPT_HEADER,
+
+
+    /**
+     * The value in 'Sec-WebSocket-Extensions' failed to be parsed.
+     */
+    EXTENSION_PARSE_ERROR,
 
 
     /**

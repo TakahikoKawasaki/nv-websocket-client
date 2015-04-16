@@ -69,10 +69,11 @@ import java.util.Map;
  * "https://tools.ietf.org/html/rfc6455#section-4">4. Opening Handshake</a>"
  * in <a href="https://tools.ietf.org/html/rfc6455">RFC 6455</a>. Before
  * calling {@code open()} method, you may call {@link #addProtocol(String)}
- * method, {@link #addExtension(String)} method and {@link #addHeader(String,
- * String)} method to adjust the opening handshake. {@link #setUserInfo(String,
- * String)} method can be used to set credentials for Basic Authentication
- * (<a href="https://tools.ietf.org/html/rfc2617">RFC 2617</a>).
+ * method, {@link #addExtension(WebSocketExtension)} method and {@link
+ * #addHeader(String, String)} method to adjust the opening handshake.
+ * {@link #setUserInfo(String, String)} method can be used to set credentials
+ * for Basic Authentication (<a href="https://tools.ietf.org/html/rfc2617"
+ * >RFC 2617</a>).
  * </p>
  *
  * <p>
@@ -108,7 +109,7 @@ public class WebSocket implements Closeable
     private WebSocketInputStream mInput;
     private WebSocketOutputStream mOutput;
     private WebSocketThread mWebSocketThread;
-    private String[] mAgreedExtensions;
+    private List<WebSocketExtension> mAgreedExtensions;
     private String mAgreedProtocol;
 
 
@@ -122,6 +123,14 @@ public class WebSocket implements Closeable
 
     /**
      * Add a value for {@code Sec-WebSocket-Protocol}.
+     *
+     * @param protocol
+     *         A protocol name.
+     *
+     * @throws IllegalArgumentException
+     *         The protocol name is invalid. A protocol name must be
+     *         a non-empty string with characters in the range U+0021
+     *         to U+007E not including separator characters.
      */
     public WebSocket addProtocol(String protocol)
     {
@@ -133,8 +142,11 @@ public class WebSocket implements Closeable
 
     /**
      * Add a value for {@code Sec-WebSocket-Extension}.
+     *
+     * @param extension
+     *         An extension. {@code null} is silently ignored.
      */
-    public WebSocket addExtension(String extension)
+    public WebSocket addExtension(WebSocketExtension extension)
     {
         mHandshakeBuilder.addExtension(extension);
 
@@ -232,7 +244,7 @@ public class WebSocket implements Closeable
      * start a thread to communicate with the server.
      *
      * <p>
-     * As necessary, {@link #addProtocol(String)}, {@link #addExtension(String)}
+     * As necessary, {@link #addProtocol(String)}, {@link #addExtension(WebSocketExtension)}
      * {@link #addHeader(String, String)} should be called before you call this
      * method. It is because the parameters set by these methods are used in the
      * opening handshake.
@@ -303,7 +315,7 @@ public class WebSocket implements Closeable
      * @return
      *         The agreed extensions.
      */
-    public String[] getAgreedExtensions()
+    public List<WebSocketExtension> getAgreedExtensions()
     {
         return mAgreedExtensions;
     }
@@ -601,7 +613,7 @@ public class WebSocket implements Closeable
         // Get the values of Upgrade.
         List<String> values = headers.get("UPGRADE");
 
-        if (values == null)
+        if (values == null || values.size() == 0)
         {
             // The opening handshake response does not contain 'Upgrade' header.
             throw new WebSocketException(
@@ -609,16 +621,25 @@ public class WebSocket implements Closeable
                 "The opening handshake response does not contain 'Upgrade' header.");
         }
 
-        // The actual value of Upgrade.
-        String actual = values.get(0);
-
-        if ("websocket".equalsIgnoreCase(actual) == false)
+        for (String value : values)
         {
-            // The value of 'Upgrade' header is not 'websocket'.
-            throw new WebSocketException(
-                WebSocketError.UNEXPECTED_UPGRADE_HEADER,
-                "The value of 'Upgrade' header is not 'websocket'.");
+            // Split the value of Upgrade header into elements.
+            String[] elements = value.split("\\s*,\\s*");
+
+            for (String element : elements)
+            {
+                if ("websocket".equalsIgnoreCase(element))
+                {
+                    // Found 'websocket' in Upgrade header.
+                    return;
+                }
+            }
         }
+
+        // 'websocket' was not found in 'Upgrade' header.
+        throw new WebSocketException(
+            WebSocketError.NO_WEBSOCKET_IN_UPGRADE_HEADER,
+            "'websocket' was not found in 'Upgrade' header.");
     }
 
 
@@ -639,7 +660,7 @@ public class WebSocket implements Closeable
         // Get the values of Upgrade.
         List<String> values = headers.get("CONNECTION");
 
-        if (values == null)
+        if (values == null || values.size() == 0)
         {
             // The opening handshake response does not contain 'Connection' header.
             throw new WebSocketException(
@@ -647,16 +668,25 @@ public class WebSocket implements Closeable
                 "The opening handshake response does not contain 'Connection' header.");
         }
 
-        // The actual value of Connection.
-        String actual = values.get(0);
-
-        if ("Upgrade".equalsIgnoreCase(actual) == false)
+        for (String value : values)
         {
-            // The value of 'Connection' header is not 'Upgrade'.
-            throw new WebSocketException(
-                WebSocketError.UNEXPECTED_CONNECTION_HEADER,
-                "The value of 'Connection' header is not 'Upgrade'.");
+            // Split the value of Connection header into elements.
+            String[] elements = value.split("\\s*,\\s*");
+
+            for (String element : elements)
+            {
+                if ("Upgrade".equalsIgnoreCase(element))
+                {
+                    // Found 'Upgrade' in Connection header.
+                    return;
+                }
+            }
         }
+
+        // 'Upgrade' was not found in 'Connection' header.
+        throw new WebSocketException(
+            WebSocketError.NO_UPGRADE_IN_CONNECTION_HEADER,
+            "'Upgrade' was not found in 'Connection' header.");
     }
 
 
@@ -745,42 +775,47 @@ public class WebSocket implements Closeable
         // Get the values of Sec-WebSocket-Extensions.
         List<String> values = headers.get("SEC-WEBSOCKET-EXTENSIONS");
 
-        if (values == null)
+        if (values == null || values.size() == 0)
         {
             // Nothing to check.
             return;
         }
 
-        // Split the value of Sec-WebSocket-Extensions by commas.
-        String[] extensions = values.get(0).split("\\s*,\\s*");
+        List<WebSocketExtension> extensions = new ArrayList<WebSocketExtension>();
 
-        if (extensions.length == 0)
+        for (String value : values)
         {
-            // Ignore.
-            return;
-        }
+            // Split the value into elements each of which represents an extension.
+            String[] elements = value.split("\\s*,\\s*");
 
-        // For each extension that the server presented.
-        for (String extension : extensions)
-        {
-            if (extension == null || extension.length() == 0)
+            for (String element : elements)
             {
-                // Ignore.
-                continue;
-            }
+                // Parse the string whose format is supposed to be "{name}[; {key}[={value}]*".
+                WebSocketExtension extension = WebSocketExtension.parse(element);
 
-            // Check if the extension is contained in the original request
-            // from this client.
-            if (mHandshakeBuilder.containsExtension(extension))
-            {
-                // OK. The extension is contained in the original request.
-                continue;
-            }
+                if (extension == null)
+                {
+                    // The value in 'Sec-WebSocket-Extensions' failed to be parsed.
+                    throw new WebSocketException(
+                        WebSocketError.EXTENSION_PARSE_ERROR,
+                        "The value in 'Sec-WebSocket-Extensions' failed to be parsed: " + element);
+                }
 
-            // The extension contained in the Sec-WebSocket-Extensions header is not supported.
-            throw new WebSocketException(
-                WebSocketError.UNSUPPORTED_EXTENSION,
-                "The extension contained in the Sec-WebSocket-Extensions header is not supported: " + extension);
+                // The extension name.
+                String name = extension.getName();
+
+                // If the extension is not contained in the original request from this client.
+                if (mHandshakeBuilder.containsExtension(name) == false)
+                {
+                    // The extension contained in the Sec-WebSocket-Extensions header is not supported.
+                    throw new WebSocketException(
+                        WebSocketError.UNSUPPORTED_EXTENSION,
+                        "The extension contained in the Sec-WebSocket-Extensions header is not supported: " + name);
+                }
+
+                // The extension has been agreed.
+                extensions.add(extension);
+            }
         }
 
         mAgreedExtensions = extensions;

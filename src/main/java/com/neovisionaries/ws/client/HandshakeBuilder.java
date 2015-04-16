@@ -17,7 +17,10 @@ package com.neovisionaries.ws.client;
 
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 
 class HandshakeBuilder
@@ -27,8 +30,8 @@ class HandshakeBuilder
     private final String mHost;
     private final String mPath;
     private String mKey;
-    private List<String> mProtocols;
-    private List<String> mExtensions;
+    private Set<String> mProtocols;
+    private List<WebSocketExtension> mExtensions;
     private List<String[]> mHeaders;
 
 
@@ -42,17 +45,43 @@ class HandshakeBuilder
 
     public void addProtocol(String protocol)
     {
-        if (protocol == null || protocol.length() == 0)
+        if (isValidProtocol(protocol) == false)
         {
-            return;
+            throw new IllegalArgumentException("'protocol' must be a non-empty string with characters in the range U+0021 to U+007E not including separator characters.");
         }
 
         if (mProtocols == null)
         {
-            mProtocols = new ArrayList<String>();
+            // 'LinkedHashSet' is used because the elements
+            // "MUST all be unique strings" and must be
+            // "ordered by preference. See RFC 6455, p18, 10.
+            mProtocols = new LinkedHashSet<String>();
         }
 
         mProtocols.add(protocol);
+    }
+
+
+    private static boolean isValidProtocol(String protocol)
+    {
+        if (protocol == null || protocol.length() == 0)
+        {
+            return false;
+        }
+
+        int len = protocol.length();
+
+        for (int i = 0; i < len; ++i)
+        {
+            char ch = protocol.charAt(i);
+
+            if (ch < 0x21 || 0x7E < ch || Token.isSeparator(ch))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
 
@@ -63,44 +92,36 @@ class HandshakeBuilder
             return false;
         }
 
-        for (String value : mProtocols)
-        {
-            if (value.equals(protocol))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return mProtocols.contains(protocol);
     }
 
 
-    public void addExtension(String extension)
+    public void addExtension(WebSocketExtension extension)
     {
-        if (extension == null || extension.length() == 0)
+        if (extension == null)
         {
             return;
         }
 
         if (mExtensions == null)
         {
-            mExtensions = new ArrayList<String>();
+            mExtensions = new ArrayList<WebSocketExtension>();
         }
 
         mExtensions.add(extension);
     }
 
 
-    public boolean containsExtension(String extension)
+    public boolean containsExtension(String extensionName)
     {
         if (mExtensions == null)
         {
             return false;
         }
 
-        for (String value : mExtensions)
+        for (WebSocketExtension extension : mExtensions)
         {
-            if (value.equals(extension))
+            if (extension.getName().equals(extensionName))
             {
                 return true;
             }
@@ -169,7 +190,7 @@ class HandshakeBuilder
     }
 
 
-    private static void append(StringBuilder builder, String name, List<String> values)
+    private static void append(StringBuilder builder, String name, Collection<?> values)
     {
         if (values == null || values.size() == 0)
         {
@@ -184,18 +205,22 @@ class HandshakeBuilder
     }
 
 
-    private static void join(StringBuilder builder, List<String> values, String delimiter)
+    private static void join(StringBuilder builder, Collection<?> values, String delimiter)
     {
-        int size = values.size();
+        boolean first = true;
 
-        for (int i = 0; i < size; ++i)
+        for (Object value : values)
         {
-            if (i != 0)
+            if (first)
+            {
+                first = false;
+            }
+            else
             {
                 builder.append(delimiter);
             }
 
-            builder.append(values.get(i));
+            builder.append(value.toString());
         }
     }
 
