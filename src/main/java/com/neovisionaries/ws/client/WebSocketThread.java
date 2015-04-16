@@ -24,8 +24,11 @@ import static com.neovisionaries.ws.client.WebSocketFrame.Opcode.PONG;
 import static com.neovisionaries.ws.client.WebSocketFrame.Opcode.TEXT;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import com.neovisionaries.ws.client.WebSocketFrame.Opcode;
 
 
 class WebSocketThread extends Thread
@@ -33,6 +36,7 @@ class WebSocketThread extends Thread
     private final WebSocket mWebSocket;
     private final Map<String, List<String>> mHeaders;
     private boolean mStopRequested;
+    private List<WebSocketFrame> mContinuation = new ArrayList<WebSocketFrame>();
 
 
     public WebSocketThread(WebSocket websocket, Map<String, List<String>> headers)
@@ -222,6 +226,59 @@ class WebSocketThread extends Thread
     }
 
 
+    /**
+     * Call {@link WebSocketListener#onTextMessage(WebSocket, String)
+     * onTextMessage} method of the listeners.
+     */
+    private void callOnTextMessage(byte[] data)
+    {
+        try
+        {
+            // Interpret the byte array as a UTF-8 string.
+            String text = (data == null) ? null : new String(data, "UTF-8");
+
+            // Call onTextMessage() method of the listeners.
+            callOnTextMessage(text);
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            // This never happens.
+        }
+    }
+
+
+    /**
+     * Call {@link WebSocketListener#onTextMessage(WebSocket, String)
+     * onTextMessage} method of the listeners.
+     */
+    private void callOnTextMessage(final String text)
+    {
+        mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
+            @Override
+            public void call(WebSocket websocket, WebSocketListener listener)
+            {
+                listener.onTextMessage(websocket, text);
+            }
+        });
+    }
+
+
+    /**
+     * Call {@link WebSocketListener#onBinaryMessage(WebSocket, String)
+     * onBinaryMessage} method of the listeners.
+     */
+    private void callOnBinaryMessage(final byte[] binary)
+    {
+        mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
+            @Override
+            public void call(WebSocket websocket, WebSocketListener listener)
+            {
+                listener.onBinaryMessage(websocket, binary);
+            }
+        });
+    }
+
+
     private WebSocketFrame readFrame()
     {
         WebSocketFrame frame = null;
@@ -271,7 +328,174 @@ class WebSocketThread extends Thread
 
     private void verifyFrame(WebSocketFrame frame) throws WebSocketException
     {
-        // TODO
+        // Verify RSV1, RSV2 and RSV3.
+        verifyReservedBits(frame);
+
+        // The opcode of the frame must be known.
+        verifyFrameOpcode(frame);
+
+        // Frames from the server must not be masked.
+        verifyFrameMask(frame);
+
+        // Verify fragmentation conditions.
+        verifyFrameFragmentation(frame);
+
+        // Verify the size of the payload.
+        verifyFrameSize(frame);
+    }
+
+
+    private void verifyReservedBits(WebSocketFrame frame) throws WebSocketException
+    {
+        // RSV1, RSV2, RSV3
+        //
+        // The specification requires that these bits "be 0 unless an extension
+        // is negotiated that defines meanings for non-zero values".
+        //
+        // However, this implementation does not check these bits here intentionally
+        // until this library is improved to provide a mechanism to delegate the
+        // task to external extensions.
+    }
+
+
+    /**
+     * Ensure that the opcode of the give frame is a known one.
+     *
+     * <blockquote>
+     * <p>From RFC 6455, 5.2. Base Framing Protocol</p>
+     * <p><i>
+     * If an unknown opcode is received, the receiving endpoint MUST
+     * Fail the WebSocket Connection.
+     * </i></p>
+     * </blockquote>
+     */
+    private void verifyFrameOpcode(WebSocketFrame frame) throws WebSocketException
+    {
+        switch (frame.getOpcode())
+        {
+            case Opcode.CONTINUATION:
+            case Opcode.TEXT:
+            case Opcode.BINARY:
+            case Opcode.CLOSE:
+            case Opcode.PING:
+            case Opcode.PONG:
+                // Known opcode
+                return;
+
+            default:
+                // A frame has an unknown opcode.
+                throw new WebSocketException(
+                    WebSocketError.UNKNOWN_OPCODE,
+                    "A frame has an unknown opcode: 0x" + Integer.toHexString(frame.getOpcode()));
+        }
+    }
+
+
+    /**
+     * Ensure that the given frame is not masked.
+     *
+     * <blockquote>
+     * <p>From RFC 6455, 5.1. Overview:</p>
+     * <p><i>
+     * A server MUST NOT mask any frames that it sends to the client.
+     * A client MUST close a connection if it detects a masked frame.
+     * </i></p>
+     * </blockquote>
+     */
+    private void verifyFrameMask(WebSocketFrame frame) throws WebSocketException
+    {
+        // If the frame is masked.
+        if (frame.isMasked())
+        {
+            // A frame from the server is masked.
+            throw new WebSocketException(
+                WebSocketError.FRAME_MASKED,
+                "A frame from the server is masked.");
+        }
+    }
+
+
+    private void verifyFrameFragmentation(WebSocketFrame frame) throws WebSocketException
+    {
+        // Control frames (see Section 5.5) MAY be injected in the
+        // middle of a fragmented message. Control frames themselves
+        // MUST NOT be fragmented.
+        if (frame.isControlFrame())
+        {
+            // If fragmented.
+            if (frame.getFin() == false)
+            {
+                // A control frame is fragmented.
+                throw new WebSocketException(
+                    WebSocketError.FRAGMENTED_CONTROL_FRAME,
+                    "A control frame is fragmented.");
+            }
+
+            // No more requirements on a control frame.
+            return;
+        }
+
+        // True if a continuation has already started.
+        boolean continuationExists = (mContinuation.size() == 0);
+
+        // If the frame is a continuation frame.
+        if (frame.getOpcode() == Opcode.CONTINUATION)
+        {
+            // There must already exist a continuation sequence.
+            if (continuationExists == false)
+            {
+                // A continuation frame was detected although a continuation had not started.
+                throw new WebSocketException(
+                    WebSocketError.UNEXPECTED_CONTINUATION_FRAME,
+                    "A continuation frame was detected although a continuation had not started.");
+            }
+
+            // No more requirements on a continuation frame.
+            return;
+        }
+
+        // A non-control frame.
+
+        if (continuationExists)
+        {
+            // A non-control frame was detected although the existing continuation had not been closed.
+            throw new WebSocketException(
+                WebSocketError.CONTINUATION_NOT_CLOSED,
+                "A non-control frame was detected although the existing continuation had not been closed.");
+        }
+    }
+
+
+    private void verifyFrameSize(WebSocketFrame frame) throws WebSocketException
+    {
+        // If the frame is not a control frame.
+        if (frame.isControlFrame() == false)
+        {
+            // Nothing to check.
+            return;
+        }
+
+        // RFC 6455, 5.5. Control Frames.
+        //
+        //   All control frames MUST have a payload length of 125 bytes or less
+        //   and MUST NOT be fragmented.
+        //
+
+        byte[] payload = frame.getPayload();
+
+        if (payload == null)
+        {
+            // The frame does not have payload.
+            return;
+        }
+
+        if (125 < payload.length)
+        {
+            // The payload size of a control frame exceeds the maximum size (125 bytes).
+            throw new WebSocketException(
+                WebSocketError.TOO_LONG_CONTROL_FRAME_PAYLOAD,
+                "The payload size of a control frame exceeds the maximum size (125 bytes): " + payload.length);
+        }
     }
 
 
@@ -280,6 +504,7 @@ class WebSocketThread extends Thread
         // Notify the listeners that a frame was received.
         callOnFrame(frame);
 
+        // Dispatch based on the opcode.
         switch (frame.getOpcode())
         {
             case CONTINUATION:
@@ -317,6 +542,17 @@ class WebSocketThread extends Thread
     {
         // Notify the listeners that a continuation frame was received.
         callOnContinuationFrame(frame);
+
+        // Append the continuation frame to the existing continuation sequence.
+        mContinuation.add(frame);
+
+        // If the frame is not the last one for the continuation.
+        if (frame.getFin() == false)
+        {
+            return;
+        }
+
+        // TODO: build a message, call onXxxMessage, then clear the continuation.
     }
 
 
@@ -324,6 +560,17 @@ class WebSocketThread extends Thread
     {
         // Notify the listeners that a text frame was received.
         callOnTextFrame(frame);
+
+        // If the frame indicates the start of fragmentation.
+        if (frame.getFin() == false)
+        {
+            // Start a continuation sequence.
+            mContinuation.add(frame);
+            return;
+        }
+
+        // Notify the listeners that a text message was received.
+        callOnTextMessage(frame.getPayload());
     }
 
 
@@ -331,6 +578,17 @@ class WebSocketThread extends Thread
     {
         // Notify the listeners that a binary frame was received.
         callOnBinaryFrame(frame);
+
+        // If the frame indicates the start of fragmentation.
+        if (frame.getFin() == false)
+        {
+            // Start a continuation sequence.
+            mContinuation.add(frame);
+            return;
+        }
+
+        // Notify the listeners that a binary message was received.
+        callOnBinaryMessage(frame.getPayload());
     }
 
 

@@ -153,5 +153,68 @@ public enum WebSocketError
      * An I/O error occurred while a frame was being read from the web socket.
      */
     IO_ERROR_IN_READING,
+
+
+    /**
+     * A frame from the server is masked.
+     *
+     * <blockquote>
+     * <p>From RFC 6455, <a href="http://tools.ietf.org/html/rfc6455#section-5.1"
+     * >5.1. Overview</a>:</p>
+     * <p><i>
+     * A server MUST NOT mask any frames that it sends to the client.
+     * A client MUST close a connection if it detects a masked frame.
+     * </i></p>
+     * </blockquote>
+     */
+    FRAME_MASKED,
+
+
+    /**
+     * A frame has an unknown opcode.
+     */
+    UNKNOWN_OPCODE,
+
+
+    /**
+     * A control frame is fragmented.
+     *
+     * <blockquote>
+     * <p>From RFC 6455, <a href="http://tools.ietf.org/html/rfc6455#section-5.4"
+     * >5.4. Fragmentation</a>:</p>
+     * <p><i>
+     * Control frames (see Section 5.5) MAY be injected in the middle of
+     * a fragmented message.  Control frames themselves MUST NOT be fragmented.
+     * </i></p>
+     * </blockquote>
+     */
+    FRAGMENTED_CONTROL_FRAME,
+
+
+    /**
+     * A continuation frame was detected although a continuation had not started.
+     */
+    UNEXPECTED_CONTINUATION_FRAME,
+
+
+    /**
+     * A non-control frame was detected although the existing continuation had not been closed.
+     */
+    CONTINUATION_NOT_CLOSED,
+
+
+    /**
+     * The payload size of a control frame exceeds the maximum size (125 bytes).
+     *
+     * <blockquote>
+     * <p>From RFC 6455, <a href="http://tools.ietf.org/html/rfc6455#section-5.5"
+     * >5.5. Control Frames</a>:</p>
+     * <p><i>
+     * All control frames MUST have a payload length of 125 bytes or less and
+     * MUST NOT be fragmented.
+     * </i></p>
+     * </blockquote>
+     */
+    TOO_LONG_CONTROL_FRAME_PAYLOAD,
     ;
 }

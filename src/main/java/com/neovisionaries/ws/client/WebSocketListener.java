@@ -20,6 +20,22 @@ import java.util.List;
 import java.util.Map;
 
 
+/**
+ * Listener interface to receive web socket events.
+ *
+ * <p>
+ * An implementation of this interface should be added by {@link
+ * WebSocket#addListener(WebSocketListener)} to a {@link WebSocket}
+ * instance before calling {@link WebSocket#open()}.
+ * </p>
+ *
+ * <p>
+ * {@link WebSocketAdapter} is an empty implementation of this interface.
+ * </p>
+ *
+ * @see WebSocket#addListener(WebSocketListener)
+ * @see WebSocketAdapter
+ */
 public interface WebSocketListener
 {
     /**
@@ -57,6 +73,16 @@ public interface WebSocketListener
     void onFrameError(WebSocket websocket, WebSocketFrame frame, WebSocketException exception);
 
 
+    /**
+     * Called when a frame was received. This method is called before
+     * an <code>on<i>Xxx</i>Frame</code> method is called.
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param frame
+     *         The frame.
+     */
     void onFrame(WebSocket websocket, WebSocketFrame frame);
 
 
