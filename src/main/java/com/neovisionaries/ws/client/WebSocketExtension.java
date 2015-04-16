@@ -20,6 +20,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 
+/**
+ * A class to hold the name and the parameters of
+ * a web socket extension.
+ */
 public class WebSocketExtension
 {
     private final String mName;

@@ -16,6 +16,11 @@
 package com.neovisionaries.ws.client;
 
 
+/**
+ * Web socket error codes.
+ *
+ * @see WebSocketException#getError()
+ */
 public enum WebSocketError
 {
     /**
@@ -156,6 +161,28 @@ public enum WebSocketError
 
 
     /**
+     * At least one of the reserved bits of a frame is set.
+     *
+     * <blockquote>
+     * <p>From RFC 6455, <a href="http://tools.ietf.org/html/rfc6455#section-5.2"
+     * >5.2 Base Framing Protocol</a>; RSV1, RSV2, RSV3:</p>
+     * <p><i>
+     * MUST be 0 unless an extension is negotiated that defines meanings
+     * for non-zero values.  If a nonzero value is received and none of
+     * the negotiated extensions defines the meaning of such a nonzero
+     * value, the receiving endpoint MUST Fail the WebSocket Connection.
+     * </i></p>
+     * </blockquote>
+     *
+     * <p>
+     * By calling {@link WebSocket#setExtended(boolean) WebSocket.setExtended}{@code
+     * (true)}, you can skip the validity check of the RSV1/RSV2/RSV3 bits.
+     * </p>
+     */
+    NON_ZERO_RESERVED_BITS,
+
+
+    /**
      * A frame from the server is masked.
      *
      * <blockquote>
@@ -172,6 +199,11 @@ public enum WebSocketError
 
     /**
      * A frame has an unknown opcode.
+     *
+     * <p>
+     * By calling {@link WebSocket#setExtended(boolean) WebSocket.setExtended}{@code
+     * (true)}, you can accept frames which have an unknown opcode.
+     * </p>
      */
     UNKNOWN_OPCODE,
 
@@ -216,5 +248,17 @@ public enum WebSocketError
      * </blockquote>
      */
     TOO_LONG_CONTROL_FRAME_PAYLOAD,
+
+
+    /**
+     * Failed to concatenate payloads of multiple frames to construct a message.
+     */
+    MESSAGE_CONSTRUCTION_ERROR,
+
+
+    /**
+     * Failed to convert payload data into a string.
+     */
+    TEXT_MESSAGE_CONSTRUCTION_ERROR,
     ;
 }

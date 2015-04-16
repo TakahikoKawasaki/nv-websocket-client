@@ -73,7 +73,8 @@ import java.util.Map;
  * #addHeader(String, String)} method to adjust the opening handshake.
  * {@link #setUserInfo(String, String)} method can be used to set credentials
  * for Basic Authentication (<a href="https://tools.ietf.org/html/rfc2617"
- * >RFC 2617</a>).
+ * >RFC 2617</a>). You can even configure the underlying {@link Socket}
+ * instance after getting it by {@link #getSocket()} method.
  * </p>
  *
  * <p>
@@ -96,8 +97,7 @@ import java.util.Map;
  * }</pre>
  * </blockquote>
  *
- * @see <a href="https://tools.ietf.org/html/rfc6455">RFC 6455
- *      (The WebSocket Protocol)</a>
+ * @see <a href="https://tools.ietf.org/html/rfc6455">RFC 6455 (The WebSocket Protocol)</a>
  */
 public class WebSocket implements Closeable
 {
@@ -111,6 +111,7 @@ public class WebSocket implements Closeable
     private WebSocketThread mWebSocketThread;
     private List<WebSocketExtension> mAgreedExtensions;
     private String mAgreedProtocol;
+    private boolean mExtended;
 
 
     WebSocket(String userInfo, String host, String path, Socket socket)
@@ -208,6 +209,46 @@ public class WebSocket implements Closeable
         String userInfo = String.format("%s:%s", id, password);
 
         return setUserInfo(userInfo);
+    }
+
+
+    /**
+     * Check if extended use of web socket frames are allowed.
+     *
+     * <p>
+     * When extended use is allowed, values of RSV1/RSV2/RSV3 bits
+     * and opcode of frames are not checked. On the other hand,
+     * if not allowed (default), non-zero values for RSV1/RSV2/RSV3
+     * bits and unknown opcodes cause an error. In such a case,
+     * {@link WebSocketListener#onFrameError(WebSocket, WebSocketFrame,
+     * WebSocketException) onFrameError} method of listeners are
+     * called and the web socket is eventually closed.
+     * </p>
+     *
+     * @return
+     *         {@code true} if extended use of web socket frames
+     *         are allowed.
+     */
+    public boolean isExtended()
+    {
+        return mExtended;
+    }
+
+
+    /**
+     * Allow or disallow extended use of web socket frames.
+     *
+     * @param extended
+     *         {@code true} to allow extended use of web socket frames.
+     *
+     * @return
+     *         {@code this} object.
+     */
+    public WebSocket setExtended(boolean extended)
+    {
+        mExtended = extended;
+
+        return this;
     }
 
 
@@ -876,8 +917,27 @@ public class WebSocket implements Closeable
 
         synchronized (this)
         {
+            if (mWebSocketThread != null)
+            {
+                mWebSocketThread.requestStop();
+            }
+
             mWebSocketThread = thread;
-            thread.start();
+        }
+
+        thread.start();
+    }
+
+
+    private void stopThread()
+    {
+        synchronized (this)
+        {
+            if (mWebSocketThread != null)
+            {
+                mWebSocketThread.requestStop();
+                mWebSocketThread = null;
+            }
         }
     }
 
@@ -888,21 +948,8 @@ public class WebSocket implements Closeable
     @Override
     public void close()
     {
-        WebSocketThread thread;
-
-        synchronized (this)
-        {
-            if (mWebSocketThread == null)
-            {
-                // Not opened or already closed.
-                return;
-            }
-
-            thread = mWebSocketThread;
-            mWebSocketThread = null;
-        }
-
-        thread.close();
+        // TODO
+        stopThread();
     }
 
 

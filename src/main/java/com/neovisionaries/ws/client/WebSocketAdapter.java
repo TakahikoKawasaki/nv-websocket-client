@@ -34,12 +34,6 @@ public class WebSocketAdapter implements WebSocketListener
 
 
     @Override
-    public void onFrameError(WebSocket websocket, WebSocketFrame frame, WebSocketException exception)
-    {
-    }
-
-
-    @Override
     public void onFrame(WebSocket websocket, WebSocketFrame frame)
     {
     }
@@ -89,6 +83,24 @@ public class WebSocketAdapter implements WebSocketListener
 
     @Override
     public void onBinaryMessage(WebSocket websocket, byte[] binary)
+    {
+    }
+
+
+    @Override
+    public void onFrameError(WebSocket websocket, WebSocketFrame frame, WebSocketException cause)
+    {
+    }
+
+
+    @Override
+    public void onMessageError(WebSocket websocket, List<WebSocketFrame> frames, WebSocketException cause)
+    {
+    }
+
+
+    @Override
+    public void onTextMessageError(WebSocket websocket, byte[] data, WebSocketException cause)
     {
     }
 }

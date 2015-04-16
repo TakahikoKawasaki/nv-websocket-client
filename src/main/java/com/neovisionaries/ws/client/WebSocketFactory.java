@@ -26,6 +26,9 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 
 
+/**
+ * Factory to create {@link WebSocket} instances.
+ */
 public class WebSocketFactory
 {
     private SocketFactory mSocketFactory;

@@ -37,6 +37,27 @@ JavaDoc
 [JavaDoc of nv-websocket-client](http://TakahikoKawasaki.github.io/nv-websocket-client/)
 
 
+Example
+-------
+
+```java
+// Create a web socket.
+WebSocket ws = new WebSocketFactory().createSocket("ws://localhost/endpoint");
+
+// Register a listener to receive web socket events.
+ws.addListener(new WebSocketAdapter() {
+    @Override
+    public void onTextMessage(WebSocket websocket, String text) {
+        // Received a text message.
+        ......
+    }
+});
+
+// Connect to the server and perform the opening handshake.
+ws.open();
+```
+
+
 Limitations
 -----------
 

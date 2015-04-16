@@ -16,6 +16,9 @@
 package com.neovisionaries.ws.client;
 
 
+/**
+ * Web socket exception.
+ */
 public class WebSocketException extends Exception
 {
     private static final long serialVersionUID = 1L;

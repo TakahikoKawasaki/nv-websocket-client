@@ -52,28 +52,6 @@ public interface WebSocketListener
 
 
     /**
-     * Called when a frame failed to be read from the web socket.
-     *
-     * @param websocket
-     *         The web socket.
-     *
-     * @param frame
-     *         The socket frame. If this is not {@code null}, it means that
-     *         verification of the frame failed.
-     *
-     * @param exception
-     *         An exception that represents the error. When the error occurred
-     *         because of {@link java.io.InterruptedIOException InterruptedIOException},
-     *         {@code exception.getError()} returns {@link WebSocketError#INTERRUPTED_IN_READING}.
-     *         For other IO errors, {@code exception.getError()} returns {@link
-     *         WebSocketError#IO_ERROR_IN_READING}. Other error codes denote
-     *         protocol errors, which imply that some bugs may exist in either
-     *         or both of the client-side and the server-side implementations.
-     */
-    void onFrameError(WebSocket websocket, WebSocketFrame frame, WebSocketException exception);
-
-
-    /**
      * Called when a frame was received. This method is called before
      * an <code>on<i>Xxx</i>Frame</code> method is called.
      *
@@ -180,4 +158,61 @@ public interface WebSocketListener
      *         The binary message.
      */
     void onBinaryMessage(WebSocket websocket, byte[] binary);
+
+
+    /**
+     * Called when a frame failed to be read from the web socket.
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param frame
+     *         The socket frame. If this is not {@code null}, it means that
+     *         verification of the frame failed.
+     *
+     * @param cause
+     *         An exception that represents the error. When the error occurred
+     *         because of {@link java.io.InterruptedIOException InterruptedIOException},
+     *         {@code exception.getError()} returns {@link WebSocketError#INTERRUPTED_IN_READING}.
+     *         For other IO errors, {@code exception.getError()} returns {@link
+     *         WebSocketError#IO_ERROR_IN_READING}. Other error codes denote
+     *         protocol errors, which imply that some bugs may exist in either
+     *         or both of the client-side and the server-side implementations.
+     */
+    void onFrameError(WebSocket websocket, WebSocketFrame frame, WebSocketException cause);
+
+
+    /**
+     * Called when it failed to concatenate payloads of multiple frames
+     * to construct a message. The reason of the failure is probably
+     * out-of-memory.
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param frames
+     *         The list of frames that form a message. The first element
+     *         is either a text frame and a binary frame, and the other
+     *         frames are continuation frames.
+     *
+     * @param cause
+     *         An exception that represents the error.
+     */
+    void onMessageError(WebSocket websocket, List<WebSocketFrame> frames, WebSocketException cause);
+
+
+    /**
+     * Called when it failed to convert payload data into a string.
+     * The reason of the failure is probably out-of-memory.
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param data
+     *         The payload data that failed to be converted to a string.
+     *
+     * @param cause
+     *         An exception that represents the error.
+     */
+    void onTextMessageError(WebSocket websocket, byte[] data, WebSocketException cause);
 }
