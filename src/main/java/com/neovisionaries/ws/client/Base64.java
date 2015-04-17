@@ -16,9 +16,6 @@
 package com.neovisionaries.ws.client;
 
 
-import java.io.UnsupportedEncodingException;
-
-
 class Base64
 {
     private static final byte[] INDEX_TABLE = {
@@ -36,15 +33,7 @@ class Base64
             return null;
         }
 
-        try
-        {
-            return encode(data.getBytes("UTF-8"));
-        }
-        catch (UnsupportedEncodingException e)
-        {
-            // This never happens.
-            return null;
-        }
+        return encode(Misc.getBytesUTF8(data));
     }
 
 

@@ -419,17 +419,178 @@ public class WebSocketFrame
     /**
      * Set the payload.
      *
+     * <p>
+     * Note that the payload length of a <a href="http://tools.ietf.org/html/rfc6455#section-5.5"
+     * >control frame</a> must be 125 bytes or less.
+     * </p>
+     *
      * @param payload
-     *         The unmasked payload.
+     *         The unmasked payload. {@code null} is accepted.
+     *         An empty byte array is treated in the same way
+     *         as {@code null}.
      *
      * @return
      *         {@code this} object.
      */
     public WebSocketFrame setPayload(byte[] payload)
     {
+        if (payload != null && payload.length == 0)
+        {
+            payload = null;
+        }
+
         mPayload = payload;
 
         return this;
+    }
+
+
+    /**
+     * Set the payload. The given string is converted to a byte array
+     * in UTF-8 encoding.
+     *
+     * <p>
+     * Note that the payload length of a <a href="http://tools.ietf.org/html/rfc6455#section-5.5"
+     * >control frame</a> must be 125 bytes or less.
+     * </p>
+     *
+     * @param payload
+     *         The unmasked payload. {@code null} is accepted.
+     *         An empty string is treated in the same way as
+     *         {@code null}.
+     *
+     * @return
+     *         {@code this} object.
+     */
+    public WebSocketFrame setPayload(String payload)
+    {
+        if (payload == null || payload.length() == 0)
+        {
+            return setPayload((byte[])null);
+        }
+
+        return setPayload(Misc.getBytesUTF8(payload));
+    }
+
+
+    /**
+     * Set the payload that conforms to the payload format of close frames.
+     *
+     * <p>
+     * The given parameters are encoded based on the rules described in
+     * "<a href="http://tools.ietf.org/html/rfc6455#section-5.5.1"
+     * >5.5.1. Close</a>" of RFC 6455.
+     * </p>
+     *
+     * <p>
+     * Note that the reason should not be too long because the payload
+     * length of a <a href="http://tools.ietf.org/html/rfc6455#section-5.5"
+     * >control frame</a> must be 125 bytes or less.
+     * </p>
+     *
+     * @param closeCode
+     *         The close code.
+     *
+     * @param reason
+     *         The reason. {@code null} is accepted. An empty string
+     *         is treated in the same way as {@code null}.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @see <a href="http://tools.ietf.org/html/rfc6455#section-5.5.1"
+     *      >RFC 6455, 5.5.1. Close</a>
+     *
+     * @see WebSocketCloseCode
+     */
+    public WebSocketFrame setCloseFramePayload(int closeCode, String reason)
+    {
+        // Convert the close code to a 2-byte unsigned integer
+        // in network byte order.
+        byte[] encodedCloseCode = new byte[] {
+            (byte)((closeCode >> 8) & 0xFF),
+            (byte)((closeCode     ) & 0xFF)
+        };
+
+        // If a reason string is not given.
+        if (reason == null || reason.length() == 0)
+        {
+            // Use the close code only.
+            return setPayload(encodedCloseCode);
+        }
+
+        // Convert the reason into a byte array.
+        byte[] encodedReason = Misc.getBytesUTF8(reason);
+
+        // Concatenate the close code and the reason.
+        byte[] payload = new byte[2 + encodedReason.length];
+        System.arraycopy(encodedCloseCode, 0, payload, 0, 2);
+        System.arraycopy(encodedReason, 0, payload, 2, encodedReason.length);
+
+        // Use the concatenated string.
+        return setPayload(payload);
+    }
+
+
+    /**
+     * Parse the first two bytes of the payload as a close code.
+     *
+     * <p>
+     * If any payload is not set or the length of the payload is less than 2,
+     * this method returns 1005 ({@link WebSocketCloseCode#NONE}).
+     * </p>
+     *
+     * <p>
+     * The value returned from this method is meaningless if this frame
+     * is not a close frame.
+     * </p>
+     *
+     * @return
+     *         The close code.
+     *
+     * @see <a href="http://tools.ietf.org/html/rfc6455#section-5.5.1"
+     *      >RFC 6455, 5.5.1. Close</a>
+     *
+     * @see WebSocketCloseCode
+     */
+    public int getCloseCode()
+    {
+        if (mPayload == null || mPayload.length < 2)
+        {
+            return WebSocketCloseCode.NONE;
+        }
+
+        // A close code is encoded in network byte order.
+        int closeCode = (((mPayload[0] & 0xFF) << 8) | (mPayload[1] & 0xFF));
+
+        return closeCode;
+    }
+
+
+    /**
+     * Parse the third and subsequent bytes of the payload as a close reason.
+     *
+     * <p>
+     * If any payload is not set or the length of the payload is less than 3,
+     * this method returns {@code null}.
+     * </p>
+     *
+     * <p>
+     * The value returned from this method is meaningless if this frame
+     * is not a close frame.
+     * </p>
+     *
+     * @return
+     *         The close reason.
+     */
+    public String getCloseReason()
+    {
+        if (mPayload == null || mPayload.length < 3)
+        {
+            return null;
+        }
+
+        return Misc.toStringUTF8(mPayload, 2, mPayload.length - 2);
     }
 
 

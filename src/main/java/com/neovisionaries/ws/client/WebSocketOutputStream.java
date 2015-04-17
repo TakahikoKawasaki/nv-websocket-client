@@ -19,7 +19,6 @@ package com.neovisionaries.ws.client;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 
 
 class WebSocketOutputStream extends FilterOutputStream
@@ -32,18 +31,8 @@ class WebSocketOutputStream extends FilterOutputStream
 
     public void write(String string) throws IOException
     {
-        byte[] bytes;
-
-        try
-        {
-            // Convert the string into a byte array.
-            bytes = string.getBytes("UTF-8");
-        }
-        catch (UnsupportedEncodingException e)
-        {
-            // This never happens.
-            return;
-        }
+        // Convert the string into a byte array.
+        byte[] bytes = Misc.getBytesUTF8(string);
 
         super.write(bytes);
     }

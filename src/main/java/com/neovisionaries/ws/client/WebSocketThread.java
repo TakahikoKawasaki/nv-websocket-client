@@ -229,7 +229,7 @@ class WebSocketThread extends Thread
         {
             // Interpret the byte array as a string.
             // OutOfMemoryError may happen when the size of data is too big.
-            String text = (data == null) ? null : new String(data, "UTF-8");
+            String text = Misc.toStringUTF8(data);
 
             // Call onTextMessage() method of the listeners.
             callOnTextMessage(text);

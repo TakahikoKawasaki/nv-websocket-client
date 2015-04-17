@@ -774,7 +774,7 @@ public class WebSocket implements Closeable
             MessageDigest md = MessageDigest.getInstance("SHA-1");
 
             // Compute the digest value.
-            byte[] digest = md.digest(input.getBytes("UTF-8"));
+            byte[] digest = md.digest(Misc.getBytesUTF8(input));
 
             // Base64.
             expected = Base64.encode(digest);
