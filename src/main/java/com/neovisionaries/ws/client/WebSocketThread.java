@@ -16,12 +16,12 @@
 package com.neovisionaries.ws.client;
 
 
-import static com.neovisionaries.ws.client.WebSocketFrame.Opcode.BINARY;
-import static com.neovisionaries.ws.client.WebSocketFrame.Opcode.CLOSE;
-import static com.neovisionaries.ws.client.WebSocketFrame.Opcode.CONTINUATION;
-import static com.neovisionaries.ws.client.WebSocketFrame.Opcode.PING;
-import static com.neovisionaries.ws.client.WebSocketFrame.Opcode.PONG;
-import static com.neovisionaries.ws.client.WebSocketFrame.Opcode.TEXT;
+import static com.neovisionaries.ws.client.WebSocketOpcode.BINARY;
+import static com.neovisionaries.ws.client.WebSocketOpcode.CLOSE;
+import static com.neovisionaries.ws.client.WebSocketOpcode.CONTINUATION;
+import static com.neovisionaries.ws.client.WebSocketOpcode.PING;
+import static com.neovisionaries.ws.client.WebSocketOpcode.PONG;
+import static com.neovisionaries.ws.client.WebSocketOpcode.TEXT;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -484,7 +484,7 @@ class WebSocketThread extends Thread
     private void verifyFrameMask(WebSocketFrame frame) throws WebSocketException
     {
         // If the frame is masked.
-        if (frame.isMasked())
+        if (frame.getMask())
         {
             // A frame from the server is masked.
             throw new WebSocketException(
@@ -518,7 +518,7 @@ class WebSocketThread extends Thread
         boolean continuationExists = (mContinuation.size() == 0);
 
         // If the frame is a continuation frame.
-        if (frame.getOpcode() == CONTINUATION)
+        if (frame.isContinuationFrame())
         {
             // There must already exist a continuation sequence.
             if (continuationExists == false)
@@ -533,7 +533,7 @@ class WebSocketThread extends Thread
             return;
         }
 
-        // A non-control frame.
+        // A data frame.
 
         if (continuationExists)
         {
@@ -638,7 +638,7 @@ class WebSocketThread extends Thread
         }
 
         // If the continuation forms a text message.
-        if (mContinuation.get(0).getOpcode() == TEXT)
+        if (mContinuation.get(0).isTextFrame())
         {
             // Notify the listeners that a text message was received.
             callOnTextMessage(data);

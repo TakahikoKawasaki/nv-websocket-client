@@ -46,6 +46,7 @@ public enum WebSocketError
      */
     OPENING_HANDSHAKE_RESPONSE_FAILURE,
 
+
     /**
      * The status line of the opening handshake response is empty.
      */

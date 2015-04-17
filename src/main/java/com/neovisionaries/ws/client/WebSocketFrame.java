@@ -16,54 +16,25 @@
 package com.neovisionaries.ws.client;
 
 
+import static com.neovisionaries.ws.client.WebSocketOpcode.BINARY;
+import static com.neovisionaries.ws.client.WebSocketOpcode.CLOSE;
+import static com.neovisionaries.ws.client.WebSocketOpcode.CONTINUATION;
+import static com.neovisionaries.ws.client.WebSocketOpcode.PING;
+import static com.neovisionaries.ws.client.WebSocketOpcode.PONG;
+import static com.neovisionaries.ws.client.WebSocketOpcode.TEXT;
+
+
 /**
  * Web socket frame.
  */
 public class WebSocketFrame
 {
-    /**
-     * Opcode.
-     */
-    public static class Opcode
-    {
-        /**
-         * Opcode for "frame continuation" (0x0).
-         */
-        public static final int CONTINUATION = 0x0;
-
-        /**
-         * Opcode for "text frame" (0x1).
-         */
-        public static final int TEXT = 0x1;
-
-        /**
-         * Opcode for "binary frame" (0x2).
-         */
-        public static final int BINARY = 0x2;
-
-        /**
-         * Opcode for "connection close" (0x8).
-         */
-        public static final int CLOSE = 0x8;
-
-        /**
-         * Opcode for "ping" (0x9).
-         */
-        public static final int PING = 0x9;
-
-        /**
-         * Opcode for "pong" (0xA).
-         */
-        public static final int PONG = 0xA;
-    }
-
-
     private boolean mFin;
     private boolean mRsv1;
     private boolean mRsv2;
     private boolean mRsv3;
     private int mOpcode;
-    private byte[] mMask;
+    private boolean mMask;
     private byte[] mPayload;
 
 
@@ -231,6 +202,8 @@ public class WebSocketFrame
      *
      * @return
      *         The opcode.
+     *
+     * @see WebSocketOpcode
      */
     public int getOpcode()
     {
@@ -246,12 +219,140 @@ public class WebSocketFrame
      *
      * @return
      *         {@code this} object.
+     *
+     * @see WebSocketOpcode
      */
     public WebSocketFrame setOpcode(int opcode)
     {
         mOpcode = opcode;
 
         return this;
+    }
+
+
+    /**
+     * Check if this frame is a continuation frame.
+     *
+     * <p>
+     * This method returns {@code true} when the value of the
+     * opcode is 0x0 ({@link WebSocketOpcode#CONTINUATION}).
+     * </p>
+     *
+     * @return
+     *         {@code true} if this frame is a continuation frame
+     *         (= if the opcode is 0x0).
+     */
+    public boolean isContinuationFrame()
+    {
+        return (mOpcode == CONTINUATION);
+    }
+
+
+    /**
+     * Check if this frame is a text frame.
+     *
+     * <p>
+     * This method returns {@code true} when the value of the
+     * opcode is 0x1 ({@link WebSocketOpcode#TEXT}).
+     * </p>
+     *
+     * @return
+     *         {@code true} if this frame is a text frame
+     *         (= if the opcode is 0x1).
+     */
+    public boolean isTextFrame()
+    {
+        return (mOpcode == TEXT);
+    }
+
+
+    /**
+     * Check if this frame is a binary frame.
+     *
+     * <p>
+     * This method returns {@code true} when the value of the
+     * opcode is 0x2 ({@link WebSocketOpcode#BINARY}).
+     * </p>
+     *
+     * @return
+     *         {@code true} if this frame is a binary frame
+     *         (= if the opcode is 0x2).
+     */
+    public boolean isBinaryFrame()
+    {
+        return (mOpcode == BINARY);
+    }
+
+
+    /**
+     * Check if this frame is a close frame.
+     *
+     * <p>
+     * This method returns {@code true} when the value of the
+     * opcode is 0x8 ({@link WebSocketOpcode#CLOSE}).
+     * </p>
+     *
+     * @return
+     *         {@code true} if this frame is a close frame
+     *         (= if the opcode is 0x8).
+     */
+    public boolean isCloseFrame()
+    {
+        return (mOpcode == CLOSE);
+    }
+
+
+    /**
+     * Check if this frame is a ping frame.
+     *
+     * <p>
+     * This method returns {@code true} when the value of the
+     * opcode is 0x9 ({@link WebSocketOpcode#PING}).
+     * </p>
+     *
+     * @return
+     *         {@code true} if this frame is a ping frame
+     *         (= if the opcode is 0x9).
+     */
+    public boolean isPingFrame()
+    {
+        return (mOpcode == PING);
+    }
+
+
+    /**
+     * Check if this frame is a pong frame.
+     *
+     * <p>
+     * This method returns {@code true} when the value of the
+     * opcode is 0xA ({@link WebSocketOpcode#PONG}).
+     * </p>
+     *
+     * @return
+     *         {@code true} if this frame is a pong frame
+     *         (= if the opcode is 0xA).
+     */
+    public boolean isPongFrame()
+    {
+        return (mOpcode == PONG);
+    }
+
+
+    /**
+     * Check if this frame is a data frame.
+     *
+     * <p>
+     * This method returns {@code true} when the value of the
+     * opcode is in between 0x1 and 0x7.
+     * </p>
+     *
+     * @return
+     *         {@code true} if this frame is a data frame
+     *         (= if the opcode is in between 0x1 and 0x7).
+     */
+    public boolean isDataFrame()
+    {
+        return (0x1 <= mOpcode && mOpcode <= 0x7);
     }
 
 
@@ -274,28 +375,27 @@ public class WebSocketFrame
 
 
     /**
-     * Get the masking key.
+     * Get the value of MASK bit.
      *
      * @return
-     *         The masking key. {@code null} may be returned.
+     *         The value of MASK bit.
      */
-    public byte[] getMask()
+    public boolean getMask()
     {
         return mMask;
     }
 
 
     /**
-     * Set the masking key.
+     * Set the value of MASK bit.
      *
      * @param mask
-     *         The masking key. Giving {@code null} means that
-     *         this frame is not masked.
+     *         The value of MASK bit.
      *
      * @return
      *         {@code this} object.
      */
-    public WebSocketFrame setMask(byte[] mask)
+    public WebSocketFrame setMask(boolean mask)
     {
         mMask = mask;
 
@@ -304,27 +404,11 @@ public class WebSocketFrame
 
 
     /**
-     * Check if this frame is masked.
-     *
-     * <p>
-     * This method returns {@code true} if a masking key is not set.
-     * </p>
-     *
-     * @return
-     *         {@code true} if this frame is masked (= if a masking
-     *         key is set).
-     */
-    public boolean isMasked()
-    {
-        return mMask != null;
-    }
-
-
-    /**
      * Get the payload.
      *
      * @return
      *         The payload. {@code null} may be returned.
+     *         Always unmasked.
      */
     public byte[] getPayload()
     {
@@ -336,7 +420,7 @@ public class WebSocketFrame
      * Set the payload.
      *
      * @param payload
-     *         The payload.
+     *         The unmasked payload.
      *
      * @return
      *         {@code this} object.
@@ -349,11 +433,39 @@ public class WebSocketFrame
     }
 
 
-    static void mask(byte[] mask, byte[] payload)
+    /**
+     * Mask/unmask payload.
+     *
+     * <p>
+     * The logic of masking/unmasking is described in "<a href=
+     * "http://tools.ietf.org/html/rfc6455#section-5.3">5.3.
+     * Client-to-Server Masking</a>" in RFC 6455.
+     * </p>
+     *
+     * @param maskingKey
+     *         The masking key. If {@code null} is given or the length
+     *         of the masking key is less than 4, nothing is performed.
+     *
+     * @param payload
+     *         Payload to be masked/unmasked.
+     *
+     * @return
+     *         {@code payload}.
+     *
+     * @see <a href="http://tools.ietf.org/html/rfc6455#section-5.3">5.3. Client-to-Server Masking</a>
+     */
+    public static byte[] mask(byte[] maskingKey, byte[] payload)
     {
+        if (maskingKey == null || maskingKey.length < 4 || payload == null)
+        {
+            return payload;
+        }
+
         for (int i = 0; i < payload.length; ++i)
         {
-            payload[i] ^= mask[i%4];
+            payload[i] ^= maskingKey[i % 4];
         }
+
+        return payload;
     }
 }

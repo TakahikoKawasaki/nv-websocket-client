@@ -123,7 +123,7 @@ class WebSocketInputStream extends FilterInputStream
         //
         //     A server MUST NOT mask any frames that it sends to the client.
         //
-        boolean masked = ((buffer[1] & 0x80) != 0);
+        boolean mask = ((buffer[1] & 0x80) != 0);
 
         // The payload length. It is expressed in 7 bits.
         long payloadLength = buffer[1] & 0x7F;
@@ -168,13 +168,13 @@ class WebSocketInputStream extends FilterInputStream
         }
 
         // Masking key
-        byte[] mask = null;
+        byte[] maskingKey = null;
 
-        if (masked)
+        if (mask)
         {
             // Read the masking key. (This should never happen.)
-            mask = new byte[4];
-            readBytes(mask, 4);
+            maskingKey = new byte[4];
+            readBytes(maskingKey, 4);
         }
 
         if (Integer.MAX_VALUE < payloadLength)
@@ -187,25 +187,8 @@ class WebSocketInputStream extends FilterInputStream
                 "The payload length of a frame exceeds the maximum array size in Java.");
         }
 
-        byte[] payload;
-
-        try
-        {
-            // Allocate a memory area to hold the content of the payload.
-            payload = new byte[(int)payloadLength];
-        }
-        catch (OutOfMemoryError e)
-        {
-            // OutOfMemoryError occurred during a trial to allocate a memory area
-            // for a frame's payload. Skip the payload and raise an exception.
-            skipQuietly(payloadLength);
-            throw new WebSocketException(
-                WebSocketError.INSUFFICIENT_MEMORY_FOR_PAYLOAD,
-                "OutOfMemoryError occurred during a trial to allocate a memory area for a frame's payload.");
-        }
-
-        // Read the payload.
-        readBytes(payload, payload.length);
+        // Read the payload if the payload length is not 0.
+        byte[] payload = readPayload(payloadLength, mask, maskingKey);
 
         // Create a WebSocketFrame instance that represents a frame.
         return new WebSocketFrame()
@@ -243,5 +226,43 @@ class WebSocketInputStream extends FilterInputStream
         catch (IOException e)
         {
         }
+    }
+
+
+    private byte[] readPayload(long payloadLength, boolean mask, byte[] maskingKey) throws IOException, WebSocketException
+    {
+        if (payloadLength == 0)
+        {
+            return null;
+        }
+
+        byte[] payload;
+
+        try
+        {
+            // Allocate a memory area to hold the content of the payload.
+            payload = new byte[(int)payloadLength];
+        }
+        catch (OutOfMemoryError e)
+        {
+            // OutOfMemoryError occurred during a trial to allocate a memory area
+            // for a frame's payload. Skip the payload and raise an exception.
+            skipQuietly(payloadLength);
+            throw new WebSocketException(
+                WebSocketError.INSUFFICIENT_MEMORY_FOR_PAYLOAD,
+                "OutOfMemoryError occurred during a trial to allocate a memory area for a frame's payload.");
+        }
+
+        // Read the payload.
+        readBytes(payload, payload.length);
+
+        // If masked.
+        if (mask)
+        {
+            // Unmasked the payload.
+            WebSocketFrame.mask(maskingKey, payload);
+        }
+
+        return payload;
     }
 }
