@@ -17,10 +17,14 @@ package com.neovisionaries.ws.client;
 
 
 import java.io.UnsupportedEncodingException;
+import java.security.SecureRandom;
 
 
 class Misc
 {
+    private static final SecureRandom sRandom = new SecureRandom();
+
+
     private Misc()
     {
     }
@@ -76,5 +80,21 @@ class Misc
         {
             return null;
         }
+    }
+
+
+    public static byte[] nextBytes(byte[] buffer)
+    {
+        sRandom.nextBytes(buffer);
+
+        return buffer;
+    }
+
+
+    public static byte[] nextBytes(int nBytes)
+    {
+        byte[] buffer = new byte[nBytes];
+
+        return nextBytes(buffer);
     }
 }

@@ -380,7 +380,7 @@ public class WebSocketFrame
      * @return
      *         The value of MASK bit.
      */
-    public boolean getMask()
+    boolean getMask()
     {
         return mMask;
     }
@@ -395,7 +395,7 @@ public class WebSocketFrame
      * @return
      *         {@code this} object.
      */
-    public WebSocketFrame setMask(boolean mask)
+    WebSocketFrame setMask(boolean mask)
     {
         mMask = mask;
 
@@ -404,11 +404,39 @@ public class WebSocketFrame
 
 
     /**
-     * Get the payload.
+     * Check if this frame has payload.
      *
      * @return
-     *         The payload. {@code null} may be returned.
-     *         Always unmasked.
+     *         {@code true} if this frame has payload.
+     */
+    public boolean hasPayload()
+    {
+        return mPayload != null;
+    }
+
+
+    /**
+     * Get the payload length.
+     *
+     * @return
+     *         The payload length.
+     */
+    public int getPayloadLength()
+    {
+        if (mPayload == null)
+        {
+            return 0;
+        }
+
+        return mPayload.length;
+    }
+
+
+    /**
+     * Get the unmasked payload.
+     *
+     * @return
+     *         The unmasked payload. {@code null} may be returned.
      */
     public byte[] getPayload()
     {
@@ -417,7 +445,7 @@ public class WebSocketFrame
 
 
     /**
-     * Set the payload.
+     * Set the unmasked payload.
      *
      * <p>
      * Note that the payload length of a <a href="http://tools.ietf.org/html/rfc6455#section-5.5"
@@ -615,7 +643,7 @@ public class WebSocketFrame
      *
      * @see <a href="http://tools.ietf.org/html/rfc6455#section-5.3">5.3. Client-to-Server Masking</a>
      */
-    public static byte[] mask(byte[] maskingKey, byte[] payload)
+    static byte[] mask(byte[] maskingKey, byte[] payload)
     {
         if (maskingKey == null || maskingKey.length < 4 || payload == null)
         {

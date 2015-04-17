@@ -22,7 +22,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.MessageDigest;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -102,7 +101,6 @@ import java.util.Map;
 public class WebSocket implements Closeable
 {
     private static final String ACCEPT_MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-    private static final SecureRandom sRandom = new SecureRandom();
     private final Socket mSocket;
     private final HandshakeBuilder mHandshakeBuilder;
     private final List<WebSocketListener> mListeners = new ArrayList<WebSocketListener>();
@@ -437,7 +435,7 @@ public class WebSocket implements Closeable
         byte[] data = new byte[16];
 
         // "randomly selected"
-        sRandom.nextBytes(data);
+        Misc.nextBytes(data);
 
         // "base64-encoded"
         return Base64.encode(data);

@@ -37,7 +37,7 @@ class WebSocketInputStream extends FilterInputStream
         while (true)
         {
             // Read one byte from the stream.
-            int b = super.read();
+            int b = read();
 
             // If the end of the stream was reached.
             if (b == -1)
@@ -68,7 +68,7 @@ class WebSocketInputStream extends FilterInputStream
             }
 
             // Read one more byte.
-            int b2 = super.read();
+            int b2 = read();
 
             // If the end of the stream was reached.
             if (b2 == -1)
@@ -205,7 +205,7 @@ class WebSocketInputStream extends FilterInputStream
     private void readBytes(byte[] buffer, int length) throws IOException, WebSocketException
     {
         // Read
-        int count = super.read(buffer, 0, length);
+        int count = read(buffer, 0, length);
 
         if (count != length)
         {
@@ -221,7 +221,7 @@ class WebSocketInputStream extends FilterInputStream
     {
         try
         {
-            super.skip(length);
+            skip(length);
         }
         catch (IOException e)
         {
