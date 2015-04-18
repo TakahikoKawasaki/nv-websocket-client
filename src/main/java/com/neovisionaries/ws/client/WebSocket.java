@@ -63,11 +63,11 @@ import java.util.Map;
  * </blockquote>
  *
  * <p>
- * By calling {@link #open()} method, an actual connection to the server
+ * By calling {@link #connect()} method, an actual connection to the server
  * is made and the opening handshake is performed as described in "<a href=
  * "https://tools.ietf.org/html/rfc6455#section-4">4. Opening Handshake</a>"
  * in <a href="https://tools.ietf.org/html/rfc6455">RFC 6455</a>. Before
- * calling {@code open()} method, you may call {@link #addProtocol(String)}
+ * calling {@code connect()} method, you may call {@link #addProtocol(String)}
  * method, {@link #addExtension(WebSocketExtension)} method and {@link
  * #addHeader(String, String)} method to adjust the opening handshake.
  * {@link #setUserInfo(String, String)} method can be used to set credentials
@@ -77,18 +77,19 @@ import java.util.Map;
  * </p>
  *
  * <p>
- * {@code open()} performs the opening handshake synchronously. When a
+ * {@code connect()} performs the opening handshake synchronously. When a
  * connection could not be made or a protocol error was detected in the
  * handshake, a {@link WebSocketException} exception is thrown. When the
- * handshake succeeds, the {@code open()} implementation creates a thread
- * and starts it to receive web socket frames from the server asynchronously.
+ * handshake succeeds, the {@code connect()} implementation creates threads
+ * and starts them to read and write web socket frames from the server
+ * asynchronously.
  * </p>
  *
  * <blockquote>
  * <pre> try
  * {
  *     // Connect to the server and perform the handshake.
- *     ws.{@link #open()};
+ *     ws.{@link #connect()};
  * }
  * catch ({@link WebSocketException} e)
  * {
@@ -104,6 +105,7 @@ public class WebSocket implements Closeable
     private final Socket mSocket;
     private final HandshakeBuilder mHandshakeBuilder;
     private final ListenerManager mListenerManager;
+    private WebSocketState mState;
     private WebSocketInputStream mInput;
     private WebSocketOutputStream mOutput;
     private ReadingThread mReadingThread;
@@ -114,10 +116,49 @@ public class WebSocket implements Closeable
 
     WebSocket(String userInfo, String host, String path, Socket socket)
     {
-        mSocket = socket;
-        mHandshakeBuilder =
-            new HandshakeBuilder(userInfo, host, path);
-        mListenerManager = new ListenerManager(this);
+        mSocket           = socket;
+        mHandshakeBuilder = new HandshakeBuilder(userInfo, host, path);
+        mListenerManager  = new ListenerManager(this);
+        mState            = WebSocketState.CREATED;
+    }
+
+
+    /**
+     * Get the current state of this web socket.
+     *
+     * <p>
+     * The initial state is {@link WebSocketState#CREATED CREATED}.
+     * When {@link #connect()} is called, the state is changed to
+     * {@link WebSocketState#CONNECTING CONNECTING}, and then to
+     * {@link WebSocketState#OPEN OPEN} after a successful handshake.
+     * If the handshake fails, the state is set to {@link
+     * WebSocketState#CLOSED CLOSED}.
+     * </p>
+     *
+     * @return
+     *         The current state.
+     */
+    public WebSocketState getState()
+    {
+        synchronized (this)
+        {
+            return mState;
+        }
+    }
+
+
+    /**
+     * Change the state of this web socket.
+     *
+     * @param state
+     *         The new state.
+     */
+    void setState(WebSocketState state)
+    {
+        synchronized (this)
+        {
+            mState = state;
+        }
     }
 
 
@@ -177,6 +218,8 @@ public class WebSocket implements Closeable
      */
     public WebSocket setUserInfo(String userInfo)
     {
+        mHandshakeBuilder.setUserInfo(userInfo);
+
         return this;
     }
 
@@ -195,19 +238,9 @@ public class WebSocket implements Closeable
      */
     public WebSocket setUserInfo(String id, String password)
     {
-        if (id == null)
-        {
-            id = "";
-        }
+        mHandshakeBuilder.setUserInfo(id, password);
 
-        if (password == null)
-        {
-            password = "";
-        }
-
-        String userInfo = String.format("%s:%s", id, password);
-
-        return setUserInfo(userInfo);
+        return this;
     }
 
 
@@ -305,9 +338,302 @@ public class WebSocket implements Closeable
      * </p>
      *
      * @throws WebSocketException
-     *         The opening handshake failed.
+     *         <ul>
+     *           <li>The current state of the web socket is not {@link
+     *               WebSocketState#CREATED CREATED}
+     *           <li>Connecting the server failed.
+     *           <li>The opening handshake failed.
+     *         </ul>
      */
-    public void open() throws WebSocketException
+    public void connect() throws WebSocketException
+    {
+        // Change the state to CONNECTING. If the state before
+        // the change is not CREATED, an exception is thrown.
+        changeStateOnConnect();
+
+        // HTTP headers from the server.
+        Map<String, List<String>> headers;
+
+        try
+        {
+            // Perform WebSocket handshake.
+            headers = shakeHands();
+        }
+        catch (WebSocketException e)
+        {
+            // Change the state to CLOSED.
+            setState(WebSocketState.CLOSED);
+
+            // The handshake failed.
+            throw e;
+        }
+
+        // Change the state to OPEN.
+        setState(WebSocketState.OPEN);
+
+        // Start threads that communicate with the server.
+        startThreads(headers);
+    }
+
+
+    /**
+     * Get the agreed extensions.
+     *
+     * <p>
+     * This method works correctly only after {@link #connect()} succeeds
+     * (= after the opening handshake succeeds).
+     * </p>
+     *
+     * @return
+     *         The agreed extensions.
+     */
+    public List<WebSocketExtension> getAgreedExtensions()
+    {
+        return mAgreedExtensions;
+    }
+
+
+    /**
+     * Get the agreed protocol.
+     *
+     * <p>
+     * This method works correctly only after {@link #connect()} succeeds
+     * (= after the opening handshake succeeds).
+     * </p>
+     *
+     * @return
+     *         The agreed protocol.
+     */
+    public String getAgreedProtocol()
+    {
+        return mAgreedProtocol;
+    }
+
+
+    /**
+     * Send a web socket frame to the server.
+     *
+     * @param frame
+     *         A web socket frame to be sent to the server.
+     */
+    public void sendFrame(WebSocketFrame frame)
+    {
+        // TODO
+    }
+
+
+    /**
+     * Send a text message to the server.
+     *
+     * <p>
+     * This method is an alias of {@link #sendFrame(WebSocketFrame)
+     * sendFrame}({@link WebSocketFrame#createTextFrame(String)
+     * WebSocketFrame.createTextFrame}(message)).
+     * </p>
+     *
+     * @param message
+     *         A text message to be sent to the server.
+     */
+    public void sendText(String message)
+    {
+        sendFrame(WebSocketFrame.createTextFrame(message));
+    }
+
+
+    /**
+     * Send a binary message to the server.
+     *
+     * <p>
+     * This method is an alias of {@link #sendFrame(WebSocketFrame)
+     * sendFrame}({@link WebSocketFrame#createBinaryFrame(byte[])
+     * WebSocketFrame.createBinaryFrame}(message)).
+     * </p>
+     *
+     * @param message
+     *         A binary message to be sent to the server.
+     */
+    public void sendBinary(byte[] message)
+    {
+        sendFrame(WebSocketFrame.createBinaryFrame(message));
+    }
+
+
+    /**
+     * Send a close frame to the server.
+     *
+     * <p>
+     * This method is an alias of {@link #sendFrame(WebSocketFrame)
+     * sendFrame}({@link WebSocketFrame#createCloseFrame()}).
+     * </p>
+     */
+    public void sendClose()
+    {
+        sendFrame(WebSocketFrame.createCloseFrame());
+    }
+
+
+    /**
+     * Send a close frame to the server.
+     *
+     * <p>
+     * This method is an alias of {@link #sendFrame(WebSocketFrame)
+     * sendFrame}({@link WebSocketFrame#createCloseFrame(int)
+     * WebSocketFrame.createCloseFrame}(closeCode)).
+     * </p>
+     *
+     * @param closeCode
+     *         The close code.
+     *
+     * @see WebSocketCloseCode
+     */
+    public void sendClose(int closeCode)
+    {
+        sendFrame(WebSocketFrame.createCloseFrame(closeCode));
+    }
+
+
+    /**
+     * Send a close frame to the server.
+     *
+     * <p>
+     * This method is an alias of {@link #sendFrame(WebSocketFrame)
+     * sendFrame}({@link WebSocketFrame#createCloseFrame(int, String)
+     * WebSocketFrame.createCloseFrame}(closeCode, reason)).
+     * </p>
+     *
+     * @param closeCode
+     *         The close code.
+     *
+     * @param reason
+     *         The close reason.
+     *
+     * @see WebSocketCloseCode
+     */
+    public void sendClose(int closeCode, String reason)
+    {
+        sendFrame(WebSocketFrame.createCloseFrame(closeCode, reason));
+    }
+
+
+    /**
+     * Send a ping frame to the server.
+     *
+     * <p>
+     * This method is an alias of {@link #sendFrame(WebSocketFrame)
+     * sendFrame}({@link WebSocketFrame#createPingFrame()}).
+     * </p>
+     */
+    public void sendPing()
+    {
+        sendFrame(WebSocketFrame.createPingFrame());
+    }
+
+
+    /**
+     * Send a ping frame to the server.
+     *
+     * <p>
+     * This method is an alias of {@link #sendFrame(WebSocketFrame)
+     * sendFrame}({@link WebSocketFrame#createPingFrame(byte[])
+     * WebSocketFrame.createPingFrame}(payload)).
+     * </p>
+     *
+     * @param payload
+     *         The payload for a ping frame.
+     */
+    public void sendPing(byte[] payload)
+    {
+        sendFrame(WebSocketFrame.createPingFrame(payload));
+    }
+
+
+    /**
+     * Send a ping frame to the server.
+     *
+     * <p>
+     * This method is an alias of {@link #sendFrame(WebSocketFrame)
+     * sendFrame}({@link WebSocketFrame#createPingFrame(String)
+     * WebSocketFrame.createPingFrame}(payload)).
+     * </p>
+     *
+     * @param payload
+     *         The payload for a ping frame.
+     */
+    public void sendPing(String payload)
+    {
+        sendFrame(WebSocketFrame.createPingFrame(payload));
+    }
+
+
+    /**
+     * Send a pong frame to the server.
+     *
+     * <p>
+     * This method is an alias of {@link #sendFrame(WebSocketFrame)
+     * sendFrame}({@link WebSocketFrame#createPongFrame()}).
+     * </p>
+     */
+    public void sendPong()
+    {
+        sendFrame(WebSocketFrame.createPongFrame());
+    }
+
+
+    /**
+     * Send a pong frame to the server.
+     *
+     * <p>
+     * This method is an alias of {@link #sendFrame(WebSocketFrame)
+     * sendFrame}({@link WebSocketFrame#createPongFrame(byte[])
+     * WebSocketFrame.createPongFrame}(payload)).
+     * </p>
+     *
+     * @param payload
+     *         The payload for a pong frame.
+     */
+    public void sendPong(byte[] payload)
+    {
+        sendFrame(WebSocketFrame.createPongFrame(payload));
+    }
+
+
+    /**
+     * Send a pong frame to the server.
+     *
+     * <p>
+     * This method is an alias of {@link #sendFrame(WebSocketFrame)
+     * sendFrame}({@link WebSocketFrame#createPongFrame(String)
+     * WebSocketFrame.createPongFrame}(payload)).
+     * </p>
+     *
+     * @param payload
+     *         The payload for a pong frame.
+     */
+    public void sendPong(String payload)
+    {
+        sendFrame(WebSocketFrame.createPongFrame(payload));
+    }
+
+
+    private void changeStateOnConnect() throws WebSocketException
+    {
+        synchronized (this)
+        {
+            // If the current state is not CREATED.
+            if (mState != WebSocketState.CREATED)
+            {
+                throw new WebSocketException(
+                    WebSocketError.NOT_IN_CREATED_STATE,
+                    "The current state of the web socket is not CREATED.");
+            }
+
+            // Change the state to CONNECTING.
+            mState = WebSocketState.CONNECTING;
+        }
+    }
+
+
+    private Map<String, List<String>> shakeHands() throws WebSocketException
     {
         // The raw socket created by WebSocketFactory.
         Socket socket = mSocket;
@@ -331,42 +657,7 @@ public class WebSocket implements Closeable
         mInput  = input;
         mOutput = output;
 
-        // Start a thread that communicate with the server.
-        startThread(headers);
-    }
-
-
-    /**
-     * Get the agreed extensions.
-     *
-     * <p>
-     * This method works correctly only after {@link #open()} succeeds
-     * (= the opening handshake succeeds).
-     * </p>
-     *
-     * @return
-     *         The agreed extensions.
-     */
-    public List<WebSocketExtension> getAgreedExtensions()
-    {
-        return mAgreedExtensions;
-    }
-
-
-    /**
-     * Get the agreed protocol.
-     *
-     * <p>
-     * This method works correctly only after {@link #open()} succeeds
-     * (= the opening handshake succeeds).
-     * </p>
-     *
-     * @return
-     *         The agreed protocol.
-     */
-    public String getAgreedProtocol()
-    {
-        return mAgreedProtocol;
+        return headers;
     }
 
 
@@ -902,7 +1193,7 @@ public class WebSocket implements Closeable
     }
 
 
-    private void startThread(Map<String, List<String>> headers)
+    private void startThreads(Map<String, List<String>> headers)
     {
         ReadingThread thread = new ReadingThread(this, headers);
 

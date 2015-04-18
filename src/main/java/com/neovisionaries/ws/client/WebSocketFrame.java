@@ -623,6 +623,255 @@ public class WebSocketFrame
 
 
     /**
+     * Create a continuation frame. Note that the FIN bit of the
+     * returned frame is false.
+     *
+     * @return
+     *         A web socket frame whose FIN bit is false, opcode is
+     *         {@link WebSocketOpcode#CONTINUATION CONTINUATION} and
+     *         payload is {@code null}.
+     */
+    public static WebSocketFrame createContinuationFrame()
+    {
+        return new WebSocketFrame()
+            .setOpcode(CONTINUATION);
+    }
+
+
+    /**
+     * Create a continuation frame. Note that the FIN bit of the
+     * returned frame is false.
+     *
+     * @param payload
+     *         The payload for a newly create frame.
+     *
+     * @return
+     *         A web socket frame whose FIN bit is false, opcode is
+     *         {@link WebSocketOpcode#CONTINUATION CONTINUATION} and
+     *         payload is the given one.
+     */
+    public static WebSocketFrame createContinuationFrame(byte[] payload)
+    {
+        return createContinuationFrame().setPayload(payload);
+    }
+
+
+    /**
+     * Create a continuation frame. Note that the FIN bit of the
+     * returned frame is false.
+     *
+     * @param payload
+     *         The payload for a newly create frame.
+     *
+     * @return
+     *         A web socket frame whose FIN bit is false, opcode is
+     *         {@link WebSocketOpcode#CONTINUATION CONTINUATION} and
+     *         payload is the given one.
+     */
+    public static WebSocketFrame createContinuationFrame(String payload)
+    {
+        return createContinuationFrame().setPayload(payload);
+    }
+
+
+    /**
+     * Create a text frame.
+     *
+     * @param payload
+     *         The payload for a newly created frame.
+     *
+     * @return
+     *         A web socket frame whose FIN bit is true, opcode is
+     *         {@link WebSocketOpcode#TEXT TEXT} and payload is
+     *         the given one.
+     */
+    public static WebSocketFrame createTextFrame(String payload)
+    {
+        return new WebSocketFrame()
+            .setFin(true)
+            .setOpcode(TEXT)
+            .setPayload(payload);
+    }
+
+
+    /**
+     * Create a binary frame.
+     *
+     * @param payload
+     *         The payload for a newly created frame.
+     *
+     * @return
+     *         A web socket frame whose FIN bit is true, opcode is
+     *         {@link WebSocketOpcode#BINARY BINARY} and payload is
+     *         the given one.
+     */
+    public static WebSocketFrame createBinaryFrame(byte[] payload)
+    {
+        return new WebSocketFrame()
+            .setFin(true)
+            .setOpcode(BINARY)
+            .setPayload(payload);
+    }
+
+
+    /**
+     * Create a close frame.
+     *
+     * @return
+     *         A web socket frame whose FIN bit is true, opcode is
+     *         {@link WebSocketOpcode#CLOSE CLOSE} and payload is
+     *         {@code null}.
+     */
+    public static WebSocketFrame createCloseFrame()
+    {
+        return new WebSocketFrame()
+            .setFin(true)
+            .setOpcode(CLOSE);
+    }
+
+
+    /**
+     * Create a close frame.
+     *
+     * @param closeCode
+     *         The close code.
+     *
+     * @return
+     *         A web socket frame whose FIN bit is true, opcode is
+     *         {@link WebSocketOpcode#CLOSE CLOSE} and payload
+     *         contains a close code.
+     *
+     * @see WebSocketCloseCode
+     */
+    public static WebSocketFrame createCloseFrame(int closeCode)
+    {
+        return createCloseFrame().setCloseFramePayload(closeCode, null);
+    }
+
+
+    /**
+     * Create a close frame.
+     *
+     * @param closeCode
+     *         The close code.
+     *
+     * @param reason
+     *         The close reason.
+     *
+     * @return
+     *         A web socket frame whose FIN bit is true, opcode is
+     *         {@link WebSocketOpcode#CLOSE CLOSE} and payload
+     *         contains a close code and a close reason.
+     *
+     * @see WebSocketCloseCode
+     */
+    public static WebSocketFrame createCloseFrame(int closeCode, String reason)
+    {
+        return createCloseFrame().setCloseFramePayload(closeCode, reason);
+    }
+
+
+    /**
+     * Create a ping frame.
+     *
+     * @return
+     *         A web socket frame whose FIN bit is true, opcode is
+     *         {@link WebSocketOpcode#PING PING} and payload is
+     *         {@code null}.
+     */
+    public static WebSocketFrame createPingFrame()
+    {
+        return new WebSocketFrame()
+            .setFin(true)
+            .setOpcode(PING);
+    }
+
+
+    /**
+     * Create a ping frame.
+     *
+     * @param payload
+     *         The payload for a newly created frame.
+     *
+     * @return
+     *         A web socket frame whose FIN bit is true, opcode is
+     *         {@link WebSocketOpcode#PING PING} and payload is
+     *         the given one.
+     */
+    public static WebSocketFrame createPingFrame(byte[] payload)
+    {
+        return createPingFrame().setPayload(payload);
+    }
+
+
+    /**
+     * Create a ping frame.
+     *
+     * @param payload
+     *         The payload for a newly created frame.
+     *
+     * @return
+     *         A web socket frame whose FIN bit is true, opcode is
+     *         {@link WebSocketOpcode#PING PING} and payload is
+     *         the given one.
+     */
+    public static WebSocketFrame createPingFrame(String payload)
+    {
+        return createPingFrame().setPayload(payload);
+    }
+
+
+    /**
+     * Create a pong frame.
+     *
+     * @return
+     *         A web socket frame whose FIN bit is true, opcode is
+     *         {@link WebSocketOpcode#PONG PONG} and payload is
+     *         {@code null}.
+     */
+    public static WebSocketFrame createPongFrame()
+    {
+        return new WebSocketFrame()
+            .setFin(true)
+            .setOpcode(PONG);
+    }
+
+
+    /**
+     * Create a pong frame.
+     *
+     * @param payload
+     *         The payload for a newly created frame.
+     *
+     * @return
+     *         A web socket frame whose FIN bit is true, opcode is
+     *         {@link WebSocketOpcode#PONG PONG} and payload is
+     *         the given one.
+     */
+    public static WebSocketFrame createPongFrame(byte[] payload)
+    {
+        return createPongFrame().setPayload(payload);
+    }
+
+
+    /**
+     * Create a pong frame.
+     *
+     * @param payload
+     *         The payload for a newly created frame.
+     *
+     * @return
+     *         A web socket frame whose FIN bit is true, opcode is
+     *         {@link WebSocketOpcode#PONG PONG} and payload is
+     *         the given one.
+     */
+    public static WebSocketFrame createPongFrame(String payload)
+    {
+        return createPongFrame().setPayload(payload);
+    }
+
+
+    /**
      * Mask/unmask payload.
      *
      * <p>

@@ -24,6 +24,18 @@ package com.neovisionaries.ws.client;
 public enum WebSocketError
 {
     /**
+     * The current state of the web socket is not CREATED.
+     *
+     * <p>
+     * This error occurs if {@link WebSocket#connect()} is called
+     * when the state of the web socket is not {@link
+     * WebSocketState#CREATED CREATED}.
+     * </p>
+     */
+    NOT_IN_CREATED_STATE,
+
+
+    /**
      * Failed to get the input stream of the raw socket.
      */
     SOCKET_INPUT_STREAM_FAILURE,

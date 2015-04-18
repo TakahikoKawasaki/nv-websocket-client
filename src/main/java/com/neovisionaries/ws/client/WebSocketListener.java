@@ -26,7 +26,7 @@ import java.util.Map;
  * <p>
  * An implementation of this interface should be added by {@link
  * WebSocket#addListener(WebSocketListener)} to a {@link WebSocket}
- * instance before calling {@link WebSocket#open()}.
+ * instance before calling {@link WebSocket#connect()}.
  * </p>
  *
  * <p>

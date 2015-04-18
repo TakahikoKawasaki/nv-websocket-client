@@ -158,6 +158,24 @@ class HandshakeBuilder
     }
 
 
+    public void setUserInfo(String id, String password)
+    {
+        if (id == null)
+        {
+            id = "";
+        }
+
+        if (password == null)
+        {
+            password = "";
+        }
+
+        String userInfo = String.format("%s:%s", id, password);
+
+        setUserInfo(userInfo);
+    }
+
+
     public void setKey(String key)
     {
         mKey = key;
