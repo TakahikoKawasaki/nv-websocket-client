@@ -106,7 +106,7 @@ public class WebSocket implements Closeable
     private final List<WebSocketListener> mListeners = new ArrayList<WebSocketListener>();
     private WebSocketInputStream mInput;
     private WebSocketOutputStream mOutput;
-    private WebSocketThread mWebSocketThread;
+    private ReadingThread mWebSocketThread;
     private List<WebSocketExtension> mAgreedExtensions;
     private String mAgreedProtocol;
     private boolean mExtended;
@@ -911,7 +911,7 @@ public class WebSocket implements Closeable
 
     private void startThread(Map<String, List<String>> headers)
     {
-        WebSocketThread thread = new WebSocketThread(this, headers);
+        ReadingThread thread = new ReadingThread(this, headers);
 
         synchronized (this)
         {

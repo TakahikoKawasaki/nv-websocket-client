@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 
-class WebSocketThread extends Thread
+class ReadingThread extends Thread
 {
     private final WebSocket mWebSocket;
     private final Map<String, List<String>> mHeaders;
@@ -38,7 +38,7 @@ class WebSocketThread extends Thread
     private List<WebSocketFrame> mContinuation = new ArrayList<WebSocketFrame>();
 
 
-    public WebSocketThread(WebSocket websocket, Map<String, List<String>> headers)
+    public ReadingThread(WebSocket websocket, Map<String, List<String>> headers)
     {
         mWebSocket = websocket;
         mHeaders   = headers;
