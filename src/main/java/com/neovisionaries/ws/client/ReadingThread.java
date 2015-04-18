@@ -97,13 +97,7 @@ class ReadingThread extends Thread
      */
     private void callOnOpen()
     {
-        mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
-            @Override
-            public void call(WebSocket websocket, WebSocketListener listener)
-            {
-                listener.onOpen(websocket, mHeaders);
-            }
-        });
+        mWebSocket.getListenerManager().callOnOpen(mHeaders);
     }
 
 
@@ -111,15 +105,9 @@ class ReadingThread extends Thread
      * Call {@link WebSocketListener#onFrame(WebSocket, WebSocketFrame) onFrame}
      * method of the listeners.
      */
-    private void callOnFrame(final WebSocketFrame frame)
+    private void callOnFrame(WebSocketFrame frame)
     {
-        mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
-            @Override
-            public void call(WebSocket websocket, WebSocketListener listener)
-            {
-                listener.onFrame(websocket, frame);
-            }
-        });
+        mWebSocket.getListenerManager().callOnFrame(frame);
     }
 
 
@@ -127,15 +115,9 @@ class ReadingThread extends Thread
      * Call {@link WebSocketListener#onContinuationFrame(WebSocket, WebSocketFrame)
      * onContinuationFrame} method of the listeners.
      */
-    private void callOnContinuationFrame(final WebSocketFrame frame)
+    private void callOnContinuationFrame(WebSocketFrame frame)
     {
-        mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
-            @Override
-            public void call(WebSocket websocket, WebSocketListener listener)
-            {
-                listener.onContinuationFrame(websocket, frame);
-            }
-        });
+        mWebSocket.getListenerManager().callOnContinuationFrame(frame);
     }
 
 
@@ -143,15 +125,9 @@ class ReadingThread extends Thread
      * Call {@link WebSocketListener#onTextFrame(WebSocket, WebSocketFrame)
      * onTextFrame} method of the listeners.
      */
-    private void callOnTextFrame(final WebSocketFrame frame)
+    private void callOnTextFrame(WebSocketFrame frame)
     {
-        mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
-            @Override
-            public void call(WebSocket websocket, WebSocketListener listener)
-            {
-                listener.onTextFrame(websocket, frame);
-            }
-        });
+        mWebSocket.getListenerManager().callOnTextFrame(frame);
     }
 
 
@@ -159,15 +135,9 @@ class ReadingThread extends Thread
      * Call {@link WebSocketListener#onBinaryFrame(WebSocket, WebSocketFrame)
      * onBinaryFrame} method of the listeners.
      */
-    private void callOnBinaryFrame(final WebSocketFrame frame)
+    private void callOnBinaryFrame(WebSocketFrame frame)
     {
-        mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
-            @Override
-            public void call(WebSocket websocket, WebSocketListener listener)
-            {
-                listener.onBinaryFrame(websocket, frame);
-            }
-        });
+        mWebSocket.getListenerManager().callOnBinaryFrame(frame);
     }
 
 
@@ -175,15 +145,9 @@ class ReadingThread extends Thread
      * Call {@link WebSocketListener#onCloseFrame(WebSocket, WebSocketFrame)
      * onCloseFrame} method of the listeners.
      */
-    private void callOnCloseFrame(final WebSocketFrame frame)
+    private void callOnCloseFrame(WebSocketFrame frame)
     {
-        mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
-            @Override
-            public void call(WebSocket websocket, WebSocketListener listener)
-            {
-                listener.onCloseFrame(websocket, frame);
-            }
-        });
+        mWebSocket.getListenerManager().callOnCloseFrame(frame);
     }
 
 
@@ -191,15 +155,9 @@ class ReadingThread extends Thread
      * Call {@link WebSocketListener#onPingFrame(WebSocket, WebSocketFrame)
      * onPingFrame} method of the listeners.
      */
-    private void callOnPingFrame(final WebSocketFrame frame)
+    private void callOnPingFrame(WebSocketFrame frame)
     {
-        mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
-            @Override
-            public void call(WebSocket websocket, WebSocketListener listener)
-            {
-                listener.onPingFrame(websocket, frame);
-            }
-        });
+        mWebSocket.getListenerManager().callOnPingFrame(frame);
     }
 
 
@@ -207,15 +165,9 @@ class ReadingThread extends Thread
      * Call {@link WebSocketListener#onPongFrame(WebSocket, WebSocketFrame)
      * onPongFrame} method of the listeners.
      */
-    private void callOnPongFrame(final WebSocketFrame frame)
+    private void callOnPongFrame(WebSocketFrame frame)
     {
-        mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
-            @Override
-            public void call(WebSocket websocket, WebSocketListener listener)
-            {
-                listener.onPongFrame(websocket, frame);
-            }
-        });
+        mWebSocket.getListenerManager().callOnPongFrame(frame);
     }
 
 
@@ -229,10 +181,10 @@ class ReadingThread extends Thread
         {
             // Interpret the byte array as a string.
             // OutOfMemoryError may happen when the size of data is too big.
-            String text = Misc.toStringUTF8(data);
+            String message = Misc.toStringUTF8(data);
 
             // Call onTextMessage() method of the listeners.
-            callOnTextMessage(text);
+            callOnTextMessage(message);
         }
         catch (Throwable e)
         {
@@ -251,15 +203,9 @@ class ReadingThread extends Thread
      * Call {@link WebSocketListener#onTextMessage(WebSocket, String)
      * onTextMessage} method of the listeners.
      */
-    private void callOnTextMessage(final String text)
+    private void callOnTextMessage(String message)
     {
-        mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
-            @Override
-            public void call(WebSocket websocket, WebSocketListener listener)
-            {
-                listener.onTextMessage(websocket, text);
-            }
-        });
+        mWebSocket.getListenerManager().callOnTextMessage(message);
     }
 
 
@@ -267,15 +213,9 @@ class ReadingThread extends Thread
      * Call {@link WebSocketListener#onBinaryMessage(WebSocket, String)
      * onBinaryMessage} method of the listeners.
      */
-    private void callOnBinaryMessage(final byte[] binary)
+    private void callOnBinaryMessage(byte[] message)
     {
-        mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
-            @Override
-            public void call(WebSocket websocket, WebSocketListener listener)
-            {
-                listener.onBinaryMessage(websocket, binary);
-            }
-        });
+        mWebSocket.getListenerManager().callOnBinaryMessage(message);
     }
 
 
@@ -283,15 +223,9 @@ class ReadingThread extends Thread
      * Call {@link WebSocketListener#onFrameError(WebSocket, WebSocketFrame,
      * WebSocketException) onFrameError} method of the listeners.
      */
-    private void callOnFrameError(final WebSocketFrame frame, final WebSocketException cause)
+    private void callOnFrameError(WebSocketFrame frame, WebSocketException cause)
     {
-        mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
-            @Override
-            public void call(WebSocket websocket, WebSocketListener listener)
-            {
-                listener.onFrameError(websocket, frame, cause);
-            }
-        });
+        mWebSocket.getListenerManager().callOnFrameError(frame, cause);
     }
 
 
@@ -299,15 +233,9 @@ class ReadingThread extends Thread
      * Call {@link WebSocketListener#onMessageError(WebSocket, List, WebSocketException)
      * onMessageError} method of the listeners.
      */
-    private void callOnMessageError(final List<WebSocketFrame> frames, final WebSocketException cause)
+    private void callOnMessageError(List<WebSocketFrame> frames, WebSocketException cause)
     {
-        mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
-            @Override
-            public void call(WebSocket websocket, WebSocketListener listener)
-            {
-                listener.onMessageError(websocket, frames, cause);
-            }
-        });
+        mWebSocket.getListenerManager().callOnMessageError(frames, cause);
     }
 
 
@@ -315,15 +243,9 @@ class ReadingThread extends Thread
      * Call {@link WebSocketListener#onTextMessageError(WebSocket, byte[], WebSocketException)
      * onTextMessageError} method of the listeners.
      */
-    private void callOnTextMessageError(final byte[] data, final WebSocketException cause)
+    private void callOnTextMessageError(byte[] data, WebSocketException cause)
     {
-        mWebSocket.callListenerMethod(new WebSocketListenerMethodCaller() {
-            @Override
-            public void call(WebSocket websocket, WebSocketListener listener)
-            {
-                listener.onTextMessageError(websocket, data, cause);
-            }
-        });
+        mWebSocket.getListenerManager().callOnTextMessageError(data, cause);
     }
 
 

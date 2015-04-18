@@ -103,10 +103,10 @@ public class WebSocket implements Closeable
     private static final String ACCEPT_MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
     private final Socket mSocket;
     private final HandshakeBuilder mHandshakeBuilder;
-    private final List<WebSocketListener> mListeners = new ArrayList<WebSocketListener>();
+    private final ListenerManager mListenerManager;
     private WebSocketInputStream mInput;
     private WebSocketOutputStream mOutput;
-    private ReadingThread mWebSocketThread;
+    private ReadingThread mReadingThread;
     private List<WebSocketExtension> mAgreedExtensions;
     private String mAgreedProtocol;
     private boolean mExtended;
@@ -117,6 +117,7 @@ public class WebSocket implements Closeable
         mSocket = socket;
         mHandshakeBuilder =
             new HandshakeBuilder(userInfo, host, path);
+        mListenerManager = new ListenerManager(this);
     }
 
 
@@ -255,15 +256,7 @@ public class WebSocket implements Closeable
      */
     public WebSocket addListener(WebSocketListener listener)
     {
-        if (listener == null)
-        {
-            return this;
-        }
-
-        synchronized (mListeners)
-        {
-            mListeners.add(listener);
-        }
+        mListenerManager.addListener(listener);
 
         return this;
     }
@@ -915,12 +908,12 @@ public class WebSocket implements Closeable
 
         synchronized (this)
         {
-            if (mWebSocketThread != null)
+            if (mReadingThread != null)
             {
-                mWebSocketThread.requestStop();
+                mReadingThread.requestStop();
             }
 
-            mWebSocketThread = thread;
+            mReadingThread = thread;
         }
 
         thread.start();
@@ -931,10 +924,10 @@ public class WebSocket implements Closeable
     {
         synchronized (this)
         {
-            if (mWebSocketThread != null)
+            if (mReadingThread != null)
             {
-                mWebSocketThread.requestStop();
-                mWebSocketThread = null;
+                mReadingThread.requestStop();
+                mReadingThread = null;
             }
         }
     }
@@ -963,20 +956,8 @@ public class WebSocket implements Closeable
     }
 
 
-    void callListenerMethod(WebSocketListenerMethodCaller caller)
+    ListenerManager getListenerManager()
     {
-        synchronized (mListeners)
-        {
-            for (WebSocketListener listener : mListeners)
-            {
-                try
-                {
-                    caller.call(this, listener);
-                }
-                catch (Exception e)
-                {
-                }
-            }
-        }
+        return mListenerManager;
     }
 }
