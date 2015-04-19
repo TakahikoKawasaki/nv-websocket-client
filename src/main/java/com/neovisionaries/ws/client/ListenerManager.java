@@ -47,7 +47,7 @@ class ListenerManager
     }
 
 
-    public void callOnOpen(Map<String, List<String>> headers)
+    public void callOnConnected(Map<String, List<String>> headers)
     {
         synchronized (mListeners)
         {
@@ -55,7 +55,25 @@ class ListenerManager
             {
                 try
                 {
-                    listener.onOpen(mWebSocket, headers);
+                    listener.onConnected(mWebSocket, headers);
+                }
+                catch (Throwable t)
+                {
+                }
+            }
+        }
+    }
+
+
+    public void callOnDisconnected()
+    {
+        synchronized (mListeners)
+        {
+            for (WebSocketListener listener : mListeners)
+            {
+                try
+                {
+                    listener.onDisconnected(mWebSocket);
                 }
                 catch (Throwable t)
                 {

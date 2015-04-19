@@ -18,7 +18,6 @@ package com.neovisionaries.ws.client;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.Closeable;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.MessageDigest;
@@ -26,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.neovisionaries.ws.client.StateManager.CloseInitiator;
 
 
 /**
@@ -38,9 +38,12 @@ import java.util.Map;
  * </p>
  *
  * <blockquote>
- * <pre> WebSocket ws = new {@link WebSocketFactory#WebSocketFactory()
- * WebSocketFactory()}.{@link WebSocketFactory#createSocket(String)
- * createWebSocket}("ws://localhost/endpoint");</pre>
+ * <pre> <span style="color: green;">// Create a web socket. The scheme part can be of
+ * // the following: 'ws', 'wss', 'http' and 'https'.</span>
+ * WebSocket ws = new {@link WebSocketFactory#WebSocketFactory()
+ * WebSocketFactory()}
+ *     .{@link WebSocketFactory#createSocket(String)
+ * createWebSocket}(<span style="color: darkred;">"ws://localhost/endpoint"</span>);</pre>
  * </blockquote>
  *
  * <p>
@@ -78,7 +81,7 @@ import java.util.Map;
  *
  * <p>
  * {@code connect()} performs the opening handshake synchronously. When a
- * connection could not be made or a protocol error was detected in the
+ * connection could not be made or a protocol error was detected during the
  * handshake, a {@link WebSocketException} exception is thrown. When the
  * handshake succeeds, the {@code connect()} implementation creates threads
  * and starts them to read and write web socket frames from the server
@@ -88,38 +91,90 @@ import java.util.Map;
  * <blockquote>
  * <pre> try
  * {
- *     // Connect to the server and perform the handshake.
+ *     <span style="color: green;">// Connect to the server and perform the handshake.</span>
  *     ws.{@link #connect()};
  * }
  * catch ({@link WebSocketException} e)
  * {
- *     // The opening handshake failed.
+ *     <span style="color: green;">// The opening handshake failed.</span>
  * }</pre>
+ * </blockquote>
+ *
+ * <p>
+ * Web socket frames can be sent by {@link #sendFrame(WebSocketFrame)}
+ * method. Other <code>send<i>Xxx</i></code> methods such as {@link
+ * #sendText(String)} are aliases of {@code sendFrame} method. All of
+ * the <code>send<i>Xxx</i></code> methods work asynchronously.
+ * </p>
+ *
+ * <p>
+ * If you want to send fragmented frames, you have to know the details
+ * of the specification (<a href="https://tools.ietf.org/html/rfc6455#section-5.4"
+ * >5.4. Fragmentation</a>). Below is an example to send a text message
+ * ("How are you?") which consists of 3 fragmented frames.
+ * </p>
+ *
+ * <blockquote>
+ * <pre> <span style="color: green;">// The first frame must be either a text frame or a binary frame.
+ * // And its FIN bit must be cleared.</span>
+ * WebSocketFrame firstFrame = WebSocketFrame
+ *     .{@link WebSocketFrame#createTextFrame(String) createTextFrame
+ *     }(<span style="color: darkred;">"How "</span>)
+ *     .{@link WebSocketFrame#setFin(boolean) setFin}(false);
+ *
+ * <span style="color: green;">// Subsequent frames must be continuation frames. The FIN bit of
+ * // all continuation frames except the last one must be cleared.
+ * // Note that the FIN bit of frames returned from
+ * // WebSocketFrame.createContinuationFrame methods is cleared, so
+ * // the example below does not clear the FIN bit explicitly.</span>
+ * WebSocketFrame secondFrame = WebSocketFrame
+ *     .{@link WebSocketFrame#createContinuationFrame(String) createContinuationFrame
+ *     }(<span style="color: darkred;">"are "</span>);
+ *
+ * <span style="color: green;">// The last frame must be a continuation frame with the FIN bit set.
+ * // Note that the FIN bit of frames returned from
+ * // WebSocketFrame.reateContinuationFrame methods is cleared, so
+ * // the FIN bit of the last frame must be set explicitly.</span>
+ * WebSocketFrame lastFrame = WebSocketFrame
+ *     .{@link WebSocketFrame#createContinuationFrame(String) createContinuationFrame
+ *     }(<span style="color: darkred;">"you?"</span>);
+ *     .{@link WebSocketFrame#setFin(boolean) setFin}(true);
+ *
+ * <span style="color: green;">// Send a text message which consists of 3 frames.</span>
+ * ws.{@link #sendFrame(WebSocketFrame) sendFrame}(firstFrame);
+ * ws.{@link #sendFrame(WebSocketFrame) sendFrame}(secondFrame);
+ * ws.{@link #sendFrame(WebSocketFrame) sendFrame}(lastFrame);
+ * </pre>
  * </blockquote>
  *
  * @see <a href="https://tools.ietf.org/html/rfc6455">RFC 6455 (The WebSocket Protocol)</a>
  */
-public class WebSocket implements Closeable
+public class WebSocket
 {
     private static final String ACCEPT_MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
     private final Socket mSocket;
+    private final StateManager mStateManager;
     private final HandshakeBuilder mHandshakeBuilder;
     private final ListenerManager mListenerManager;
-    private WebSocketState mState;
+    private final Object mSendFrameLock = new Object();
+    private final Object mThreadsLock = new Object();
     private WebSocketInputStream mInput;
     private WebSocketOutputStream mOutput;
     private ReadingThread mReadingThread;
+    private WritingThread mWritingThread;
     private List<WebSocketExtension> mAgreedExtensions;
     private String mAgreedProtocol;
     private boolean mExtended;
+    private boolean mReadingThreadFinished;
+    private boolean mWritingThreadFinished;
 
 
     WebSocket(String userInfo, String host, String path, Socket socket)
     {
         mSocket           = socket;
+        mStateManager     = new StateManager();
         mHandshakeBuilder = new HandshakeBuilder(userInfo, host, path);
         mListenerManager  = new ListenerManager(this);
-        mState            = WebSocketState.CREATED;
     }
 
 
@@ -140,24 +195,9 @@ public class WebSocket implements Closeable
      */
     public WebSocketState getState()
     {
-        synchronized (this)
+        synchronized (mStateManager)
         {
-            return mState;
-        }
-    }
-
-
-    /**
-     * Change the state of this web socket.
-     *
-     * @param state
-     *         The new state.
-     */
-    void setState(WebSocketState state)
-    {
-        synchronized (this)
-        {
-            mState = state;
+            return mStateManager.getState();
         }
     }
 
@@ -362,17 +402,46 @@ public class WebSocket implements Closeable
         catch (WebSocketException e)
         {
             // Change the state to CLOSED.
-            setState(WebSocketState.CLOSED);
+            mStateManager.changeToClosed();
 
             // The handshake failed.
             throw e;
         }
 
         // Change the state to OPEN.
-        setState(WebSocketState.OPEN);
+        mStateManager.changeToOpen();
 
         // Start threads that communicate with the server.
         startThreads(headers);
+    }
+
+
+    /**
+     * Disconnect the web socket.
+     */
+    public void disconnect()
+    {
+        synchronized (mStateManager)
+        {
+            if (mStateManager.isOpen() == false)
+            {
+                return;
+            }
+
+            // Change the state to CLOSING.
+            mStateManager.changeToClosing(CloseInitiator.CLIENT);
+
+            // Create a close frame.
+            WebSocketFrame frame = WebSocketFrame.createCloseFrame(
+                WebSocketCloseCode.NORMAL,
+                "The client initiated the closing handshake.");
+
+            // Send the close frame to the server.
+            sendFrame(frame);
+        }
+
+        // Request the threads to stop.
+        stopThreads();
     }
 
 
@@ -418,7 +487,13 @@ public class WebSocket implements Closeable
      */
     public void sendFrame(WebSocketFrame frame)
     {
-        // TODO
+        synchronized (mSendFrameLock)
+        {
+            if (mWritingThread != null)
+            {
+                mWritingThread.sendFrame(frame);
+            }
+        }
     }
 
 
@@ -617,10 +692,10 @@ public class WebSocket implements Closeable
 
     private void changeStateOnConnect() throws WebSocketException
     {
-        synchronized (this)
+        synchronized (mStateManager)
         {
             // If the current state is not CREATED.
-            if (mState != WebSocketState.CREATED)
+            if (mStateManager.isCreated() == false)
             {
                 throw new WebSocketException(
                     WebSocketError.NOT_IN_CREATED_STATE,
@@ -628,7 +703,7 @@ public class WebSocket implements Closeable
             }
 
             // Change the state to CONNECTING.
-            mState = WebSocketState.CONNECTING;
+            mStateManager.changeToConnecting();
         }
     }
 
@@ -1195,43 +1270,43 @@ public class WebSocket implements Closeable
 
     private void startThreads(Map<String, List<String>> headers)
     {
-        ReadingThread thread = new ReadingThread(this, headers);
+        ReadingThread readingThread = new ReadingThread(this, headers);
+        WritingThread writingThread = new WritingThread(this);
 
-        synchronized (this)
+        synchronized (mThreadsLock)
         {
-            if (mReadingThread != null)
-            {
-                mReadingThread.requestStop();
-            }
-
-            mReadingThread = thread;
+            mReadingThread = readingThread;
+            mWritingThread = writingThread;
         }
 
-        thread.start();
+        readingThread.start();
+        writingThread.start();
     }
 
 
-    private void stopThread()
+    private void stopThreads()
     {
-        synchronized (this)
+        ReadingThread readingThread;
+        WritingThread writingThread;
+
+        synchronized (mThreadsLock)
         {
-            if (mReadingThread != null)
-            {
-                mReadingThread.requestStop();
-                mReadingThread = null;
-            }
+            readingThread = mReadingThread;
+            writingThread = mWritingThread;
+
+            mReadingThread = null;
+            mWritingThread = null;
         }
-    }
 
+        if (readingThread != null)
+        {
+            readingThread.requestStop();
+        }
 
-    /**
-     * Close the web socket.
-     */
-    @Override
-    public void close()
-    {
-        // TODO
-        stopThread();
+        if (writingThread != null)
+        {
+            writingThread.requestStop();
+        }
     }
 
 
@@ -1247,8 +1322,48 @@ public class WebSocket implements Closeable
     }
 
 
+    StateManager getStateManager()
+    {
+        return mStateManager;
+    }
+
+
     ListenerManager getListenerManager()
     {
         return mListenerManager;
+    }
+
+
+    void onReadingThreadFinished(WebSocketFrame closeFrame)
+    {
+        synchronized (mThreadsLock)
+        {
+            mReadingThreadFinished = true;
+
+            if (mWritingThreadFinished == false)
+            {
+                // Wait for the writing thread to finish.
+                return;
+            }
+        }
+
+        // TODO
+    }
+
+
+    void onWritingThreadFinished(WebSocketFrame closeFrame)
+    {
+        synchronized (mThreadsLock)
+        {
+            mWritingThreadFinished = true;
+
+            if (mReadingThreadFinished == false)
+            {
+                // Wait for the reading thread to finish.
+                return;
+            }
+        }
+
+        // TODO
     }
 }

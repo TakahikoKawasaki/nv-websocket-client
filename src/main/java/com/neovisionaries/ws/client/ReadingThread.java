@@ -28,18 +28,25 @@ import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import com.neovisionaries.ws.client.StateManager.CloseInitiator;
 
 
 class ReadingThread extends Thread
 {
+    private static final long INTERRUPTION_TIMER_DELAY = 60 * 1000;
     private final WebSocket mWebSocket;
     private final Map<String, List<String>> mHeaders;
     private boolean mStopRequested;
+    private WebSocketFrame mCloseFrame;
     private List<WebSocketFrame> mContinuation = new ArrayList<WebSocketFrame>();
 
 
     public ReadingThread(WebSocket websocket, Map<String, List<String>> headers)
     {
+        super("ReadingThread");
+
         mWebSocket = websocket;
         mHeaders   = headers;
     }
@@ -49,7 +56,7 @@ class ReadingThread extends Thread
     public void run()
     {
         // Notify listeners that the handshake succeeded.
-        callOnOpen();
+        callOnConnected();
 
         while (true)
         {
@@ -78,6 +85,12 @@ class ReadingThread extends Thread
                 break;
             }
         }
+
+        // Wait for a close frame if one has not been received yet.
+        waitForCloseFrame();
+
+        // Notify this reading thread finished.
+        notifyFinished();
     }
 
 
@@ -92,12 +105,12 @@ class ReadingThread extends Thread
 
 
     /**
-     * Call {@link WebSocketListener#onOpen(WebSocket, Map) onOpen} method
+     * Call {@link WebSocketListener#onConnected(WebSocket, Map) onConnected} method
      * of the listeners.
      */
-    private void callOnOpen()
+    private void callOnConnected()
     {
-        mWebSocket.getListenerManager().callOnOpen(mHeaders);
+        mWebSocket.getListenerManager().callOnConnected(mHeaders);
     }
 
 
@@ -253,6 +266,7 @@ class ReadingThread extends Thread
     {
         WebSocketFrame frame = null;
         WebSocketException wse = null;
+        boolean intentionallyInterrupted = false;
 
         try
         {
@@ -267,8 +281,12 @@ class ReadingThread extends Thread
         }
         catch (InterruptedIOException e)
         {
-            // If the interruption occurred unintentionally.
-            if (mStopRequested == false)
+            if (mStopRequested)
+            {
+                // Intentionally interrupted.
+                intentionallyInterrupted = true;
+            }
+            else
             {
                 // Interruption occurred while a frame was being read from the web socket.
                 wse = new WebSocketException(
@@ -289,15 +307,17 @@ class ReadingThread extends Thread
             wse = e;
         }
 
-        // (wse is null only when reading was interrupted intentionally.
-        if (wse != null)
+        if (intentionallyInterrupted == false)
         {
             // Notify the listeners that an error occurred while a frame was being read.
             callOnFrameError(frame, wse);
-        }
 
-        // TODO
-        // Send a close frame to the server if any has not been sent yet.
+            // Create a close frame.
+            WebSocketFrame closeFrame = createCloseFrame(wse);
+
+            // Send the close frame.
+            mWebSocket.sendFrame(closeFrame);
+        }
 
         // A frame is not available.
         return null;
@@ -500,6 +520,54 @@ class ReadingThread extends Thread
     }
 
 
+    private WebSocketFrame createCloseFrame(WebSocketException wse)
+    {
+        int closeCode;
+
+        switch (wse.getError())
+        {
+            // In WebSocketInputStream.readFrame()
+
+            case INSUFFICENT_DATA:
+            case INVALID_PAYLOAD_LENGTH:
+                closeCode = WebSocketCloseCode.UNCONFORMED;
+                break;
+
+            case TOO_LONG_PAYLOAD:
+            case INSUFFICIENT_MEMORY_FOR_PAYLOAD:
+                closeCode = WebSocketCloseCode.OVERSIZE;
+                break;
+
+            // In this.verifyFrame(WebSocketFrame)
+
+            case NON_ZERO_RESERVED_BITS:
+            case UNKNOWN_OPCODE:
+            case FRAME_MASKED:
+            case FRAGMENTED_CONTROL_FRAME:
+            case UNEXPECTED_CONTINUATION_FRAME:
+            case CONTINUATION_NOT_CLOSED:
+            case TOO_LONG_CONTROL_FRAME_PAYLOAD:
+                closeCode = WebSocketCloseCode.UNCONFORMED;
+                break;
+
+            // In this.readFrame()
+
+            case INTERRUPTED_IN_READING:
+            case IO_ERROR_IN_READING:
+                closeCode = WebSocketCloseCode.VIOLATED;
+                break;
+
+            // Others (unexpected)
+
+            default:
+                closeCode = WebSocketCloseCode.VIOLATED;
+                break;
+        }
+
+        return WebSocketFrame.createCloseFrame(closeCode, wse.getMessage());
+    }
+
+
     private boolean handleFrame(WebSocketFrame frame)
     {
         // Notify the listeners that a frame was received.
@@ -554,7 +622,6 @@ class ReadingThread extends Thread
         // If the concatenation failed.
         if (data == null)
         {
-            // TODO: Send a close frame if necessary.
             // Stop reading.
             return false;
         }
@@ -623,6 +690,14 @@ class ReadingThread extends Thread
         // Notify the listeners that message construction failed.
         callOnMessageError(frames, wse);
 
+        // Create a close frame with a close code of 1009 which
+        // indicates that the message is too big to process.
+        WebSocketFrame frame = WebSocketFrame
+            .createCloseFrame(WebSocketCloseCode.OVERSIZE, wse.getMessage());
+
+        // Send the close frame.
+        mWebSocket.sendFrame(frame);
+
         // Failed to construct a message.
         return null;
     }
@@ -676,11 +751,36 @@ class ReadingThread extends Thread
 
     private boolean handleCloseFrame(WebSocketFrame frame)
     {
+        // Get the manager which manages the state of the web socket.
+        StateManager manager = mWebSocket.getStateManager();
+
+        // The close frame sent from the server.
+        mCloseFrame = frame;
+
+        synchronized (manager)
+        {
+            // If the current state is neither CLOSING nor CLOSED.
+            if (manager.isClosing() == false && manager.isClosed() == false)
+            {
+                // Change the state to CLOSING.
+                manager.changeToClosing(CloseInitiator.SERVER);
+
+                // This web socket has not sent a close frame yet,
+                // so schedule sending a close frame.
+
+                // RFC 6455, 5.5.1. Close
+                //
+                //   When sending a Close frame in response, the endpoint
+                //   typically echos the status code it received.
+                //
+
+                // Simply reuse the frame.
+                mWebSocket.sendFrame(frame);
+            }
+        }
+
         // Notify the listeners that a close frame was received.
         callOnCloseFrame(frame);
-
-        // TODO
-        // Send a close frame if not yet, and close the connection.
 
         // Stop reading.
         return false;
@@ -692,8 +792,19 @@ class ReadingThread extends Thread
         // Notify the listeners that a ping frame was received.
         callOnPingFrame(frame);
 
-        // TODO
-        // Send back a pong frame.
+        // RFC 6455, 5.5.3. Pong
+        //
+        //   A Pong frame sent in response to a Ping frame must
+        //   have identical "Application data" as found in the
+        //   message body of the Ping frame being replied to.
+
+        // Create a pong frame which has the same payload as
+        // the ping frame.
+        WebSocketFrame pong = WebSocketFrame
+            .createPongFrame(frame.getPayload());
+
+        // Send the pong frame to the server.
+        mWebSocket.sendFrame(pong);
 
         // Keep reading.
         return true;
@@ -707,5 +818,71 @@ class ReadingThread extends Thread
 
         // Keep reading.
         return true;
+    }
+
+
+    private void waitForCloseFrame()
+    {
+        // If a close frame has already been received.
+        if (mCloseFrame != null)
+        {
+            return;
+        }
+
+        WebSocketFrame frame = null;
+
+        // Schedule a timer to prevent from waiting forever.
+        Timer timer = scheduleInterruptionTimer();
+
+        while (true)
+        {
+            try
+            {
+                // Read a frame from the server.
+                frame = mWebSocket.getInput().readFrame();
+            }
+            catch (Exception e)
+            {
+                // Give up receiving a close frame.
+                break;
+            }
+
+            // If it is a close frame.
+            if (frame.isCloseFrame())
+            {
+                // Received a close frame. Finished.
+                mCloseFrame = frame;
+                break;
+            }
+        }
+
+        // Cancel the timer for the case where a close frame was received.
+        timer.cancel();
+    }
+
+
+    private Timer scheduleInterruptionTimer()
+    {
+        Timer timer = new Timer("ReadingThreadInterruptionTimer");
+
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run()
+            {
+                if (ReadingThread.this.isAlive())
+                {
+                    // Interrupt WebSocketInputStream.readFrame().
+                    ReadingThread.this.interrupt();
+                }
+            }
+        }, INTERRUPTION_TIMER_DELAY);
+
+        return timer;
+    }
+
+
+    private void notifyFinished()
+    {
+        mWebSocket.onReadingThreadFinished(mCloseFrame);
     }
 }

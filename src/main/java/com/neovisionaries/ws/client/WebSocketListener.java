@@ -48,7 +48,16 @@ public interface WebSocketListener
      *         HTTP headers received from the server. Keys of the map are
      *         capitalized HTTP header names such as "SEC-WEBSOCKET-ACCEPT".
      */
-    void onOpen(WebSocket websocket, Map<String, List<String>> headers);
+    void onConnected(WebSocket websocket, Map<String, List<String>> headers);
+
+
+    /**
+     * Called after the web socket connection was closed.
+     *
+     * @param websocket
+     *         The web socket.
+     */
+    void onDisconnected(WebSocket websocket);
 
 
     /**
