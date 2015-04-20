@@ -4,7 +4,18 @@ nv-websocket-client
 Overview
 --------
 
-WebSocket client implementation in Java.
+High-quality WebSocket client implementation in Java which
+
+- complies with [RFC 6455](http://tools.ietf.org/html/rfc6455) (The WebSocket Protocol),
+- works on Android,
+- supports all the frame types (continuation/binary/text/close/ping/pong),
+- provides a method to send a fragmented frame in addition to methods for unfragmented frames,
+- provides a method to get the underlying raw socket of a web socket to configure it,
+- provides a method for [Basic Authentication](http://tools.ietf.org/html/rfc2617),
+- provides a factory class which utilizes javax.net.SocketFactory interface,
+- provides a rich listener interface to hook web socket events,
+- has fine-grained error codes for fine-grained controllability on errors,
+- and allows to disable validity checks on RSV1/RSV2/RSV3 bits and opcode of frames.
 
 
 License
@@ -37,13 +48,27 @@ JavaDoc
 [JavaDoc of nv-websocket-client](http://TakahikoKawasaki.github.io/nv-websocket-client/)
 
 
-Example
--------
+Description
+-----------
+
+`WebSocket` class represents a web socket. Its instances are created by calling
+one of `createSocket` methods of a `WebSocketFactory` instance. `WebSocketFactory`
+class provides methods to configure the underlying socket factories (see the
+JavaDoc for details). Below is the simplest example to create a `WebSocket`
+instance.
 
 ```java
-// Create a web socket.
+// Create a web socket. The scheme part can be one of the following:
+// 'ws', 'wss', 'http' and 'https' (case-insensitive). The user info
+// part, if any, is interpreted as expected.
 WebSocket ws = new WebSocketFactory().createSocket("ws://localhost/endpoint");
+```
 
+After creating a `WebSocket` instance, you should call `addListener` method
+to register a `WebSocketListener` that receives web socket events.
+`WebSocketAdapter` is an empty implementation of `WebSocketListener` interface.
+
+```java
 // Register a listener to receive web socket events.
 ws.addListener(new WebSocketAdapter() {
     @Override
@@ -52,9 +77,87 @@ ws.addListener(new WebSocketAdapter() {
         ......
     }
 });
+```
 
-// Connect to the server and perform the opening handshake.
-ws.connect();
+Before making a connection to the server, you can configure the web socket
+instance by using the following methods.
+
+| METHOD         | DESCRIPTION                                            |
+|----------------|--------------------------------------------------------|
+| `addProtocol`  | Adds an element to `Sec-WebSocket-Protocol`.           |
+| `addExtension` | Adds an element to `Sec-WebSocket-Extensions`.         |
+| `addHeaer`     | Adds an arbitrary HTTP header.                         |
+| `setUserInfo`  | Adds `Authorization` header for Basic Authentication.  |
+| `getSocket`    | Gets the underlying `Socket` instance to configure it. |
+| `setExtended`  | Disable validity checks on RSV1/RSV2/RSV3 and opcode.  |
+
+By calling `connect()` method, an actual connection to the server is made and
+the [opening handshake](https://tools.ietf.org/html/rfc6455#section-4) is
+performed synchronously. When a connection could not be made or a protocol
+error was detected during the handshake, a `WebSocketException` exception is
+thrown. Instead, when the handshake succeeded, the `connect()` implementation
+creates threads and starts them to read and write web socket frames
+asynchronously.
+
+```java
+try
+{
+    // Connect to the server and perform the opening handshake.
+    ws.connect();
+}
+catch (WebSocketException e)
+{
+    // Failed.
+}
+```
+
+Web socket frames can be sent by `sendFrame` method. There exist other
+`sendXxxFrame` methods such as `sendText` and they are aliases of
+`sendFrame` method. All of the methods to send a frame work
+asynchronously.
+
+If you want to send fragmented frames, you have to know the details of the
+specification ([5.4. Fragmentation](https://tools.ietf.org/html/rfc6455#section-5.4)).
+Below is an example to send a text message (`"How are you?"`) which consists
+of 3 fragmented frames.
+
+```java
+// The first frame must be either a text frame or a binary frame.
+// And its FIN bit must be cleared.
+WebSocketFrame firstFrame = WebSocketFrame
+    .createTextFrame("How ")
+    .setFin(false);
+
+// Subsequent frames must be continuation frames. The FIN bit of
+// all continuation frames except the last one must be cleared.
+// Notethat the FIN bit of frames returned from
+// WebSocketFrame.createContinuationFrame() method is cleared,
+// so the example below does not clear the FIN bit explicitly.
+WebSocketFrame secondFrame = WebSocketFrame
+    .createContinuationFrame("are ");
+
+// The last frame must be a continuation frame with the FIN bit
+// set. Note that the FIN bit of frames returned from
+// WebSocketFrame.createContinuationFrame methods is cleared,
+// so the FIN bit of the last frame must be set explicitly.
+WebSocketFrame lastFrame = WebSocketFrame
+    .createContinuationFrame("you?")
+    .setFin(true);
+
+// Send a text message which consists of 3 frames.
+ws.sendFrame(firstFrame)
+  .sendFrame(secondFrame)
+  .sendFrame(lastFrame);
+```
+
+A web socket connection is closed when it receives a close frame from the
+server or an error occurred. If you want to [close the connection]
+(https://tools.ietf.org/html/rfc6455#section-4) from the client side,
+call `disconnect()` method.
+
+```java
+// Close the web socket connection.
+ws.disconnect();
 ```
 
 
@@ -66,10 +169,16 @@ Limitations
   library cannot treat frames whose payload length is greater than (2^31 - 1).
 
 
+See Also
+--------
+
+- [RFC 6455](https://tools.ietf.org/html/rfc6455)
+
+
 Note
 ----
 
-Just started. Not usable yet.
+Not usable yet.
 
 
 Author
