@@ -757,6 +757,9 @@ public class WebSocketFrame
      *
      * @param reason
      *         The close reason.
+     *         Note that a control frame's payload length must be 125 bytes or less
+     *         (RFC 6455, <a href="https://tools.ietf.org/html/rfc6455#section-5.5"
+     *         >5.5. Control Frames</a>).
      *
      * @return
      *         A web socket frame whose FIN bit is true, opcode is
@@ -792,6 +795,9 @@ public class WebSocketFrame
      *
      * @param payload
      *         The payload for a newly created frame.
+     *         Note that a control frame's payload length must be 125 bytes or less
+     *         (RFC 6455, <a href="https://tools.ietf.org/html/rfc6455#section-5.5"
+     *         >5.5. Control Frames</a>).
      *
      * @return
      *         A web socket frame whose FIN bit is true, opcode is
@@ -809,6 +815,9 @@ public class WebSocketFrame
      *
      * @param payload
      *         The payload for a newly created frame.
+     *         Note that a control frame's payload length must be 125 bytes or less
+     *         (RFC 6455, <a href="https://tools.ietf.org/html/rfc6455#section-5.5"
+     *         >5.5. Control Frames</a>).
      *
      * @return
      *         A web socket frame whose FIN bit is true, opcode is
@@ -842,6 +851,9 @@ public class WebSocketFrame
      *
      * @param payload
      *         The payload for a newly created frame.
+     *         Note that a control frame's payload length must be 125 bytes or less
+     *         (RFC 6455, <a href="https://tools.ietf.org/html/rfc6455#section-5.5"
+     *         >5.5. Control Frames</a>).
      *
      * @return
      *         A web socket frame whose FIN bit is true, opcode is
@@ -859,6 +871,9 @@ public class WebSocketFrame
      *
      * @param payload
      *         The payload for a newly created frame.
+     *         Note that a control frame's payload length must be 125 bytes or less
+     *         (RFC 6455, <a href="https://tools.ietf.org/html/rfc6455#section-5.5"
+     *         >5.5. Control Frames</a>).
      *
      * @return
      *         A web socket frame whose FIN bit is true, opcode is

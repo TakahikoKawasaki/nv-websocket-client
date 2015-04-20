@@ -174,6 +174,12 @@ public enum WebSocketError
 
 
     /**
+     * An I/O error occurred when a frame was tried to be sent.
+     */
+    IO_ERROR_IN_WRITING,
+
+
+    /**
      * At least one of the reserved bits of a frame is set.
      *
      * <blockquote>
@@ -273,5 +279,19 @@ public enum WebSocketError
      * Failed to convert payload data into a string.
      */
     TEXT_MESSAGE_CONSTRUCTION_ERROR,
+
+
+    /**
+     * An uncaught throwable was detected in the reading thread (which reads
+     * frames from the server).
+     */
+    UNEXPECTED_ERROR_IN_READING_THREAD,
+
+
+    /**
+     * An uncaught throwable was detected in the writing thread (which sends
+     * frames to the server).
+     */
+    UNEXPECTED_ERROR_IN_WRITING_THREAD,
     ;
 }

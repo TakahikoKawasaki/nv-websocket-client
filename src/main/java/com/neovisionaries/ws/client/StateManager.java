@@ -16,11 +16,8 @@
 package com.neovisionaries.ws.client;
 
 
-import static com.neovisionaries.ws.client.WebSocketState.CLOSED;
 import static com.neovisionaries.ws.client.WebSocketState.CLOSING;
-import static com.neovisionaries.ws.client.WebSocketState.CONNECTING;
 import static com.neovisionaries.ws.client.WebSocketState.CREATED;
-import static com.neovisionaries.ws.client.WebSocketState.OPEN;
 
 
 class StateManager
@@ -31,6 +28,7 @@ class StateManager
         SERVER,
         CLIENT
     }
+
 
     private WebSocketState mState;
     private CloseInitiator mCloseInitiator = CloseInitiator.NONE;
@@ -48,39 +46,9 @@ class StateManager
     }
 
 
-    public boolean isCreated()
+    public void setState(WebSocketState state)
     {
-        return (mState == CREATED);
-    }
-
-
-    public boolean isOpen()
-    {
-        return (mState == OPEN);
-    }
-
-
-    public boolean isClosing()
-    {
-        return (mState == CLOSING);
-    }
-
-
-    public boolean isClosed()
-    {
-        return (mState == CLOSED);
-    }
-
-
-    public void changeToConnecting()
-    {
-        mState = CONNECTING;
-    }
-
-
-    public void changeToOpen()
-    {
-        mState = OPEN;
+        mState = state;
     }
 
 
@@ -93,12 +61,6 @@ class StateManager
         {
             mCloseInitiator = closeInitiator;
         }
-    }
-
-
-    public void changeToClosed()
-    {
-        mState = CLOSED;
     }
 
 

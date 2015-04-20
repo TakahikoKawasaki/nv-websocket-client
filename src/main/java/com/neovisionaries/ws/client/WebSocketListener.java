@@ -170,14 +170,37 @@ public interface WebSocketListener
 
 
     /**
-     * Called when a frame failed to be read from the web socket.
+     * Called when a web socket frame was not sent to the server
+     * because a close frame has already been sent (or at least
+     * tried to be sent).
      *
      * @param websocket
      *         The web socket.
      *
      * @param frame
-     *         The socket frame. If this is not {@code null}, it means that
-     *         verification of the frame failed.
+     *         The unsent frame.
+     */
+    void onFrameUnsent(WebSocket websocket, WebSocketFrame frame);
+
+
+    /**
+     * Call when an error occurred. This method is called before
+     * an <code>on<i>Xxx</i>Error</code> method is called.
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param cause
+     *         An exception that represents the error.
+     */
+    void onError(WebSocket websocket, WebSocketException cause);
+
+
+    /**
+     * Called when a frame failed to be read from the web socket.
+     *
+     * @param websocket
+     *         The web socket.
      *
      * @param cause
      *         An exception that represents the error. When the error occurred
@@ -187,8 +210,12 @@ public interface WebSocketListener
      *         WebSocketError#IO_ERROR_IN_READING}. Other error codes denote
      *         protocol errors, which imply that some bugs may exist in either
      *         or both of the client-side and the server-side implementations.
+     *
+     * @param frame
+     *         The socket frame. If this is not {@code null}, it means that
+     *         verification of the frame failed.
      */
-    void onFrameError(WebSocket websocket, WebSocketFrame frame, WebSocketException cause);
+    void onFrameError(WebSocket websocket, WebSocketException cause, WebSocketFrame frame);
 
 
     /**
@@ -199,15 +226,15 @@ public interface WebSocketListener
      * @param websocket
      *         The web socket.
      *
+     * @param cause
+     *         An exception that represents the error.
+     *
      * @param frames
      *         The list of frames that form a message. The first element
      *         is either a text frame and a binary frame, and the other
      *         frames are continuation frames.
-     *
-     * @param cause
-     *         An exception that represents the error.
      */
-    void onMessageError(WebSocket websocket, List<WebSocketFrame> frames, WebSocketException cause);
+    void onMessageError(WebSocket websocket, WebSocketException cause, List<WebSocketFrame> frames);
 
 
     /**
@@ -217,11 +244,41 @@ public interface WebSocketListener
      * @param websocket
      *         The web socket.
      *
+     * @param cause
+     *         An exception that represents the error.
+     *
      * @param data
      *         The payload data that failed to be converted to a string.
+     */
+    void onTextMessageError(WebSocket websocket, WebSocketException cause, byte[] data);
+
+
+    /**
+     * Called when an error occurred when a frame was tried to be sent
+     * to the server.
+     *
+     * @param websocket
+     *         The web socket.
      *
      * @param cause
      *         An exception that represents the error.
+     *
+     * @param frame
+     *         The frame which was tried to be sent.
      */
-    void onTextMessageError(WebSocket websocket, byte[] data, WebSocketException cause);
+    void onSendError(WebSocket websocket, WebSocketException cause, WebSocketFrame frame);
+
+
+    /**
+     * Called when an uncaught throwable was detected in either the
+     * reading thread (which reads frames from the server) or the
+     * writing thread (which sends frames to the server).
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param cause
+     *         The cause of the error.
+     */
+    void onUnexpectedError(WebSocket websocket, WebSocketException cause);
 }

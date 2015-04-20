@@ -22,6 +22,8 @@ import static com.neovisionaries.ws.client.WebSocketOpcode.CONTINUATION;
 import static com.neovisionaries.ws.client.WebSocketOpcode.PING;
 import static com.neovisionaries.ws.client.WebSocketOpcode.PONG;
 import static com.neovisionaries.ws.client.WebSocketOpcode.TEXT;
+import static com.neovisionaries.ws.client.WebSocketState.CLOSED;
+import static com.neovisionaries.ws.client.WebSocketState.CLOSING;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -54,6 +56,27 @@ class ReadingThread extends Thread
 
     @Override
     public void run()
+    {
+        try
+        {
+            main();
+        }
+        catch (Throwable t)
+        {
+            // An uncaught throwable was detected in the reading thread.
+            WebSocketException cause = new WebSocketException(
+                WebSocketError.UNEXPECTED_ERROR_IN_READING_THREAD,
+                "An uncaught throwable was detected in the reading thread", t);
+
+            // Notify the listeners.
+            ListenerManager manager = mWebSocket.getListenerManager();
+            manager.callOnError(cause);
+            manager.callOnUnexpectedError(cause);
+        }
+    }
+
+
+    private void main()
     {
         // Notify listeners that the handshake succeeded.
         callOnConnected();
@@ -207,7 +230,8 @@ class ReadingThread extends Thread
                 "Failed to convert payload data into a string.", e);
 
             // Notify the listeners that text message construction failed.
-            callOnTextMessageError(data, wse);
+            callOnError(wse);
+            callOnTextMessageError(wse, data);
         }
     }
 
@@ -233,32 +257,42 @@ class ReadingThread extends Thread
 
 
     /**
-     * Call {@link WebSocketListener#onFrameError(WebSocket, WebSocketFrame,
-     * WebSocketException) onFrameError} method of the listeners.
+     * Call {@link WebSocketListener#onError(WebSocket, WebSocketException)
+     * onError} method of the listeners.
      */
-    private void callOnFrameError(WebSocketFrame frame, WebSocketException cause)
+    private void callOnError(WebSocketException cause)
     {
-        mWebSocket.getListenerManager().callOnFrameError(frame, cause);
+        mWebSocket.getListenerManager().callOnError(cause);
     }
 
 
     /**
-     * Call {@link WebSocketListener#onMessageError(WebSocket, List, WebSocketException)
+     * Call {@link WebSocketListener#onFrameError(WebSocket,
+     * WebSocketException, WebSocketFrame) onFrameError} method of the listeners.
+     */
+    private void callOnFrameError(WebSocketException cause, WebSocketFrame frame)
+    {
+        mWebSocket.getListenerManager().callOnFrameError(cause, frame);
+    }
+
+
+    /**
+     * Call {@link WebSocketListener#onMessageError(WebSocket, WebSocketException, List)
      * onMessageError} method of the listeners.
      */
-    private void callOnMessageError(List<WebSocketFrame> frames, WebSocketException cause)
+    private void callOnMessageError(WebSocketException cause, List<WebSocketFrame> frames)
     {
-        mWebSocket.getListenerManager().callOnMessageError(frames, cause);
+        mWebSocket.getListenerManager().callOnMessageError(cause, frames);
     }
 
 
     /**
-     * Call {@link WebSocketListener#onTextMessageError(WebSocket, byte[], WebSocketException)
+     * Call {@link WebSocketListener#onTextMessageError(WebSocket, WebSocketException, byte[])
      * onTextMessageError} method of the listeners.
      */
-    private void callOnTextMessageError(byte[] data, WebSocketException cause)
+    private void callOnTextMessageError(WebSocketException cause, byte[] data)
     {
-        mWebSocket.getListenerManager().callOnTextMessageError(data, cause);
+        mWebSocket.getListenerManager().callOnTextMessageError(cause, data);
     }
 
 
@@ -310,7 +344,8 @@ class ReadingThread extends Thread
         if (intentionallyInterrupted == false)
         {
             // Notify the listeners that an error occurred while a frame was being read.
-            callOnFrameError(frame, wse);
+            callOnError(wse);
+            callOnFrameError(wse, frame);
 
             // Create a close frame.
             WebSocketFrame closeFrame = createCloseFrame(wse);
@@ -688,7 +723,8 @@ class ReadingThread extends Thread
             "Failed to concatenate payloads of multiple frames to construct a message.", cause);
 
         // Notify the listeners that message construction failed.
-        callOnMessageError(frames, wse);
+        callOnError(wse);
+        callOnMessageError(wse, frames);
 
         // Create a close frame with a close code of 1009 which
         // indicates that the message is too big to process.
@@ -759,8 +795,11 @@ class ReadingThread extends Thread
 
         synchronized (manager)
         {
+            // The current state of the web socket.
+            WebSocketState state = manager.getState();
+
             // If the current state is neither CLOSING nor CLOSED.
-            if (manager.isClosing() == false && manager.isClosed() == false)
+            if (state != CLOSING && state != CLOSED)
             {
                 // Change the state to CLOSING.
                 manager.changeToClosing(CloseInitiator.SERVER);

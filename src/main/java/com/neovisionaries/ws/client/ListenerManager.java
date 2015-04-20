@@ -245,7 +245,7 @@ class ListenerManager
     }
 
 
-    public void callOnFrameError(WebSocketFrame frame, WebSocketException cause)
+    public void callOnFrameUnsent(WebSocketFrame frame)
     {
         synchronized (mListeners)
         {
@@ -253,7 +253,7 @@ class ListenerManager
             {
                 try
                 {
-                    listener.onFrameError(mWebSocket, frame, cause);
+                    listener.onFrameUnsent(mWebSocket, frame);
                 }
                 catch (Throwable t)
                 {
@@ -263,7 +263,7 @@ class ListenerManager
     }
 
 
-    public void callOnMessageError(List<WebSocketFrame> frames, WebSocketException cause)
+    public void callOnError(WebSocketException cause)
     {
         synchronized (mListeners)
         {
@@ -271,7 +271,7 @@ class ListenerManager
             {
                 try
                 {
-                    listener.onMessageError(mWebSocket, frames, cause);
+                    listener.onError(mWebSocket, cause);
                 }
                 catch (Throwable t)
                 {
@@ -281,7 +281,7 @@ class ListenerManager
     }
 
 
-    public void callOnTextMessageError(byte[] data, WebSocketException cause)
+    public void callOnFrameError(WebSocketException cause, WebSocketFrame frame)
     {
         synchronized (mListeners)
         {
@@ -289,7 +289,79 @@ class ListenerManager
             {
                 try
                 {
-                    listener.onTextMessageError(mWebSocket, data, cause);
+                    listener.onFrameError(mWebSocket, cause, frame);
+                }
+                catch (Throwable t)
+                {
+                }
+            }
+        }
+    }
+
+
+    public void callOnMessageError(WebSocketException cause, List<WebSocketFrame> frames)
+    {
+        synchronized (mListeners)
+        {
+            for (WebSocketListener listener : mListeners)
+            {
+                try
+                {
+                    listener.onMessageError(mWebSocket, cause, frames);
+                }
+                catch (Throwable t)
+                {
+                }
+            }
+        }
+    }
+
+
+    public void callOnTextMessageError(WebSocketException cause, byte[] data)
+    {
+        synchronized (mListeners)
+        {
+            for (WebSocketListener listener : mListeners)
+            {
+                try
+                {
+                    listener.onTextMessageError(mWebSocket, cause, data);
+                }
+                catch (Throwable t)
+                {
+                }
+            }
+        }
+    }
+
+
+    public void callOnSendError(WebSocketException cause, WebSocketFrame frame)
+    {
+        synchronized (mListeners)
+        {
+            for (WebSocketListener listener : mListeners)
+            {
+                try
+                {
+                    listener.onSendError(mWebSocket, cause, frame);
+                }
+                catch (Throwable t)
+                {
+                }
+            }
+        }
+    }
+
+
+    public void callOnUnexpectedError(WebSocketException cause)
+    {
+        synchronized (mListeners)
+        {
+            for (WebSocketListener listener : mListeners)
+            {
+                try
+                {
+                    listener.onUnexpectedError(mWebSocket, cause);
                 }
                 catch (Throwable t)
                 {

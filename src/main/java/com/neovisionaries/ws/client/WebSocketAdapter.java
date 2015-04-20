@@ -94,19 +94,43 @@ public class WebSocketAdapter implements WebSocketListener
 
 
     @Override
-    public void onFrameError(WebSocket websocket, WebSocketFrame frame, WebSocketException cause)
+    public void onFrameUnsent(WebSocket websocket, WebSocketFrame frame)
     {
     }
 
 
     @Override
-    public void onMessageError(WebSocket websocket, List<WebSocketFrame> frames, WebSocketException cause)
+    public void onError(WebSocket websocket, WebSocketException cause)
     {
     }
 
 
     @Override
-    public void onTextMessageError(WebSocket websocket, byte[] data, WebSocketException cause)
+    public void onFrameError(WebSocket websocket, WebSocketException cause, WebSocketFrame frame)
+    {
+    }
+
+
+    @Override
+    public void onMessageError(WebSocket websocket, WebSocketException cause, List<WebSocketFrame> frames)
+    {
+    }
+
+
+    @Override
+    public void onTextMessageError(WebSocket websocket, WebSocketException cause, byte[] data)
+    {
+    }
+
+
+    @Override
+    public void onSendError(WebSocket websocket, WebSocketException cause, WebSocketFrame frame)
+    {
+    }
+
+
+    @Override
+    public void onUnexpectedError(WebSocket websocket, WebSocketException cause)
     {
     }
 }

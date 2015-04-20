@@ -16,6 +16,11 @@
 package com.neovisionaries.ws.client;
 
 
+import static com.neovisionaries.ws.client.WebSocketState.CLOSED;
+import static com.neovisionaries.ws.client.WebSocketState.CLOSING;
+import static com.neovisionaries.ws.client.WebSocketState.CONNECTING;
+import static com.neovisionaries.ws.client.WebSocketState.CREATED;
+import static com.neovisionaries.ws.client.WebSocketState.OPEN;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -55,11 +60,12 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * </p>
  *
  * <blockquote>
- * <pre> ws.{@link #addListener(WebSocketListener) addListener}(new {@link
+ * <pre> <span style="color: green;">// Register a listener to receive web socket events.</span>
+ * ws.{@link #addListener(WebSocketListener) addListener}(new {@link
  * WebSocketAdapter#WebSocketAdapter() WebSocketAdapter()} {
  *     {@code @}Override
  *     public void {@link WebSocketListener#onTextMessage(WebSocket, String)
- *     onTextMessage}(WebSocket websocket, String text) {
+ *     onTextMessage}(WebSocket websocket, String message) {
  *         ......
  *     }
  * });</pre>
@@ -67,7 +73,8 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *
  * <p>
  * By calling {@link #connect()} method, an actual connection to the server
- * is made and the opening handshake is performed as described in "<a href=
+ * is made and the <a href="https://tools.ietf.org/html/rfc6455#section-4"
+ * >opening handshake</a> is performed as described in "<a href=
  * "https://tools.ietf.org/html/rfc6455#section-4">4. Opening Handshake</a>"
  * in <a href="https://tools.ietf.org/html/rfc6455">RFC 6455</a>. Before
  * calling {@code connect()} method, you may call {@link #addProtocol(String)}
@@ -133,7 +140,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *
  * <span style="color: green;">// The last frame must be a continuation frame with the FIN bit set.
  * // Note that the FIN bit of frames returned from
- * // WebSocketFrame.reateContinuationFrame methods is cleared, so
+ * // WebSocketFrame.createContinuationFrame methods is cleared, so
  * // the FIN bit of the last frame must be set explicitly.</span>
  * WebSocketFrame lastFrame = WebSocketFrame
  *     .{@link WebSocketFrame#createContinuationFrame(String) createContinuationFrame
@@ -147,6 +154,19 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * </pre>
  * </blockquote>
  *
+ * <p>
+ * A web socket connection is closed when it receives a close frame
+ * from the server or an error occurred. If you want to <a href=
+ * "https://tools.ietf.org/html/rfc6455#section-4">close the
+ * connection</a> from the client size, call {@link #disconnect()}
+ * method.
+ * </p>
+ *
+ * <blockquote>
+ * <pre> <span style="color: green;">// Close the web socket connection.</span>
+ * ws.{@link #disconnect()};</pre>
+ * </blockquote>
+ *
  * @see <a href="https://tools.ietf.org/html/rfc6455">RFC 6455 (The WebSocket Protocol)</a>
  */
 public class WebSocket
@@ -156,7 +176,6 @@ public class WebSocket
     private final StateManager mStateManager;
     private final HandshakeBuilder mHandshakeBuilder;
     private final ListenerManager mListenerManager;
-    private final Object mSendFrameLock = new Object();
     private final Object mThreadsLock = new Object();
     private WebSocketInputStream mInput;
     private WebSocketOutputStream mOutput;
@@ -292,9 +311,9 @@ public class WebSocket
      * and opcode of frames are not checked. On the other hand,
      * if not allowed (default), non-zero values for RSV1/RSV2/RSV3
      * bits and unknown opcodes cause an error. In such a case,
-     * {@link WebSocketListener#onFrameError(WebSocket, WebSocketFrame,
-     * WebSocketException) onFrameError} method of listeners are
-     * called and the web socket is eventually closed.
+     * {@link WebSocketListener#onFrameError(WebSocket,
+     * WebSocketException, WebSocketFrame) onFrameError} method of
+     * listeners are called and the web socket is eventually closed.
      * </p>
      *
      * @return
@@ -377,6 +396,9 @@ public class WebSocket
      * call {@code setUserInfo} method.
      * </p>
      *
+     * @return
+     *         {@code this} object.
+     *
      * @throws WebSocketException
      *         <ul>
      *           <li>The current state of the web socket is not {@link
@@ -385,7 +407,7 @@ public class WebSocket
      *           <li>The opening handshake failed.
      *         </ul>
      */
-    public void connect() throws WebSocketException
+    public WebSocket connect() throws WebSocketException
     {
         // Change the state to CONNECTING. If the state before
         // the change is not CREATED, an exception is thrown.
@@ -402,30 +424,47 @@ public class WebSocket
         catch (WebSocketException e)
         {
             // Change the state to CLOSED.
-            mStateManager.changeToClosed();
+            mStateManager.setState(CLOSED);
 
             // The handshake failed.
             throw e;
         }
 
         // Change the state to OPEN.
-        mStateManager.changeToOpen();
+        mStateManager.setState(OPEN);
 
         // Start threads that communicate with the server.
         startThreads(headers);
+
+        return this;
     }
 
 
     /**
      * Disconnect the web socket.
+     *
+     * @return
+     *         {@code this} object.
      */
-    public void disconnect()
+    public WebSocket disconnect()
     {
         synchronized (mStateManager)
         {
-            if (mStateManager.isOpen() == false)
+            if (mStateManager.getState() != OPEN)
             {
-                return;
+                // - CREATED
+                //     There is no connection to disconnect.
+                //
+                // - CONNECTING
+                //     It won't happen unless the programmer calls
+                //     open() and disconnect() in parallel.
+                //
+                // - CLOSING
+                //     A closing handshake has already been started.
+                //
+                // - CLOSED
+                //     The connection has already been closed.
+                return this;
             }
 
             // Change the state to CLOSING.
@@ -442,6 +481,8 @@ public class WebSocket
 
         // Request the threads to stop.
         stopThreads();
+
+        return this;
     }
 
 
@@ -482,18 +523,60 @@ public class WebSocket
     /**
      * Send a web socket frame to the server.
      *
+     * <p>
+     * This method just queues the given frame. Actual transmission
+     * is performed asynchronously.
+     * </p>
+     *
+     * <p>
+     * When the current state of this web socket is not {@link
+     * WebSocketState#OPEN OPEN}, this method does not accept
+     * the frame.
+     * </p>
+     *
+     * <p>
+     * Sending a <a href="https://tools.ietf.org/html/rfc6455#section-5.5.1"
+     * >close frame</a> changes the state to {@link WebSocketState#CLOSING
+     * CLOSING} (if the current state is neither {@link WebSocketState#CLOSING
+     * CLOSING} nor {@link WebSocketState#CLOSED CLOSED}).
+     * </p>
+     *
+     * <p>
+     * Note that the validity of the give frame is not checked.
+     * For example, even if the payload length of a given frame
+     * is greater than 125 and the opcode indicates that the
+     * frame is a control frame, this method accepts the given
+     * frame.
+     * </p>
+     *
      * @param frame
      *         A web socket frame to be sent to the server.
+     *         If {@code null} is given, nothing is done.
+     *
+     * @return
+     *         {@code this} object.
      */
-    public void sendFrame(WebSocketFrame frame)
+    public WebSocket sendFrame(WebSocketFrame frame)
     {
-        synchronized (mSendFrameLock)
+        if (frame == null)
         {
-            if (mWritingThread != null)
-            {
-                mWritingThread.sendFrame(frame);
-            }
+            return this;
         }
+
+        synchronized (mStateManager)
+        {
+            WebSocketState state = mStateManager.getState();
+
+            if (state != OPEN && state != CLOSING)
+            {
+                return this;
+            }
+
+            // Queue the frame.
+            mWritingThread.queueFrame(frame);
+        }
+
+        return this;
     }
 
 
@@ -508,10 +591,13 @@ public class WebSocket
      *
      * @param message
      *         A text message to be sent to the server.
+     *
+     * @return
+     *         {@code this} object.
      */
-    public void sendText(String message)
+    public WebSocket sendText(String message)
     {
-        sendFrame(WebSocketFrame.createTextFrame(message));
+        return sendFrame(WebSocketFrame.createTextFrame(message));
     }
 
 
@@ -526,10 +612,13 @@ public class WebSocket
      *
      * @param message
      *         A binary message to be sent to the server.
+     *
+     * @return
+     *         {@code this} object.
      */
-    public void sendBinary(byte[] message)
+    public WebSocket sendBinary(byte[] message)
     {
-        sendFrame(WebSocketFrame.createBinaryFrame(message));
+        return sendFrame(WebSocketFrame.createBinaryFrame(message));
     }
 
 
@@ -540,10 +629,13 @@ public class WebSocket
      * This method is an alias of {@link #sendFrame(WebSocketFrame)
      * sendFrame}({@link WebSocketFrame#createCloseFrame()}).
      * </p>
+     *
+     * @return
+     *         {@code this} object.
      */
-    public void sendClose()
+    public WebSocket sendClose()
     {
-        sendFrame(WebSocketFrame.createCloseFrame());
+        return sendFrame(WebSocketFrame.createCloseFrame());
     }
 
 
@@ -559,11 +651,14 @@ public class WebSocket
      * @param closeCode
      *         The close code.
      *
+     * @return
+     *         {@code this} object.
+     *
      * @see WebSocketCloseCode
      */
-    public void sendClose(int closeCode)
+    public WebSocket sendClose(int closeCode)
     {
-        sendFrame(WebSocketFrame.createCloseFrame(closeCode));
+        return sendFrame(WebSocketFrame.createCloseFrame(closeCode));
     }
 
 
@@ -581,12 +676,18 @@ public class WebSocket
      *
      * @param reason
      *         The close reason.
+     *         Note that a control frame's payload length must be 125 bytes or less
+     *         (RFC 6455, <a href="https://tools.ietf.org/html/rfc6455#section-5.5"
+     *         >5.5. Control Frames</a>).
+     *
+     * @return
+     *         {@code this} object.
      *
      * @see WebSocketCloseCode
      */
-    public void sendClose(int closeCode, String reason)
+    public WebSocket sendClose(int closeCode, String reason)
     {
-        sendFrame(WebSocketFrame.createCloseFrame(closeCode, reason));
+        return sendFrame(WebSocketFrame.createCloseFrame(closeCode, reason));
     }
 
 
@@ -597,10 +698,13 @@ public class WebSocket
      * This method is an alias of {@link #sendFrame(WebSocketFrame)
      * sendFrame}({@link WebSocketFrame#createPingFrame()}).
      * </p>
+     *
+     * @return
+     *         {@code this} object.
      */
-    public void sendPing()
+    public WebSocket sendPing()
     {
-        sendFrame(WebSocketFrame.createPingFrame());
+        return sendFrame(WebSocketFrame.createPingFrame());
     }
 
 
@@ -615,10 +719,16 @@ public class WebSocket
      *
      * @param payload
      *         The payload for a ping frame.
+     *         Note that a control frame's payload length must be 125 bytes or less
+     *         (RFC 6455, <a href="https://tools.ietf.org/html/rfc6455#section-5.5"
+     *         >5.5. Control Frames</a>).
+     *
+     * @return
+     *         {@code this} object.
      */
-    public void sendPing(byte[] payload)
+    public WebSocket sendPing(byte[] payload)
     {
-        sendFrame(WebSocketFrame.createPingFrame(payload));
+        return sendFrame(WebSocketFrame.createPingFrame(payload));
     }
 
 
@@ -633,10 +743,16 @@ public class WebSocket
      *
      * @param payload
      *         The payload for a ping frame.
+     *         Note that a control frame's payload length must be 125 bytes or less
+     *         (RFC 6455, <a href="https://tools.ietf.org/html/rfc6455#section-5.5"
+     *         >5.5. Control Frames</a>).
+     *
+     * @return
+     *         {@code this} object.
      */
-    public void sendPing(String payload)
+    public WebSocket sendPing(String payload)
     {
-        sendFrame(WebSocketFrame.createPingFrame(payload));
+        return sendFrame(WebSocketFrame.createPingFrame(payload));
     }
 
 
@@ -647,10 +763,13 @@ public class WebSocket
      * This method is an alias of {@link #sendFrame(WebSocketFrame)
      * sendFrame}({@link WebSocketFrame#createPongFrame()}).
      * </p>
+     *
+     * @return
+     *         {@code this} object.
      */
-    public void sendPong()
+    public WebSocket sendPong()
     {
-        sendFrame(WebSocketFrame.createPongFrame());
+        return sendFrame(WebSocketFrame.createPongFrame());
     }
 
 
@@ -665,10 +784,16 @@ public class WebSocket
      *
      * @param payload
      *         The payload for a pong frame.
+     *         Note that a control frame's payload length must be 125 bytes or less
+     *         (RFC 6455, <a href="https://tools.ietf.org/html/rfc6455#section-5.5"
+     *         >5.5. Control Frames</a>).
+     *
+     * @return
+     *         {@code this} object.
      */
-    public void sendPong(byte[] payload)
+    public WebSocket sendPong(byte[] payload)
     {
-        sendFrame(WebSocketFrame.createPongFrame(payload));
+        return sendFrame(WebSocketFrame.createPongFrame(payload));
     }
 
 
@@ -683,10 +808,16 @@ public class WebSocket
      *
      * @param payload
      *         The payload for a pong frame.
+     *         Note that a control frame's payload length must be 125 bytes or less
+     *         (RFC 6455, <a href="https://tools.ietf.org/html/rfc6455#section-5.5"
+     *         >5.5. Control Frames</a>).
+     *
+     * @return
+     *         {@code this} object.
      */
-    public void sendPong(String payload)
+    public WebSocket sendPong(String payload)
     {
-        sendFrame(WebSocketFrame.createPongFrame(payload));
+        return sendFrame(WebSocketFrame.createPongFrame(payload));
     }
 
 
@@ -695,7 +826,7 @@ public class WebSocket
         synchronized (mStateManager)
         {
             // If the current state is not CREATED.
-            if (mStateManager.isCreated() == false)
+            if (mStateManager.getState() != CREATED)
             {
                 throw new WebSocketException(
                     WebSocketError.NOT_IN_CREATED_STATE,
@@ -703,7 +834,7 @@ public class WebSocket
             }
 
             // Change the state to CONNECTING.
-            mStateManager.changeToConnecting();
+            mStateManager.setState(CONNECTING);
         }
     }
 
