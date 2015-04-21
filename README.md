@@ -142,7 +142,7 @@ WebSocketFrame firstFrame = WebSocketFrame
 
 // Subsequent frames must be continuation frames. The FIN bit of
 // all continuation frames except the last one must be cleared.
-// Notethat the FIN bit of frames returned from
+// Note that the FIN bit of frames returned from
 // WebSocketFrame.createContinuationFrame() method is cleared,
 // so the example below does not clear the FIN bit explicitly.
 WebSocketFrame secondFrame = WebSocketFrame
