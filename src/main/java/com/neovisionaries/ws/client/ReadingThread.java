@@ -492,7 +492,7 @@ class ReadingThread extends Thread
         }
 
         // True if a continuation has already started.
-        boolean continuationExists = (mContinuation.size() == 0);
+        boolean continuationExists = (mContinuation.size() != 0);
 
         // If the frame is a continuation frame.
         if (frame.isContinuationFrame())

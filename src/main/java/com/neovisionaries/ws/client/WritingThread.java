@@ -205,6 +205,26 @@ class WritingThread extends Thread
             // Send the frame to the server.
             sendFrame(frame);
         }
+
+        try
+        {
+            // Flush
+            mWebSocket.getOutput().flush();
+        }
+        catch (IOException e)
+        {
+            // Flushing frames to the server failed.
+            WebSocketException cause = new WebSocketException(
+                WebSocketError.FLUSH_ERROR,
+                "Flushing frames to the server failed", e);
+
+            // Notify the listeners.
+            ListenerManager manager = mWebSocket.getListenerManager();
+            manager.callOnError(cause);
+            manager.callOnSendError(cause, null);
+
+            throw cause;
+        }
     }
 
 
@@ -261,6 +281,9 @@ class WritingThread extends Thread
 
             throw cause;
         }
+
+        // Notify the listeners that the frame was sent.
+        mWebSocket.getListenerManager().callOnFrameSent(frame);
     }
 
 

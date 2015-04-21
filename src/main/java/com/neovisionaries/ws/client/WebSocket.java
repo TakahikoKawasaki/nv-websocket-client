@@ -204,6 +204,17 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * </blockquote>
  *
  * <p>
+ * Alternatively, the same as above can be done like this.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Send a text message which consists of 3 frames.</span>
+ * ws.{@link #sendText(String, boolean) sendText}(<span style="color: darkred;">"How "</span>, false)
+ *   .{@link #sendContinuation(String) sendContinuation}(<span style="color: darkred;">"are "</span>)
+ *   .{@link #sendContinuation(String, boolean) sendContinuation}(<span style="color: darkred;">"you?"</span>, true);</pre>
+ * </blockquote>
+ *
+ * <p>
  * Before a web socket is closed, a closing handshake is performed. A closing handshake
  * is started (1) when the server sends a close frame to the client or (2) when the
  * client sends a close frame to the server. You can start a closing handshake by calling
@@ -631,12 +642,177 @@ public class WebSocket
 
 
     /**
+     * Send a continuation frame to the server.
+     *
+     * <p>
+     * This method is an alias of {@link #sendFrame(WebSocketFrame)
+     * sendFrame}{@code (WebSocketFrame.}{@link
+     * WebSocketFrame#createContinuationFrame()
+     * createContinuationFrame()}{@code )}.
+     * </p>
+     *
+     * <p>
+     * Note that the FIN bit of a frame sent by this method is {@code false}.
+     * If you want to set the FIN bit, use {@link #sendContinuation(boolean)
+     * sendContinuation(boolean fin)} with {@code fin=true}.
+     * </p>
+     *
+     * @return
+     *         {@code this} object.
+     */
+    public WebSocket sendContinuation()
+    {
+        return sendFrame(WebSocketFrame.createContinuationFrame());
+    }
+
+
+    /**
+     * Send a continuation frame to the server.
+     *
+     * <p>
+     * This method is an alias of {@link #sendFrame(WebSocketFrame)
+     * sendFrame}{@code (WebSocketFrame.}{@link
+     * WebSocketFrame#createContinuationFrame()
+     * createContinuationFrame()}{@code .}{@link
+     * WebSocketFrame#setFin(boolean) setFin}{@code (fin))}.
+     * </p>
+     *
+     * @param fin
+     *         The FIN bit value.
+     *
+     * @return
+     *         {@code this} object.
+     */
+    public WebSocket sendContinuation(boolean fin)
+    {
+        return sendFrame(WebSocketFrame.createContinuationFrame().setFin(fin));
+    }
+
+
+    /**
+     * Send a continuation frame to the server.
+     *
+     * <p>
+     * This method is an alias of {@link #sendFrame(WebSocketFrame)
+     * sendFrame}{@code (WebSocketFrame.}{@link
+     * WebSocketFrame#createContinuationFrame(String)
+     * createContinuationFrame}{@code (payload))}.
+     * </p>
+     *
+     * <p>
+     * Note that the FIN bit of a frame sent by this method is {@code false}.
+     * If you want to set the FIN bit, use {@link #sendContinuation(String,
+     * boolean) sendContinuation(String payload, boolean fin)} with {@code
+     * fin=true}.
+     * </p>
+     *
+     * @param payload
+     *         The payload of a continuation frame.
+     *
+     * @return
+     *         {@code this} object.
+     */
+    public WebSocket sendContinuation(String payload)
+    {
+        return sendFrame(WebSocketFrame.createContinuationFrame(payload));
+    }
+
+
+    /**
+     * Send a continuation frame to the server.
+     *
+     * <p>
+     * This method is an alias of {@link #sendFrame(WebSocketFrame)
+     * sendFrame}{@code (WebSocketFrame.}{@link
+     * WebSocketFrame#createContinuationFrame(String)
+     * createContinuationFrame}{@code (payload).}{@link
+     * WebSocketFrame#setFin(boolean) setFin}{@code (fin))}.
+     * </p>
+     *
+     * @param payload
+     *         The payload of a continuation frame.
+     *
+     * @param fin
+     *         The FIN bit value.
+     *
+     * @return
+     *         {@code this} object.
+     */
+    public WebSocket sendContinuation(String payload, boolean fin)
+    {
+        return sendFrame(WebSocketFrame.createContinuationFrame(payload).setFin(fin));
+    }
+
+
+    /**
+     * Send a continuation frame to the server.
+     *
+     * <p>
+     * This method is an alias of {@link #sendFrame(WebSocketFrame)
+     * sendFrame}{@code (WebSocketFrame.}{@link
+     * WebSocketFrame#createContinuationFrame(byte[])
+     * createContinuationFrame}{@code (payload))}.
+     * </p>
+     *
+     * <p>
+     * Note that the FIN bit of a frame sent by this method is {@code false}.
+     * If you want to set the FIN bit, use {@link #sendContinuation(byte[],
+     * boolean) sendContinuation(byte[] payload, boolean fin)} with {@code
+     * fin=true}.
+     * </p>
+     *
+     * @param payload
+     *         The payload of a continuation frame.
+     *
+     * @return
+     *         {@code this} object.
+     */
+    public WebSocket sendContinuation(byte[] payload)
+    {
+        return sendFrame(WebSocketFrame.createContinuationFrame(payload));
+    }
+
+
+    /**
+     * Send a continuation frame to the server.
+     *
+     * <p>
+     * This method is an alias of {@link #sendFrame(WebSocketFrame)
+     * sendFrame}{@code (WebSocketFrame.}{@link
+     * WebSocketFrame#createContinuationFrame(byte[])
+     * createContinuationFrame}{@code (payload).}{@link
+     * WebSocketFrame#setFin(boolean) setFin}{@code (fin))}.
+     * </p>
+     *
+     * @param payload
+     *         The payload of a continuation frame.
+     *
+     * @param fin
+     *         The FIN bit value.
+     *
+     * @return
+     *         {@code this} object.
+     */
+    public WebSocket sendContinuation(byte[] payload, boolean fin)
+    {
+        return sendFrame(WebSocketFrame.createContinuationFrame(payload).setFin(fin));
+    }
+
+
+    /**
      * Send a text message to the server.
      *
      * <p>
      * This method is an alias of {@link #sendFrame(WebSocketFrame)
-     * sendFrame}({@link WebSocketFrame#createTextFrame(String)
-     * WebSocketFrame.createTextFrame}(message)).
+     * sendFrame}{@code (WebSocketFrame.}{@link
+     * WebSocketFrame#createTextFrame(String)
+     * createTextFrame}{@code (message))}.
+     * </p>
+     *
+     * <p>
+     * If you want to send a text frame that are to be followed by
+     * continuation frames, use {@link #sendText(String, boolean)
+     * setText(String payload, boolean fin)} with {@code fin=false}.
      * </p>
      *
      * @param message
@@ -652,12 +828,45 @@ public class WebSocket
 
 
     /**
+     * Send a text frame to the server.
+     *
+     * <p>
+     * This method is an alias of {@link #sendFrame(WebSocketFrame)
+     * sendFrame}{@code (WebSocketFrame.}{@link
+     * WebSocketFrame#createTextFrame(String)
+     * createTextFrame}{@code (payload).}{@link
+     * WebSocketFrame#setFin(boolean) setFin}{@code (fin))}.
+     * </p>
+     *
+     * @param payload
+     *         The payload of a text frame.
+     *
+     * @param fin
+     *         The FIN bit value.
+     *
+     * @return
+     *         {@code this} object.
+     */
+    public WebSocket sendText(String payload, boolean fin)
+    {
+        return sendFrame(WebSocketFrame.createTextFrame(payload).setFin(fin));
+    }
+
+
+    /**
      * Send a binary message to the server.
      *
      * <p>
      * This method is an alias of {@link #sendFrame(WebSocketFrame)
-     * sendFrame}({@link WebSocketFrame#createBinaryFrame(byte[])
-     * WebSocketFrame.createBinaryFrame}(message)).
+     * sendFrame}{@code (WebSocketFrame.}{@link
+     * WebSocketFrame#createBinaryFrame(byte[])
+     * createBinaryFrame}{@code (message))}.
+     * </p>
+     *
+     * <p>
+     * If you want to send a binary frame that are to be followed by
+     * continuation frames, use {@link #sendBinary(byte[], boolean)
+     * setBinary(byte[] payload, boolean fin)} with {@code fin=false}.
      * </p>
      *
      * @param message
@@ -673,11 +882,38 @@ public class WebSocket
 
 
     /**
+     * Send a binary frame to the server.
+     *
+     * <p>
+     * This method is an alias of {@link #sendFrame(WebSocketFrame)
+     * sendFrame}{@code (WebSocketFrame.}{@link
+     * WebSocketFrame#createBinaryFrame(byte[])
+     * createBinaryFrame}{@code (payload).}{@link
+     * WebSocketFrame#setFin(boolean) setFin}{@code (fin))}.
+     * </p>
+     *
+     * @param payload
+     *         The payload of a binary frame.
+     *
+     * @param fin
+     *         The FIN bit value.
+     *
+     * @return
+     *         {@code this} object.
+     */
+    public WebSocket sendBinary(byte[] payload, boolean fin)
+    {
+        return sendFrame(WebSocketFrame.createBinaryFrame(payload).setFin(fin));
+    }
+
+
+    /**
      * Send a close frame to the server.
      *
      * <p>
      * This method is an alias of {@link #sendFrame(WebSocketFrame)
-     * sendFrame}({@link WebSocketFrame#createCloseFrame()}).
+     * sendFrame}{@code (WebSocketFrame.}{@link
+     * WebSocketFrame#createCloseFrame() createCloseFrame()}).
      * </p>
      *
      * @return
@@ -694,8 +930,9 @@ public class WebSocket
      *
      * <p>
      * This method is an alias of {@link #sendFrame(WebSocketFrame)
-     * sendFrame}({@link WebSocketFrame#createCloseFrame(int)
-     * WebSocketFrame.createCloseFrame}(closeCode)).
+     * sendFrame}{@code (WebSocketFrame.}{@link
+     * WebSocketFrame#createCloseFrame(int)
+     * createCloseFrame}{@code (closeCode))}.
      * </p>
      *
      * @param closeCode
@@ -717,8 +954,9 @@ public class WebSocket
      *
      * <p>
      * This method is an alias of {@link #sendFrame(WebSocketFrame)
-     * sendFrame}({@link WebSocketFrame#createCloseFrame(int, String)
-     * WebSocketFrame.createCloseFrame}(closeCode, reason)).
+     * sendFrame}{@code (WebSocketFrame.}{@link
+     * WebSocketFrame#createCloseFrame(int, String)
+     * createCloseFrame}{@code (closeCode, reason))}.
      * </p>
      *
      * @param closeCode
@@ -746,7 +984,8 @@ public class WebSocket
      *
      * <p>
      * This method is an alias of {@link #sendFrame(WebSocketFrame)
-     * sendFrame}({@link WebSocketFrame#createPingFrame()}).
+     * sendFrame}{@code (WebSocketFrame.}{@link
+     * WebSocketFrame#createPingFrame() createPingFrame()}).
      * </p>
      *
      * @return
@@ -763,8 +1002,9 @@ public class WebSocket
      *
      * <p>
      * This method is an alias of {@link #sendFrame(WebSocketFrame)
-     * sendFrame}({@link WebSocketFrame#createPingFrame(byte[])
-     * WebSocketFrame.createPingFrame}(payload)).
+     * sendFrame}{@code (WebSocketFrame.}{@link
+     * WebSocketFrame#createPingFrame(byte[])
+     * createPingFrame}{@code (payload))}.
      * </p>
      *
      * @param payload
@@ -787,8 +1027,9 @@ public class WebSocket
      *
      * <p>
      * This method is an alias of {@link #sendFrame(WebSocketFrame)
-     * sendFrame}({@link WebSocketFrame#createPingFrame(String)
-     * WebSocketFrame.createPingFrame}(payload)).
+     * sendFrame}{@code (WebSocketFrame.}{@link
+     * WebSocketFrame#createPingFrame(String)
+     * createPingFrame}{@code (payload))}.
      * </p>
      *
      * @param payload
@@ -811,7 +1052,8 @@ public class WebSocket
      *
      * <p>
      * This method is an alias of {@link #sendFrame(WebSocketFrame)
-     * sendFrame}({@link WebSocketFrame#createPongFrame()}).
+     * sendFrame}{@code (WebSocketFrame.}{@link
+     * WebSocketFrame#createPongFrame() createPongFrame()}).
      * </p>
      *
      * @return
@@ -828,8 +1070,9 @@ public class WebSocket
      *
      * <p>
      * This method is an alias of {@link #sendFrame(WebSocketFrame)
-     * sendFrame}({@link WebSocketFrame#createPongFrame(byte[])
-     * WebSocketFrame.createPongFrame}(payload)).
+     * sendFrame}{@code (WebSocketFrame.}{@link
+     * WebSocketFrame#createPongFrame(byte[])
+     * createPongFrame}{@code (payload))}.
      * </p>
      *
      * @param payload
@@ -852,8 +1095,9 @@ public class WebSocket
      *
      * <p>
      * This method is an alias of {@link #sendFrame(WebSocketFrame)
-     * sendFrame}({@link WebSocketFrame#createPongFrame(String)
-     * WebSocketFrame.createPongFrame}(payload)).
+     * sendFrame}{@code (WebSocketFrame.}{@link
+     * WebSocketFrame#createPongFrame(String)
+     * createPongFrame}{@code (payload))}.
      * </p>
      *
      * @param payload
@@ -968,6 +1212,7 @@ public class WebSocket
      * </blockquote>
      *
      * @return
+     *         A randomly generated web socket key.
      */
     private static String generateWebSocketKey()
     {

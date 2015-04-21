@@ -162,6 +162,14 @@ ws.sendFrame(firstFrame)
   .sendFrame(lastFrame);
 ```
 
+Alternatively, the same as above can be done like this.
+
+```java
+ws.sendText("How ", false)
+  .sendContinuation("are ")
+  .sendContinuation("you?", true);
+```
+
 Before a web socket is closed, a closing handshake is performed. A closing
 handshake is started (1) when the server sends a close frame to the client
 or (2) when the client sends a close frame to the server. You can start a
@@ -188,10 +196,10 @@ See Also
 - [RFC 6455](https://tools.ietf.org/html/rfc6455)
 
 
-Note
+TODO
 ----
 
-Not tested enough.
+Proxy support.
 
 
 Author

@@ -184,9 +184,27 @@ public interface WebSocketListener
 
 
     /**
+     * Called when a web socket frame was sent to the server
+     * (but not flushed yet).
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param frame
+     *         The sent frame.
+     */
+    void onFrameSent(WebSocket websocket, WebSocketFrame frame);
+
+
+    /**
      * Called when a web socket frame was not sent to the server
-     * because a close frame has already been sent (or at least
-     * tried to be sent).
+     * because a close frame has already been sent.
+     *
+     * <p>
+     * Note that {@code onFrameUnsent} is not called when {@link
+     * #onSendError(WebSocket, WebSocketException, WebSocketFrame)
+     * onSendError} is called.
+     * </p>
      *
      * @param websocket
      *         The web socket.
@@ -278,7 +296,9 @@ public interface WebSocketListener
      *         An exception that represents the error.
      *
      * @param frame
-     *         The frame which was tried to be sent.
+     *         The frame which was tried to be sent. This is {@code null}
+     *         when the error code of the exception is {@link
+     *         WebSocketError#FLUSH_ERROR FLUSH_ERROR}.
      */
     void onSendError(WebSocket websocket, WebSocketException cause, WebSocketFrame frame);
 

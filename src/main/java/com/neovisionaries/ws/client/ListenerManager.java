@@ -248,6 +248,24 @@ class ListenerManager
     }
 
 
+    public void callOnFrameSent(WebSocketFrame frame)
+    {
+        synchronized (mListeners)
+        {
+            for (WebSocketListener listener : mListeners)
+            {
+                try
+                {
+                    listener.onFrameSent(mWebSocket, frame);
+                }
+                catch (Throwable t)
+                {
+                }
+            }
+        }
+    }
+
+
     public void callOnFrameUnsent(WebSocketFrame frame)
     {
         synchronized (mListeners)

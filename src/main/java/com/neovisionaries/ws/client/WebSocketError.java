@@ -180,6 +180,12 @@ public enum WebSocketError
 
 
     /**
+     * Flushing frames to the server failed.
+     */
+    FLUSH_ERROR,
+
+
+    /**
      * At least one of the reserved bits of a frame is set.
      *
      * <blockquote>

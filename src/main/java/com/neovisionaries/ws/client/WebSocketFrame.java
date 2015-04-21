@@ -445,6 +445,24 @@ public class WebSocketFrame
 
 
     /**
+     * Get the unmasked payload as a text.
+     *
+     * @return
+     *         A string constructed by interrupting the payload
+     *         as a UTF-8 bytes.
+     */
+    public String getPayloadText()
+    {
+        if (mPayload == null)
+        {
+            return null;
+        }
+
+        return Misc.toStringUTF8(mPayload);
+    }
+
+
+    /**
      * Set the unmasked payload.
      *
      * <p>
@@ -619,6 +637,35 @@ public class WebSocketFrame
         }
 
         return Misc.toStringUTF8(mPayload, 2, mPayload.length - 2);
+    }
+
+
+    @Override
+    public String toString()
+    {
+        StringBuilder builder = new StringBuilder()
+            .append("WebSocketFrame(FIN=").append(mFin ? "1" : "0")
+            .append(",RSV1=").append(mRsv1 ? "1" : "0")
+            .append(",RSV2=").append(mRsv2 ? "1" : "0")
+            .append(",RSV3=").append(mRsv3 ? "1" : "0")
+            .append(",Opcode=").append(Misc.toOpcodeName(mOpcode))
+            .append(",Length=").append(getPayloadLength());
+
+        switch (mOpcode)
+        {
+            case TEXT:
+                builder
+                    .append(",Payload=\"").append(getPayloadText()).append("\"");
+                break;
+
+            case CLOSE:
+                builder
+                    .append(",CloseCode=").append(getCloseCode())
+                    .append(",Reason=\"").append(getCloseReason()).append("\"");
+                break;
+        }
+
+        return builder.append(")").toString();
     }
 
 

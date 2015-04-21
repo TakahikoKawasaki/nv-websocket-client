@@ -16,6 +16,12 @@
 package com.neovisionaries.ws.client;
 
 
+import static com.neovisionaries.ws.client.WebSocketOpcode.BINARY;
+import static com.neovisionaries.ws.client.WebSocketOpcode.CLOSE;
+import static com.neovisionaries.ws.client.WebSocketOpcode.CONTINUATION;
+import static com.neovisionaries.ws.client.WebSocketOpcode.PING;
+import static com.neovisionaries.ws.client.WebSocketOpcode.PONG;
+import static com.neovisionaries.ws.client.WebSocketOpcode.TEXT;
 import java.io.UnsupportedEncodingException;
 import java.security.SecureRandom;
 
@@ -96,5 +102,45 @@ class Misc
         byte[] buffer = new byte[nBytes];
 
         return nextBytes(buffer);
+    }
+
+
+    public static String toOpcodeName(int opcode)
+    {
+        switch (opcode)
+        {
+            case CONTINUATION:
+                return "CONTINUATION";
+
+            case TEXT:
+                return "TEXT";
+
+            case BINARY:
+                return "BINARY";
+
+            case CLOSE:
+                return "CLOSE";
+
+            case PING:
+                return "PING";
+
+            case PONG:
+                return "PONG";
+
+            default:
+                break;
+        }
+
+        if (0x1 <= opcode && opcode <= 0x7)
+        {
+            return String.format("DATA(0x%X)", opcode);
+        }
+
+        if (0x8 <= opcode && opcode <= 0xF)
+        {
+            return String.format("CONTROL(0x%X)", opcode);
+        }
+
+        return String.format("0x%X", opcode);
     }
 }
