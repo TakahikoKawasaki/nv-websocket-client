@@ -85,7 +85,7 @@ instance by using the following methods.
 |----------------|--------------------------------------------------------|
 | `addProtocol`  | Adds an element to `Sec-WebSocket-Protocol`.           |
 | `addExtension` | Adds an element to `Sec-WebSocket-Extensions`.         |
-| `addHeaer`     | Adds an arbitrary HTTP header.                         |
+| `addHeader`    | Adds an arbitrary HTTP header.                         |
 | `setUserInfo`  | Adds `Authorization` header for Basic Authentication.  |
 | `getSocket`    | Gets the underlying `Socket` instance to configure it. |
 | `setExtended`  | Disables validity checks on RSV1/RSV2/RSV3 and opcode. |
