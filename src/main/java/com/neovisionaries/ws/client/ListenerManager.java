@@ -65,7 +65,9 @@ class ListenerManager
     }
 
 
-    public void callOnDisconnected()
+    public void callOnDisconnected(
+        WebSocketFrame serverCloseFrame, WebSocketFrame clientCloseFrame,
+        boolean closedByServer)
     {
         synchronized (mListeners)
         {
@@ -73,7 +75,8 @@ class ListenerManager
             {
                 try
                 {
-                    listener.onDisconnected(mWebSocket);
+                    listener.onDisconnected(
+                        mWebSocket, serverCloseFrame, clientCloseFrame, closedByServer);
                 }
                 catch (Throwable t)
                 {

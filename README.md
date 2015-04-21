@@ -7,7 +7,7 @@ Overview
 High-quality WebSocket client implementation in Java which
 
 - complies with [RFC 6455](http://tools.ietf.org/html/rfc6455) (The WebSocket Protocol),
-- works on Android,
+- works on Java SE 1.5+ and Android,
 - supports all the frame types (continuation/binary/text/close/ping/pong),
 - provides a method to send a fragmented frame in addition to methods for unfragmented frames,
 - provides a method to get the underlying raw socket of a web socket to configure it,
@@ -53,9 +53,8 @@ Description
 
 `WebSocket` class represents a web socket. Its instances are created by calling
 one of `createSocket` methods of a `WebSocketFactory` instance. `WebSocketFactory`
-class provides methods to configure the underlying socket factories (see the
-JavaDoc for details). Below is the simplest example to create a `WebSocket`
-instance.
+class provides methods such as `setSSLSocketFactory` to configure the underlying
+socket factories. Below is the simplest example to create a `WebSocket` instance.
 
 ```java
 // Create a web socket. The scheme part can be one of the following:
@@ -89,15 +88,14 @@ instance by using the following methods.
 | `addHeaer`     | Adds an arbitrary HTTP header.                         |
 | `setUserInfo`  | Adds `Authorization` header for Basic Authentication.  |
 | `getSocket`    | Gets the underlying `Socket` instance to configure it. |
-| `setExtended`  | Disable validity checks on RSV1/RSV2/RSV3 and opcode.  |
+| `setExtended`  | Disables validity checks on RSV1/RSV2/RSV3 and opcode. |
 
 By calling `connect()` method, an actual connection to the server is made and
 the [opening handshake](https://tools.ietf.org/html/rfc6455#section-4) is
 performed synchronously. When a connection could not be made or a protocol
-error was detected during the handshake, a `WebSocketException` exception is
-thrown. Instead, when the handshake succeeded, the `connect()` implementation
-creates threads and starts them to read and write web socket frames
-asynchronously.
+error was detected during the handshake, a `WebSocketException` is thrown.
+Instead, when the handshake succeeded, the `connect()` implementation creates
+threads and starts them to read and write web socket frames asynchronously.
 
 ```java
 try
@@ -111,10 +109,24 @@ catch (WebSocketException e)
 }
 ```
 
-Web socket frames can be sent by `sendFrame` method. There exist other
-`sendXxxFrame` methods such as `sendText` and they are aliases of
-`sendFrame` method. All of the methods to send a frame work
-asynchronously.
+Web socket frames can be sent by `sendFrame` method. Other `sendXxx`
+methods such as `sendText` are aliases of `sendFrame` method. All of
+the `sendXxx` methods work asynchronously. Below are some examples
+of `sendXxx` methods. Note that in normal cases, you don't have to
+call `sendClose` method and `sendPong` method (or their variants)
+explicitly because they are called automatically when appropriate.
+
+```java
+// Send a text frame.
+ws.sendText("Hello.");
+
+// Send a binary frame.
+byte[] binary = ......;
+ws.sendBinary(binary);
+
+// Send a ping frame.
+ws.sendPing("Are you there?");
+```
 
 If you want to send fragmented frames, you have to know the details of the
 specification ([5.4. Fragmentation](https://tools.ietf.org/html/rfc6455#section-5.4)).
@@ -150,10 +162,11 @@ ws.sendFrame(firstFrame)
   .sendFrame(lastFrame);
 ```
 
-A web socket connection is closed when it receives a close frame from the
-server or an error occurred. If you want to [close the connection]
-(https://tools.ietf.org/html/rfc6455#section-4) from the client side,
-call `disconnect()` method.
+Before a web socket is closed, a closing handshake is performed. A closing
+handshake is started (1) when the server sends a close frame to the client
+or (2) when the client sends a close frame to the server. You can start a
+closing handshake by calling `disconnect()` method (or by sending a close
+frame manually).
 
 ```java
 // Close the web socket connection.
@@ -178,7 +191,7 @@ See Also
 Note
 ----
 
-Not usable yet.
+Not tested enough.
 
 
 Author

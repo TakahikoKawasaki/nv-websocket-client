@@ -64,8 +64,8 @@ class StateManager
     }
 
 
-    public CloseInitiator getCloseInitiator()
+    public boolean getClosedByServer()
     {
-        return mCloseInitiator;
+        return mCloseInitiator == CloseInitiator.SERVER;
     }
 }

@@ -56,8 +56,22 @@ public interface WebSocketListener
      *
      * @param websocket
      *         The web socket.
+     *
+     * @param serverCloseFrame
+     *         The close frame which the server sent to this client.
+     *         This may be {@code null}.
+     *
+     * @param clientCloseFrame
+     *         The close frame which this client sent to the server.
+     *         This may be {@code null}.
+     *
+     * @param closedByServer
+     *         {@code true} if the closing handshake was started by the server.
+     *         {@code false} if the closing handshake was started by the client.
      */
-    void onDisconnected(WebSocket websocket);
+    void onDisconnected(WebSocket websocket,
+        WebSocketFrame serverCloseFrame, WebSocketFrame clientCloseFrame,
+        boolean closedByServer);
 
 
     /**

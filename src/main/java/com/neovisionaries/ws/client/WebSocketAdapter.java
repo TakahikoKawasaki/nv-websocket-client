@@ -34,7 +34,9 @@ public class WebSocketAdapter implements WebSocketListener
 
 
     @Override
-    public void onDisconnected(WebSocket websocket)
+    public void onDisconnected(WebSocket websocket,
+        WebSocketFrame serverCloseFrame, WebSocketFrame clientCloseFrame,
+        boolean closedByServer)
     {
     }
 

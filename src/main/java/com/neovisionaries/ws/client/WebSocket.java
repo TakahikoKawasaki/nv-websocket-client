@@ -37,14 +37,18 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * Web socket.
  *
  * <p>
- * Instances of {@code WebSocket} are created by calling one of {@code
- * createSocket} methods of a {@link WebSocketFactory} instance. Below
- * is the simplest example to create a {@code WebSocket} instance.
+ * {@link WebSocket} class represents a web socket. Its instances are
+ * created by calling one of {@code createSocket} methods of a {@link
+ * WebSocketFactory} instance. {@code WebSocketFactory} class provides
+ * methods such as {@link WebSocketFactory#setSSLSocketFactory(javax.net.ssl.SSLSocketFactory)
+ * setSSLSocketFactory} to configure the underlying socket factories.
+ * Below is the simplest example to create a {@code WebSocket} instance.
  * </p>
  *
  * <blockquote>
- * <pre> <span style="color: green;">// Create a web socket. The scheme part can be of
- * // the following: 'ws', 'wss', 'http' and 'https'.</span>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Create a web socket. The scheme part can be one of the following:
+ * // 'ws', 'wss', 'http' and 'https' (case-insensitive). The user info
+ * // part, if any, is interpreted as expected.</span>
  * WebSocket ws = new {@link WebSocketFactory#WebSocketFactory()
  * WebSocketFactory()}
  *     .{@link WebSocketFactory#createSocket(String)
@@ -60,50 +64,79 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * </p>
  *
  * <blockquote>
- * <pre> <span style="color: green;">// Register a listener to receive web socket events.</span>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Register a listener to receive web socket events.</span>
  * ws.{@link #addListener(WebSocketListener) addListener}(new {@link
  * WebSocketAdapter#WebSocketAdapter() WebSocketAdapter()} {
  *     {@code @}Override
  *     public void {@link WebSocketListener#onTextMessage(WebSocket, String)
  *     onTextMessage}(WebSocket websocket, String message) {
+ *         <span style="color: green;">// Received a text message.</span>
  *         ......
  *     }
  * });</pre>
  * </blockquote>
  *
  * <p>
- * By calling {@link #connect()} method, an actual connection to the server
- * is made and the <a href="https://tools.ietf.org/html/rfc6455#section-4"
- * >opening handshake</a> is performed as described in "<a href=
- * "https://tools.ietf.org/html/rfc6455#section-4">4. Opening Handshake</a>"
- * in <a href="https://tools.ietf.org/html/rfc6455">RFC 6455</a>. Before
- * calling {@code connect()} method, you may call {@link #addProtocol(String)}
- * method, {@link #addExtension(WebSocketExtension)} method and {@link
- * #addHeader(String, String)} method to adjust the opening handshake.
- * {@link #setUserInfo(String, String)} method can be used to set credentials
- * for Basic Authentication (<a href="https://tools.ietf.org/html/rfc2617"
- * >RFC 2617</a>). You can even configure the underlying {@link Socket}
- * instance after getting it by {@link #getSocket()} method.
- * </p>
- *
- * <p>
- * {@code connect()} performs the opening handshake synchronously. When a
- * connection could not be made or a protocol error was detected during the
- * handshake, a {@link WebSocketException} exception is thrown. When the
- * handshake succeeds, the {@code connect()} implementation creates threads
- * and starts them to read and write web socket frames from the server
- * asynchronously.
+ * Before making a connection to the server, you can configure the web
+ * socket instance by using the following methods.
  * </p>
  *
  * <blockquote>
- * <pre> try
+ * <table border="1" cellpadding="5" style="border-collapse: collapse;">
+ *   <thead>
+ *     <tr>
+ *       <th>METHOD</th>
+ *       <th>DESCRIPTION</th>
+ *     </tr>
+ *   </thead>
+ *   <tbody>
+ *     <tr>
+ *       <td>{@link #addProtocol(String) addProtocol}</td>
+ *       <td>Adds an element to {@code Sec-WebSocket-Protocol}</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link #addExtension(WebSocketExtension) addExtension}</td>
+ *       <td>Adds an element to {@code Sec-WebSocket-Extensions}</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link #addHeader(String, String) addHeader}</td>
+ *       <td>Adds an arbitrary HTTP header.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link #setUserInfo(String, String) setUserInfo}</td>
+ *       <td>Adds {@code Authorization} header for Basic Authentication.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link #getSocket() getSocket}</td>
+ *       <td>Gets the underlying {@link Socket} instance to configure it.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link #setExtended(boolean) setExtended}</td>
+ *       <td>Disables validity checks on RSV1/RSV2/RSV3 and opcode.</td>
+ *     </tr>
+ *   </tbody>
+ * </table>
+ * </blockquote>
+ *
+ * <p>
+ * By calling {@link #connect()} method, an actual connection to the server
+ * is made and the <a href="https://tools.ietf.org/html/rfc6455#section-4"
+ * >opening handshake</a> is performed synchronously. When a connection
+ * could not be made or a protocol error was detected during the handshake,
+ * a {@link WebSocketException} is thrown. Instead, when the handshake
+ * succeeded, the {@code connect()} implementation creates threads and
+ * starts them to read and write web socket frames asynchronously.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> try
  * {
  *     <span style="color: green;">// Connect to the server and perform the handshake.</span>
  *     ws.{@link #connect()};
  * }
  * catch ({@link WebSocketException} e)
  * {
- *     <span style="color: green;">// The opening handshake failed.</span>
+ *     <span style="color: green;">// Failed.</span>
  * }</pre>
  * </blockquote>
  *
@@ -111,18 +144,35 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * Web socket frames can be sent by {@link #sendFrame(WebSocketFrame)}
  * method. Other <code>send<i>Xxx</i></code> methods such as {@link
  * #sendText(String)} are aliases of {@code sendFrame} method. All of
- * the <code>send<i>Xxx</i></code> methods work asynchronously.
+ * the <code>send<i>Xxx</i></code> methods work asynchronously. Below
+ * are some examples of <code>send<i>Xxx</i></code> methods. Note that
+ * in normal cases, you don't have to call {@link #sendClose()} method
+ * and {@link #sendPong()} (or their variants) explicitly because they
+ * are called automatically when appropriate.
  * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Send a text frame.</span>
+ * ws.{@link #sendText(String) sendText}(<span class="color: darkred;">"Hello."</span>);
+ *
+ * <span style="color: green;">// Send a binary frame.</span>
+ * byte[] binary = ......;
+ * ws.{@link #sendBinary(byte[]) sendBinary}(binary);
+ *
+ * <span style="color: green;">// Send a ping frame.</span>
+ * ws.{@link #sendPing(String) sendPing}(<span class="color: darkred;">"Are you there?"</span>);</pre>
+ * </blockquote>
+ *
  *
  * <p>
  * If you want to send fragmented frames, you have to know the details
  * of the specification (<a href="https://tools.ietf.org/html/rfc6455#section-5.4"
  * >5.4. Fragmentation</a>). Below is an example to send a text message
- * ("How are you?") which consists of 3 fragmented frames.
+ * ({@code "How are you?"}) which consists of 3 fragmented frames.
  * </p>
  *
  * <blockquote>
- * <pre> <span style="color: green;">// The first frame must be either a text frame or a binary frame.
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// The first frame must be either a text frame or a binary frame.
  * // And its FIN bit must be cleared.</span>
  * WebSocketFrame firstFrame = WebSocketFrame
  *     .{@link WebSocketFrame#createTextFrame(String) createTextFrame
@@ -144,26 +194,24 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * // the FIN bit of the last frame must be set explicitly.</span>
  * WebSocketFrame lastFrame = WebSocketFrame
  *     .{@link WebSocketFrame#createContinuationFrame(String) createContinuationFrame
- *     }(<span style="color: darkred;">"you?"</span>);
+ *     }(<span style="color: darkred;">"you?"</span>)
  *     .{@link WebSocketFrame#setFin(boolean) setFin}(true);
  *
  * <span style="color: green;">// Send a text message which consists of 3 frames.</span>
- * ws.{@link #sendFrame(WebSocketFrame) sendFrame}(firstFrame);
- * ws.{@link #sendFrame(WebSocketFrame) sendFrame}(secondFrame);
- * ws.{@link #sendFrame(WebSocketFrame) sendFrame}(lastFrame);
- * </pre>
+ * ws.{@link #sendFrame(WebSocketFrame) sendFrame}(firstFrame)
+ *   .{@link #sendFrame(WebSocketFrame) sendFrame}(secondFrame)
+ *   .{@link #sendFrame(WebSocketFrame) sendFrame}(lastFrame);</pre>
  * </blockquote>
  *
  * <p>
- * A web socket connection is closed when it receives a close frame
- * from the server or an error occurred. If you want to <a href=
- * "https://tools.ietf.org/html/rfc6455#section-4">close the
- * connection</a> from the client size, call {@link #disconnect()}
- * method.
+ * Before a web socket is closed, a closing handshake is performed. A closing handshake
+ * is started (1) when the server sends a close frame to the client or (2) when the
+ * client sends a close frame to the server. You can start a closing handshake by calling
+ * {@link #disconnect()} method (or by sending a close frame manually).
  * </p>
  *
  * <blockquote>
- * <pre> <span style="color: green;">// Close the web socket connection.</span>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Close the web socket connection.</span>
  * ws.{@link #disconnect()};</pre>
  * </blockquote>
  *
@@ -186,6 +234,8 @@ public class WebSocket
     private boolean mExtended;
     private boolean mReadingThreadFinished;
     private boolean mWritingThreadFinished;
+    private WebSocketFrame mServerCloseFrame;
+    private WebSocketFrame mClientCloseFrame;
 
 
     WebSocket(String userInfo, String host, String path, Socket socket)
@@ -1470,6 +1520,7 @@ public class WebSocket
         synchronized (mThreadsLock)
         {
             mReadingThreadFinished = true;
+            mServerCloseFrame = closeFrame;
 
             if (mWritingThreadFinished == false)
             {
@@ -1478,7 +1529,7 @@ public class WebSocket
             }
         }
 
-        // TODO
+        finish();
     }
 
 
@@ -1487,6 +1538,7 @@ public class WebSocket
         synchronized (mThreadsLock)
         {
             mWritingThreadFinished = true;
+            mClientCloseFrame = closeFrame;
 
             if (mReadingThreadFinished == false)
             {
@@ -1495,6 +1547,20 @@ public class WebSocket
             }
         }
 
-        // TODO
+        finish();
+    }
+
+
+    private void finish()
+    {
+        synchronized (mStateManager)
+        {
+            // Change the state to CLOSED.
+            mStateManager.setState(CLOSED);
+        }
+
+        // Notify the listeners that the web socket was disconnected.
+        mListenerManager.callOnDisconnected(
+            mServerCloseFrame, mClientCloseFrame, mStateManager.getClosedByServer());
     }
 }
