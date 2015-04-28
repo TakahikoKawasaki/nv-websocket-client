@@ -291,6 +291,8 @@ class WritingThread extends Thread
     {
         StateManager manager = mWebSocket.getStateManager();
 
+        boolean stateChanged = false;
+
         synchronized (manager)
         {
             // The current state of the web socket.
@@ -301,7 +303,15 @@ class WritingThread extends Thread
             {
                 // Change the state to CLOSING.
                 manager.changeToClosing(CloseInitiator.CLIENT);
+
+                stateChanged = true;
             }
+        }
+
+        if (stateChanged)
+        {
+            // Notify the listeners of the state change.
+            mWebSocket.getListenerManager().callOnStateChanged(CLOSING);
         }
     }
 

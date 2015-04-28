@@ -39,6 +39,20 @@ import java.util.Map;
 public interface WebSocketListener
 {
     /**
+     * Called after the state of the web socket changed.
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param newState
+     *         The new state of the web socket.
+     *
+     * @since 1.1
+     */
+    void onStateChanged(WebSocket websocket, WebSocketState newState);
+
+
+    /**
      * Called after the opening handshake of the web socket connection succeeded.
      *
      * @param websocket

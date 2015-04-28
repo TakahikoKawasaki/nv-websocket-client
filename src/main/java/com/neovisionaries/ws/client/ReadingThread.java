@@ -793,6 +793,8 @@ class ReadingThread extends Thread
         // The close frame sent from the server.
         mCloseFrame = frame;
 
+        boolean stateChanged = false;
+
         synchronized (manager)
         {
             // The current state of the web socket.
@@ -815,7 +817,15 @@ class ReadingThread extends Thread
 
                 // Simply reuse the frame.
                 mWebSocket.sendFrame(frame);
+
+                stateChanged = true;
             }
+        }
+
+        if (stateChanged)
+        {
+            // Notify the listeners of the state change.
+            mWebSocket.getListenerManager().callOnStateChanged(CLOSING);
         }
 
         // Notify the listeners that a close frame was received.

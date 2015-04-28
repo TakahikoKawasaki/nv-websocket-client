@@ -47,6 +47,24 @@ class ListenerManager
     }
 
 
+    public void callOnStateChanged(WebSocketState newState)
+    {
+        synchronized (mListeners)
+        {
+            for (WebSocketListener listener : mListeners)
+            {
+                try
+                {
+                    listener.onStateChanged(mWebSocket, newState);
+                }
+                catch (Throwable t)
+                {
+                }
+            }
+        }
+    }
+
+
     public void callOnConnected(Map<String, List<String>> headers)
     {
         synchronized (mListeners)

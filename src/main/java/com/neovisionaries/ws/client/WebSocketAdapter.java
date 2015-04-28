@@ -28,6 +28,12 @@ import java.util.Map;
 public class WebSocketAdapter implements WebSocketListener
 {
     @Override
+    public void onStateChanged(WebSocket websocket, WebSocketState newState)
+    {
+    }
+
+
+    @Override
     public void onConnected(WebSocket websocket, Map<String, List<String>> headers)
     {
     }

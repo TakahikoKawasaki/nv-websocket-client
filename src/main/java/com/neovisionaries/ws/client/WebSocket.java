@@ -487,12 +487,18 @@ public class WebSocket
             // Change the state to CLOSED.
             mStateManager.setState(CLOSED);
 
+            // Notify the listener of the state change.
+            mListenerManager.callOnStateChanged(CLOSED);
+
             // The handshake failed.
             throw e;
         }
 
         // Change the state to OPEN.
         mStateManager.setState(OPEN);
+
+        // Notify the listener of the state change.
+        mListenerManager.callOnStateChanged(OPEN);
 
         // Start threads that communicate with the server.
         startThreads(headers);
@@ -539,6 +545,9 @@ public class WebSocket
             // Send the close frame to the server.
             sendFrame(frame);
         }
+
+        // Notify the listeners of the state change.
+        mListenerManager.callOnStateChanged(CLOSING);
 
         // Request the threads to stop.
         stopThreads();
@@ -1130,6 +1139,9 @@ public class WebSocket
             // Change the state to CONNECTING.
             mStateManager.setState(CONNECTING);
         }
+
+        // Notify the listeners of the state change.
+        mListenerManager.callOnStateChanged(CONNECTING);
     }
 
 
@@ -1803,6 +1815,9 @@ public class WebSocket
             // Change the state to CLOSED.
             mStateManager.setState(CLOSED);
         }
+
+        // Notify the listeners of the state change.
+        mListenerManager.callOnStateChanged(CLOSED);
 
         // Notify the listeners that the web socket was disconnected.
         mListenerManager.callOnDisconnected(
