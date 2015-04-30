@@ -212,7 +212,7 @@ class HandshakeBuilder
         if (mUserInfo != null && mUserInfo.length() != 0)
         {
             builder
-                .append("Authorization: ")
+                .append("Authorization: Basic ")
                 .append(Base64.encode(mUserInfo))
                 .append(RN);
         }

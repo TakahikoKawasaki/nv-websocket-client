@@ -5,6 +5,7 @@ CHANGES
 1.1-SNAPSHOT
 ------------
 
+- Fixed a bug around Basic Authentication.
 - Added getURI method to WebSocket.
 - Added onStateChanged method to WebSocketListener.
 
