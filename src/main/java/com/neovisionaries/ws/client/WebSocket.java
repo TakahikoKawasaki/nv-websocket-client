@@ -25,6 +25,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.URI;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -250,11 +251,11 @@ public class WebSocket
     private WebSocketFrame mClientCloseFrame;
 
 
-    WebSocket(String userInfo, String host, String path, Socket socket)
+    WebSocket(boolean secure, String userInfo, String host, String path, Socket socket)
     {
         mSocket           = socket;
         mStateManager     = new StateManager();
-        mHandshakeBuilder = new HandshakeBuilder(userInfo, host, path);
+        mHandshakeBuilder = new HandshakeBuilder(secure, userInfo, host, path);
         mListenerManager  = new ListenerManager(this);
     }
 
@@ -446,6 +447,21 @@ public class WebSocket
     public Socket getSocket()
     {
         return mSocket;
+    }
+
+
+    /**
+     * Get the URI of the web socket endpoint.
+     *
+     * @return
+     *         The URI of the web socket endpoint. The scheme part is
+     *         either {@code "ws"} or {@code "wss"}.
+     *
+     * @since 1.1
+     */
+    public URI getURI()
+    {
+        return mHandshakeBuilder.getURI();
     }
 
 

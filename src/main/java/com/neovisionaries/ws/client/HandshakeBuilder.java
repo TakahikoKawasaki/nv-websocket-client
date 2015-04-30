@@ -16,6 +16,7 @@
 package com.neovisionaries.ws.client;
 
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -26,17 +27,20 @@ import java.util.Set;
 class HandshakeBuilder
 {
     private static final String RN = "\r\n";
+    private final boolean mSecure;
     private String mUserInfo;
     private final String mHost;
     private final String mPath;
+    private URI mUri;
     private String mKey;
     private Set<String> mProtocols;
     private List<WebSocketExtension> mExtensions;
     private List<String[]> mHeaders;
 
 
-    public HandshakeBuilder(String userInfo, String host, String path)
+    public HandshakeBuilder(boolean secure, String userInfo, String host, String path)
     {
+        mSecure   = secure;
         mUserInfo = userInfo;
         mHost     = host;
         mPath     = path;
@@ -154,6 +158,23 @@ class HandshakeBuilder
 
     public void setUserInfo(String userInfo)
     {
+        if (userInfo == null || userInfo.length() == 0)
+        {
+            if (mUserInfo != null && mUserInfo.length() != 0)
+            {
+                // Rebuild URI when getURI() is called.
+                mUri = null;
+            }
+        }
+        else
+        {
+            if (mUserInfo == null || mUserInfo.length() == 0)
+            {
+                // Rebuild URI when getURI() is called.
+                mUri = null;
+            }
+        }
+
         mUserInfo = userInfo;
     }
 
@@ -173,6 +194,26 @@ class HandshakeBuilder
         String userInfo = String.format("%s:%s", id, password);
 
         setUserInfo(userInfo);
+    }
+
+
+    public URI getURI()
+    {
+        if (mUri != null)
+        {
+            return mUri;
+        }
+
+        // 'mHost' may contain ':{port}' at its end.
+        // 'mPath' may contain '?{query}' at its end.
+        String uri = String.format("%s://%s%s%s",
+            (mSecure ? "wss" : "ws"),
+            ((mUserInfo == null) ? "" : mUserInfo),
+            mHost, mPath);
+
+        mUri = URI.create(uri);
+
+        return mUri;
     }
 
 

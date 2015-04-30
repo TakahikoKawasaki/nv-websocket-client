@@ -286,7 +286,7 @@ public class WebSocketFactory
         Socket socket = createRawSocket(host, port, secure);
 
         // Create a WebSocket instance.
-        return createWebSocket(userInfo, host, port, path, query, socket);
+        return createWebSocket(secure, userInfo, host, port, path, query, socket);
     }
 
 
@@ -388,7 +388,7 @@ public class WebSocketFactory
 
 
     private WebSocket createWebSocket(
-        String userInfo, String host, int port, String path, String query, Socket socket)
+        boolean secure, String userInfo, String host, int port, String path, String query, Socket socket)
     {
         // The value for "Host" HTTP header.
         if (0 <= port)
@@ -402,6 +402,6 @@ public class WebSocketFactory
             path = path + "?" + query;
         }
 
-        return new WebSocket(userInfo, host, path, socket);
+        return new WebSocket(secure, userInfo, host, path, socket);
     }
 }
