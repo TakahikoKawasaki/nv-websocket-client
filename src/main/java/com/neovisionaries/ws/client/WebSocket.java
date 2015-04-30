@@ -83,6 +83,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *
  * <blockquote>
  * <table border="1" cellpadding="5" style="border-collapse: collapse;">
+ *   <caption>Methods for Configuration</caption>
  *   <thead>
  *     <tr>
  *       <th>METHOD</th>
@@ -175,8 +176,8 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// The first frame must be either a text frame or a binary frame.
  * // And its FIN bit must be cleared.</span>
  * WebSocketFrame firstFrame = WebSocketFrame
- *     .{@link WebSocketFrame#createTextFrame(String) createTextFrame
- *     }(<span style="color: darkred;">"How "</span>)
+ *     .{@link WebSocketFrame#createTextFrame(String)
+ *     createTextFrame}(<span style="color: darkred;">"How "</span>)
  *     .{@link WebSocketFrame#setFin(boolean) setFin}(false);
  *
  * <span style="color: green;">// Subsequent frames must be continuation frames. The FIN bit of
@@ -185,16 +186,16 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * // WebSocketFrame.createContinuationFrame methods is cleared, so
  * // the example below does not clear the FIN bit explicitly.</span>
  * WebSocketFrame secondFrame = WebSocketFrame
- *     .{@link WebSocketFrame#createContinuationFrame(String) createContinuationFrame
- *     }(<span style="color: darkred;">"are "</span>);
+ *     .{@link WebSocketFrame#createContinuationFrame(String)
+ *     createContinuationFrame}(<span style="color: darkred;">"are "</span>);
  *
  * <span style="color: green;">// The last frame must be a continuation frame with the FIN bit set.
  * // Note that the FIN bit of frames returned from
  * // WebSocketFrame.createContinuationFrame methods is cleared, so
  * // the FIN bit of the last frame must be set explicitly.</span>
  * WebSocketFrame lastFrame = WebSocketFrame
- *     .{@link WebSocketFrame#createContinuationFrame(String) createContinuationFrame
- *     }(<span style="color: darkred;">"you?"</span>)
+ *     .{@link WebSocketFrame#createContinuationFrame(String)
+ *     createContinuationFrame}(<span style="color: darkred;">"you?"</span>)
  *     .{@link WebSocketFrame#setFin(boolean) setFin}(true);
  *
  * <span style="color: green;">// Send a text message which consists of 3 frames.</span>
@@ -288,6 +289,9 @@ public class WebSocket
      * @param protocol
      *         A protocol name.
      *
+     * @return
+     *         {@code this} object.
+     *
      * @throws IllegalArgumentException
      *         The protocol name is invalid. A protocol name must be
      *         a non-empty string with characters in the range U+0021
@@ -306,6 +310,9 @@ public class WebSocket
      *
      * @param extension
      *         An extension. {@code null} is silently ignored.
+     *
+     * @return
+     *         {@code this} object.
      */
     public WebSocket addExtension(WebSocketExtension extension)
     {
@@ -317,6 +324,15 @@ public class WebSocket
 
     /**
      * Add a pair of HTTP header.
+     *
+     * @param name
+     *         An HTTP header name.
+     *
+     * @param value
+     *         The value of the HTTP header.
+     *
+     * @return
+     *         {@code this} object.
      */
     public WebSocket addHeader(String name, String value)
     {
@@ -334,7 +350,7 @@ public class WebSocket
      *         should be <code><i>id</i>:<i>password</i></code>.
      *
      * @return
-     *         {@code this} instance.
+     *         {@code this} object.
      */
     public WebSocket setUserInfo(String userInfo)
     {
@@ -354,7 +370,7 @@ public class WebSocket
      *         The password.
      *
      * @return
-     *         {@code this} instance.
+     *         {@code this} object.
      */
     public WebSocket setUserInfo(String id, String password)
     {
@@ -406,6 +422,12 @@ public class WebSocket
 
     /**
      * Add a listener to receive events on this web socket.
+     *
+     * @param listener
+     *         A listener to add.
+     *
+     * @return
+     *         {@code this} object.
      */
     public WebSocket addListener(WebSocketListener listener)
     {
@@ -417,6 +439,9 @@ public class WebSocket
 
     /**
      * Get the raw socket which this web socket uses internally.
+     *
+     * @return
+     *         The underlying {@link Socket} instance.
      */
     public Socket getSocket()
     {

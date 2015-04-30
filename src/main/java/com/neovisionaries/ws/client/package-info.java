@@ -4,7 +4,7 @@
  * <ul>
  * <li>complies with <a href="http://tools.ietf.org/html/rfc6455">RFC 6455</a> (The WebSocket Protocol),
  * <li>works on Java SE 1.5+ and Android,
- * <li>supports all the frame types (continuation/<wbr>binary/<wbr>text/<wbr>close/<wbr>ping/<wbr>pong),
+ * <li>supports all the frame types (continuation, binary, text, close, ping and pong),
  * <li>provides a method to send a fragmented frame in addition to methods for unfragmented frames,
  * <li>provides a method to get the underlying raw socket of a web socket to configure it,
  * <li>provides a method for <a href="http://tools.ietf.org/html/rfc2617">Basic Authentication</a>,

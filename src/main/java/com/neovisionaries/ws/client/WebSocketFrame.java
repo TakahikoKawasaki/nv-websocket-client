@@ -158,6 +158,7 @@ public class WebSocketFrame
      * Get the opcode.
      *
      * <table border="1" cellpadding="5" style="table-collapse: collapse;">
+     *   <caption>WebSocket opcode</caption>
      *   <thead>
      *     <tr>
      *       <th>Value</th>

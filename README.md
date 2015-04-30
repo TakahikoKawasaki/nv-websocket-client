@@ -8,7 +8,7 @@ High-quality WebSocket client implementation in Java which
 
 - complies with [RFC 6455](http://tools.ietf.org/html/rfc6455) (The WebSocket Protocol),
 - works on Java SE 1.5+ and Android,
-- supports all the frame types (continuation/binary/text/close/ping/pong),
+- supports all the frame types (continuation, binary, text, close, ping and pong),
 - provides a method to send a fragmented frame in addition to methods for unfragmented frames,
 - provides a method to get the underlying raw socket of a web socket to configure it,
 - provides a method for [Basic Authentication](http://tools.ietf.org/html/rfc2617),
