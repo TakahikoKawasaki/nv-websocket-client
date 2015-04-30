@@ -59,7 +59,8 @@ socket factories. Below is the simplest example to create a `WebSocket` instance
 ```java
 // Create a web socket. The scheme part can be one of the following:
 // 'ws', 'wss', 'http' and 'https' (case-insensitive). The user info
-// part, if any, is interpreted as expected.
+// part, if any, is interpreted as expected. If a raw socket failed
+// to be created, an IOException is thrown.
 WebSocket ws = new WebSocketFactory().createSocket("ws://localhost/endpoint");
 ```
 
@@ -78,8 +79,9 @@ ws.addListener(new WebSocketAdapter() {
 });
 ```
 
-Before making a connection to the server, you can configure the web socket
-instance by using the following methods.
+Before starting a WebSocket [opening handshake]
+(http://tools.ietf.org/html/rfc6455#section-4)) with the server, you can
+configure the web socket instance by using the following methods.
 
 | METHOD         | DESCRIPTION                                            |
 |----------------|--------------------------------------------------------|
@@ -90,17 +92,16 @@ instance by using the following methods.
 | `getSocket`    | Gets the underlying `Socket` instance to configure it. |
 | `setExtended`  | Disables validity checks on RSV1/RSV2/RSV3 and opcode. |
 
-By calling `connect()` method, an actual connection to the server is made and
-the [opening handshake](https://tools.ietf.org/html/rfc6455#section-4) is
-performed synchronously. When a connection could not be made or a protocol
-error was detected during the handshake, a `WebSocketException` is thrown.
-Instead, when the handshake succeeded, the `connect()` implementation creates
-threads and starts them to read and write web socket frames asynchronously.
+By calling `connect()` method, a WebSocket opening handshake is performed
+synchronously. If an error occurred during the handshake, a
+`WebSocketException` would be thrown. Instead, if the handshake succeeds,
+the `connect()` implementation creates threads and starts them to read and
+write web socket frames asynchronously.
 
 ```java
 try
 {
-    // Connect to the server and perform the opening handshake.
+    // Perform an opening handshake.
     ws.connect();
 }
 catch (WebSocketException e)
@@ -275,7 +276,7 @@ Limitations
 See Also
 --------
 
-- [RFC 6455](https://tools.ietf.org/html/rfc6455)
+- [RFC 6455](http://tools.ietf.org/html/rfc6455)
 
 
 ToDo

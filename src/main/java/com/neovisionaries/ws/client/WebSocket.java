@@ -49,7 +49,8 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * <blockquote>
  * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Create a web socket. The scheme part can be one of the following:
  * // 'ws', 'wss', 'http' and 'https' (case-insensitive). The user info
- * // part, if any, is interpreted as expected.</span>
+ * // part, if any, is interpreted as expected. If a raw socket failed
+ * // to be created, an IOException is thrown.</span>
  * WebSocket ws = new {@link WebSocketFactory#WebSocketFactory()
  * WebSocketFactory()}
  *     .{@link WebSocketFactory#createSocket(String)
@@ -78,7 +79,8 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * </blockquote>
  *
  * <p>
- * Before making a connection to the server, you can configure the web
+ * Before starting a WebSocket <a href="https://tools.ietf.org/html/rfc6455#section-4"
+ * >opening handshake</a> with the server, you can configure the web
  * socket instance by using the following methods.
  * </p>
  *
@@ -121,19 +123,18 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * </blockquote>
  *
  * <p>
- * By calling {@link #connect()} method, an actual connection to the server
- * is made and the <a href="https://tools.ietf.org/html/rfc6455#section-4"
- * >opening handshake</a> is performed synchronously. When a connection
- * could not be made or a protocol error was detected during the handshake,
- * a {@link WebSocketException} is thrown. Instead, when the handshake
- * succeeded, the {@code connect()} implementation creates threads and
- * starts them to read and write web socket frames asynchronously.
+ * By calling {@link #connect()} method, a WebSocket opening handshake
+ * is performed synchronously. If an error occurred during the handshake,
+ * a {@link WebSocketException} would be thrown. Instead, when the
+ * handshake succeeds, the {@code connect()} implementation creates
+ * threads and starts them to read and write web socket frames
+ * asynchronously.
  * </p>
  *
  * <blockquote>
  * <pre style="border-left: solid 5px lightgray;"> try
  * {
- *     <span style="color: green;">// Connect to the server and perform the handshake.</span>
+ *     <span style="color: green;">// Perform an opening handshake.</span>
  *     ws.{@link #connect()};
  * }
  * catch ({@link WebSocketException} e)
@@ -280,6 +281,30 @@ public class WebSocket
         synchronized (mStateManager)
         {
             return mStateManager.getState();
+        }
+    }
+
+
+    /**
+     * Check if the current state of this web socket is {@link
+     * WebSocketState#OPEN OPEN}.
+     *
+     * @return
+     *         {@code true} if the current state is OPEN.
+     *
+     * @since 1.1
+     */
+    public boolean isOpen()
+    {
+        return isInState(OPEN);
+    }
+
+
+    private boolean isInState(WebSocketState state)
+    {
+        synchronized (mStateManager)
+        {
+            return (mStateManager.getState() == state);
         }
     }
 
