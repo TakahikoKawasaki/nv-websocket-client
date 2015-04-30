@@ -2,8 +2,8 @@ CHANGES
 =======
 
 
-1.1-SNAPSHOT
-------------
+1.1 (2015-05-01)
+----------------
 
 - Added isOpen method to WebSocket.
 - Fixed a bug around Basic Authentication.
