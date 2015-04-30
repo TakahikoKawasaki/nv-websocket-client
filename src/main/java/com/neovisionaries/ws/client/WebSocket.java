@@ -451,11 +451,11 @@ public class WebSocket
 
 
     /**
-     * Get the URI of the web socket endpoint.
+     * Get the URI of the web socket endpoint. The scheme part is either
+     * {@code "ws"} or {@code "wss"}. The authority part is always empty.
      *
      * @return
-     *         The URI of the web socket endpoint. The scheme part is
-     *         either {@code "ws"} or {@code "wss"}.
+     *         The URI of the web socket endpoint.
      *
      * @since 1.1
      */
