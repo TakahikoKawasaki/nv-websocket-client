@@ -1851,6 +1851,15 @@ public class WebSocket
 
     private void finish()
     {
+        try
+        {
+            // Close the raw socket.
+            mSocket.close();
+        }
+        catch (IOException e)
+        {
+        }
+
         synchronized (mStateManager)
         {
             // Change the state to CLOSED.
