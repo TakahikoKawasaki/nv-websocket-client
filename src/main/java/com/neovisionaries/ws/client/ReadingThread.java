@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import com.neovisionaries.ws.client.StateManager.CloseInitiator;
@@ -39,18 +38,16 @@ class ReadingThread extends Thread
 {
     private static final long INTERRUPTION_TIMER_DELAY = 60 * 1000;
     private final WebSocket mWebSocket;
-    private final Map<String, List<String>> mHeaders;
     private boolean mStopRequested;
     private WebSocketFrame mCloseFrame;
     private List<WebSocketFrame> mContinuation = new ArrayList<WebSocketFrame>();
 
 
-    public ReadingThread(WebSocket websocket, Map<String, List<String>> headers)
+    public ReadingThread(WebSocket websocket)
     {
         super("ReadingThread");
 
         mWebSocket = websocket;
-        mHeaders   = headers;
     }
 
 
@@ -78,9 +75,6 @@ class ReadingThread extends Thread
 
     private void main()
     {
-        // Notify listeners that the handshake succeeded.
-        callOnConnected();
-
         mWebSocket.onReadingThreadStarted();
 
         while (true)
@@ -126,16 +120,6 @@ class ReadingThread extends Thread
             mStopRequested = true;
             interrupt();
         }
-    }
-
-
-    /**
-     * Call {@link WebSocketListener#onConnected(WebSocket, Map) onConnected} method
-     * of the listeners.
-     */
-    private void callOnConnected()
-    {
-        mWebSocket.getListenerManager().callOnConnected(mHeaders);
     }
 
 

@@ -280,9 +280,11 @@ public class WebSocket
     private WebSocketOutputStream mOutput;
     private ReadingThread mReadingThread;
     private WritingThread mWritingThread;
+    private Map<String, List<String>> mServerHeaders;
     private List<WebSocketExtension> mAgreedExtensions;
     private String mAgreedProtocol;
     private boolean mExtended;
+    private boolean mOnConnectedCalled;
     private boolean mReadingThreadStarted;
     private boolean mWritingThreadStarted;
     private boolean mReadingThreadFinished;
@@ -322,13 +324,21 @@ public class WebSocket
      * The initial state is {@link WebSocketState#CREATED CREATED}.
      * When {@link #connect()} is called, the state is changed to
      * {@link WebSocketState#CONNECTING CONNECTING}, and then to
-     * {@link WebSocketState#OPEN OPEN} after a successful handshake.
-     * If the handshake fails, the state is set to {@link
-     * WebSocketState#CLOSED CLOSED}.
+     * {@link WebSocketState#OPEN OPEN} after a successful opening
+     * handshake. The state is changed to {@link
+     * WebSocketState#CLOSING CLOSING} when a closing handshake
+     * is started, and then to {@link WebSocketState#CLOSED CLOSED}
+     * when the closing handshake finished.
+     * </p>
+     *
+     * <p>
+     * See the description of {@link WebSocketState} for details.
      * </p>
      *
      * @return
      *         The current state.
+     *
+     * @see WebSocketState
      */
     public WebSocketState getState()
     {
@@ -726,7 +736,8 @@ public class WebSocket
         mListenerManager.callOnStateChanged(OPEN);
 
         // Start threads that communicate with the server.
-        startThreads(headers);
+        mServerHeaders = headers;
+        startThreads();
 
         return this;
     }
@@ -1936,9 +1947,9 @@ public class WebSocket
     }
 
 
-    private void startThreads(Map<String, List<String>> headers)
+    private void startThreads()
     {
-        ReadingThread readingThread = new ReadingThread(this, headers);
+        ReadingThread readingThread = new ReadingThread(this);
         WritingThread writingThread = new WritingThread(this);
 
         synchronized (mThreadsLock)
@@ -2008,6 +2019,9 @@ public class WebSocket
         {
             mReadingThreadStarted = true;
 
+            // Call onConnected() method of listeners if net called yet.
+            callOnConnectedIfNotYet();
+
             if (mWritingThreadStarted == false)
             {
                 // Wait for the writing thread to start.
@@ -2025,6 +2039,9 @@ public class WebSocket
         {
             mWritingThreadStarted = true;
 
+            // Call onConnected() method of listeners if not called yet.
+            callOnConnectedIfNotYet();
+
             if (mReadingThreadStarted == false)
             {
                 // Wait for the reading thread to start.
@@ -2033,6 +2050,24 @@ public class WebSocket
         }
 
         onThreadsStarted();
+    }
+
+
+    private void callOnConnectedIfNotYet()
+    {
+        // This method is called in synchronized (mThreadsLock) block.
+
+        // If onConnected() has already been called.
+        if (mOnConnectedCalled)
+        {
+            // Do not call onConnected() twice.
+            return;
+        }
+
+        // Notify the listeners that the handshake succeeded.
+        mListenerManager.callOnConnected(mServerHeaders);
+
+        mOnConnectedCalled = true;
     }
 
 
