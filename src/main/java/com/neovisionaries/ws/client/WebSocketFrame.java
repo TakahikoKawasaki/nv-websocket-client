@@ -26,6 +26,9 @@ import static com.neovisionaries.ws.client.WebSocketOpcode.TEXT;
 
 /**
  * Web socket frame.
+ *
+ * @see <a href="https://tools.ietf.org/html/rfc6455#section-5"
+ *      >RFC 6455, 5. Data Framing</a>
  */
 public class WebSocketFrame
 {
