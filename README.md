@@ -51,6 +51,8 @@ JavaDoc
 Description
 -----------
 
+##### Create WebSocket
+
 `WebSocket` class represents a web socket. Its instances are created by calling
 one of `createSocket` methods of a `WebSocketFactory` instance. `WebSocketFactory`
 class provides methods such as `setSSLSocketFactory` to configure the underlying
@@ -63,6 +65,8 @@ socket factories. Below is the simplest example to create a `WebSocket` instance
 // to be created, an IOException is thrown.
 WebSocket ws = new WebSocketFactory().createSocket("ws://localhost/endpoint");
 ```
+
+##### Register Listener
 
 After creating a `WebSocket` instance, you should call `addListener` method
 to register a `WebSocketListener` that receives web socket events.
@@ -79,6 +83,8 @@ ws.addListener(new WebSocketAdapter() {
 });
 ```
 
+##### Configure WebSocket
+
 Before starting a WebSocket [opening handshake]
 (http://tools.ietf.org/html/rfc6455#section-4)) with the server, you can
 configure the web socket instance by using the following methods.
@@ -91,6 +97,8 @@ configure the web socket instance by using the following methods.
 | `setUserInfo`  | Adds `Authorization` header for Basic Authentication.  |
 | `getSocket`    | Gets the underlying `Socket` instance to configure it. |
 | `setExtended`  | Disables validity checks on RSV1/RSV2/RSV3 and opcode. |
+
+##### Perform Opening Handshake
 
 By calling `connect()` method, a WebSocket opening handshake is performed
 synchronously. If an error occurred during the handshake, a
@@ -109,6 +117,8 @@ catch (WebSocketException e)
     // Failed.
 }
 ```
+
+##### Send Frames
 
 Web socket frames can be sent by `sendFrame` method. Other `sendXxx`
 methods such as `sendText` are aliases of `sendFrame` method. All of
@@ -171,6 +181,23 @@ ws.sendText("How ", false)
   .sendContinuation("you?", true);
 ```
 
+##### Send Ping/Pong Frames Periodically
+
+You can send ping frames periodically by calling `setPingInterval` method
+with an interval in milliseconds between ping frames. This method can be
+called both before and after `connect()` method. Passing zero stops the
+periodical sending.
+
+```java
+// Send a ping per 60 seconds.
+ws.setPingInterval(60 * 1000);
+
+// Stop the periodical sending.
+ws.setPingInterval(0);
+```
+
+##### Disconnect WebSocket
+
 Before a web socket is closed, a closing handshake is performed. A closing
 handshake is started (1) when the server sends a close frame to the client
 or (2) when the client sends a close frame to the server. You can start a
@@ -190,7 +217,8 @@ The following is a sample application that connects to the echo server on
 [websocket.org](https://www.websocket.org) (`ws://echo.websocket.org`) and
 repeats to (1) read a line from the standard input, (2) send the read line
 to the server and (3) prints the response from the server, until `exit` is
-entered.
+entered. The source code can be downloaded from [Gist]
+(https://gist.github.com/TakahikoKawasaki/e79d36bf91bf9508ddd2).
 
 ```java
 import java.io.*;

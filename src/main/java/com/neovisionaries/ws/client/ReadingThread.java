@@ -81,6 +81,8 @@ class ReadingThread extends Thread
         // Notify listeners that the handshake succeeded.
         callOnConnected();
 
+        mWebSocket.onReadingThreadStarted();
+
         while (true)
         {
             synchronized (this)

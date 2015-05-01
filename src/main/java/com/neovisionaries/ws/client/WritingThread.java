@@ -69,6 +69,8 @@ class WritingThread extends Thread
 
     private void main()
     {
+        mWebSocket.onWritingThreadStarted();
+
         while (true)
         {
             // Wait for frames to be queued.

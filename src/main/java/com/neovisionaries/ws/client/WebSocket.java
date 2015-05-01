@@ -37,6 +37,8 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
 /**
  * Web socket.
  *
+ * <h3>Create WebSocket</h3>
+ *
  * <p>
  * {@link WebSocket} class represents a web socket. Its instances are
  * created by calling one of {@code createSocket} methods of a {@link
@@ -56,6 +58,8 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *     .{@link WebSocketFactory#createSocket(String)
  * createWebSocket}(<span style="color: darkred;">"ws://localhost/endpoint"</span>);</pre>
  * </blockquote>
+ *
+ * <h3>Register Listener</h3>
  *
  * <p>
  * After creating a {@code WebSocket} instance, you should call {@link
@@ -77,6 +81,8 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *     }
  * });</pre>
  * </blockquote>
+ *
+ * <h3>Configure WebSocket</h3>
  *
  * <p>
  * Before starting a WebSocket <a href="https://tools.ietf.org/html/rfc6455#section-4"
@@ -122,6 +128,8 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * </table>
  * </blockquote>
  *
+ * <h3>Perform Opening Handshake</h3>
+ *
  * <p>
  * By calling {@link #connect()} method, a WebSocket opening handshake
  * is performed synchronously. If an error occurred during the handshake,
@@ -142,6 +150,8 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *     <span style="color: green;">// Failed.</span>
  * }</pre>
  * </blockquote>
+ *
+ * <h3>Send Frames</h3>
  *
  * <p>
  * Web socket frames can be sent by {@link #sendFrame(WebSocketFrame)}
@@ -165,7 +175,6 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * <span style="color: green;">// Send a ping frame.</span>
  * ws.{@link #sendPing(String) sendPing}(<span class="color: darkred;">"Are you there?"</span>);</pre>
  * </blockquote>
- *
  *
  * <p>
  * If you want to send fragmented frames, you have to know the details
@@ -217,6 +226,32 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *   .{@link #sendContinuation(String, boolean) sendContinuation}(<span style="color: darkred;">"you?"</span>, true);</pre>
  * </blockquote>
  *
+ * <h3>Send Ping/Pong Frames Periodically</h3>
+ *
+ * <p>
+ * You can send ping frames periodically by calling {@link #setPingInterval(long)
+ * setPingInterval} method with an interval in milliseconds between ping frames.
+ * This method can be called both before and after {@link #connect()} method.
+ * Passing zero stops the periodical sending.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Send a ping per 60 seconds.</span>
+ * ws.{@link #setPingInterval(long) setPingInterval}(60 * 1000);
+ *
+ * <span style="color: green;">// Stop the periodical sending.</span>
+ * ws.{@link #setPingInterval(long) setPingInterval}(0);</pre>
+ * </blockquote>
+ *
+ * <p>
+ * Likewise, you can send pong frames periodically by calling {@link
+ * #setPongInterval(long) setPongInterval} method. "<i>A Pong frame MAY be sent
+ * <b>unsolicited</b>."</i> (<a href="https://tools.ietf.org/html/rfc6455#section-5.5.3"
+ * >RFC 6455, 5.5.3. Pong</a>)
+ * </p>
+ *
+ * <h3>Disconnect WebSocket</h3>
+ *
  * <p>
  * Before a web socket is closed, a closing handshake is performed. A closing handshake
  * is started (1) when the server sends a close frame to the client or (2) when the
@@ -238,6 +273,8 @@ public class WebSocket
     private final StateManager mStateManager;
     private final HandshakeBuilder mHandshakeBuilder;
     private final ListenerManager mListenerManager;
+    private final PingSender mPingSender;
+    private final PongSender mPongSender;
     private final Object mThreadsLock = new Object();
     private WebSocketInputStream mInput;
     private WebSocketOutputStream mOutput;
@@ -246,6 +283,8 @@ public class WebSocket
     private List<WebSocketExtension> mAgreedExtensions;
     private String mAgreedProtocol;
     private boolean mExtended;
+    private boolean mReadingThreadStarted;
+    private boolean mWritingThreadStarted;
     private boolean mReadingThreadFinished;
     private boolean mWritingThreadFinished;
     private WebSocketFrame mServerCloseFrame;
@@ -258,6 +297,21 @@ public class WebSocket
         mStateManager     = new StateManager();
         mHandshakeBuilder = new HandshakeBuilder(secure, userInfo, host, path);
         mListenerManager  = new ListenerManager(this);
+        mPingSender       = new PingSender(this);
+        mPongSender       = new PongSender(this);
+    }
+
+
+    @Override
+    protected void finalize() throws Throwable
+    {
+        if (isInState(CREATED))
+        {
+            // The raw socket needs to be closed.
+            finish();
+        }
+
+        super.finalize();
     }
 
 
@@ -447,6 +501,111 @@ public class WebSocket
 
 
     /**
+     * Get the interval of periodical
+     * <a href="https://tools.ietf.org/html/rfc6455#section-5.5.2">ping</a>
+     * frames.
+     *
+     * @return
+     *         The interval in milliseconds.
+     *
+     * @since 1.2
+     */
+    public long getPingInterval()
+    {
+        return mPingSender.getInterval();
+    }
+
+
+    /**
+     * Set the interval of periodical
+     * <a href="https://tools.ietf.org/html/rfc6455#section-5.5.2">ping</a>
+     * frames.
+     *
+     * <p>
+     * Setting a positive number starts sending ping frames periodically.
+     * Setting zero stops the periodical sending. This method can be called
+     * both before and after {@link #connect()} method.
+     * </p>
+     *
+     * @param interval
+     *         The interval in milliseconds. A negative value is
+     *         regarded as zero.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.2
+     */
+    public WebSocket setPingInterval(long interval)
+    {
+        mPingSender.setInterval(interval);
+
+        return this;
+    }
+
+
+    /**
+     * Get the interval of periodical
+     * <a href="https://tools.ietf.org/html/rfc6455#section-5.5.3">pong</a>
+     * frames.
+     *
+     * @return
+     *         The interval in milliseconds.
+     *
+     * @since 1.2
+     */
+    public long getPongInterval()
+    {
+        return mPongSender.getInterval();
+    }
+
+
+    /**
+     * Set the interval of periodical
+     * <a href="https://tools.ietf.org/html/rfc6455#section-5.5.3">pong</a>
+     * frames.
+     *
+     * <p>
+     * Setting a positive number starts sending pong frames periodically.
+     * Setting zero stops the periodical sending. This method can be called
+     * both before and after {@link #connect()} method.
+     * </p>
+     *
+     * <blockquote>
+     * <dl>
+     * <dt>
+     * <span style="font-weight: normal;">An excerpt from <a href=
+     * "https://tools.ietf.org/html/rfc6455#section-5.5.3"
+     * >RFC 6455, 5.5.3. Pong</a></span>
+     * </dt>
+     * <dd>
+     * <p><i>
+     * A Pong frame MAY be sent <b>unsolicited</b>. This serves as a
+     * unidirectional heartbeat.  A response to an unsolicited Pong
+     * frame is not expected.
+     * </i></p>
+     * </dd>
+     * </dl>
+     * </blockquote>
+     *
+     * @param interval
+     *         The interval in milliseconds. A negative value is
+     *         regarded as zero.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.2
+     */
+    public WebSocket setPongInterval(long interval)
+    {
+        mPongSender.setInterval(interval);
+
+        return this;
+    }
+
+
+    /**
      * Add a listener to receive events on this web socket.
      *
      * @param listener
@@ -492,7 +651,7 @@ public class WebSocket
 
     /**
      * Send an opening handshake to the server, receive the response and then
-     * start a thread to communicate with the server.
+     * start threads to communicate with the server.
      *
      * <p>
      * As necessary, {@link #addProtocol(String)}, {@link #addExtension(WebSocketExtension)}
@@ -583,21 +742,26 @@ public class WebSocket
     {
         synchronized (mStateManager)
         {
-            if (mStateManager.getState() != OPEN)
+            switch (mStateManager.getState())
             {
-                // - CREATED
-                //     There is no connection to disconnect.
-                //
-                // - CONNECTING
-                //     It won't happen unless the programmer calls
-                //     open() and disconnect() in parallel.
-                //
-                // - CLOSING
-                //     A closing handshake has already been started.
-                //
-                // - CLOSED
-                //     The connection has already been closed.
-                return this;
+                case CREATED:
+                    finishAsynchronously();
+                    return this;
+
+                case OPEN:
+                    break;
+
+                default:
+                    // - CONNECTING
+                    //     It won't happen unless the programmer dare call
+                    //     open() and disconnect() in parallel.
+                    //
+                    // - CLOSING
+                    //     A closing handshake has already been started.
+                    //
+                    // - CLOSED
+                    //     The connection has already been closed.
+                    return this;
             }
 
             // Change the state to CLOSING.
@@ -1838,6 +2002,51 @@ public class WebSocket
     }
 
 
+    void onReadingThreadStarted()
+    {
+        synchronized (mThreadsLock)
+        {
+            mReadingThreadStarted = true;
+
+            if (mWritingThreadStarted == false)
+            {
+                // Wait for the writing thread to start.
+                return;
+            }
+        }
+
+        onThreadsStarted();
+    }
+
+
+    void onWritingThreadStarted()
+    {
+        synchronized (mThreadsLock)
+        {
+            mWritingThreadStarted = true;
+
+            if (mReadingThreadStarted == false)
+            {
+                // Wait for the reading thread to start.
+                return;
+            }
+        }
+
+        onThreadsStarted();
+    }
+
+
+    private void onThreadsStarted()
+    {
+        // Start sending ping frames periodically.
+        // If the interval is zero, this call does nothing.
+        mPingSender.start();
+
+        // Likewise, start the pong sender.
+        mPongSender.start();
+    }
+
+
     void onReadingThreadFinished(WebSocketFrame closeFrame)
     {
         synchronized (mThreadsLock)
@@ -1852,7 +2061,7 @@ public class WebSocket
             }
         }
 
-        finish();
+        onThreadsFinished();
     }
 
 
@@ -1870,12 +2079,22 @@ public class WebSocket
             }
         }
 
+        onThreadsFinished();
+    }
+
+
+    private void onThreadsFinished()
+    {
         finish();
     }
 
 
     private void finish()
     {
+        // Stop the ping sender and the pong sender.
+        mPingSender.stop();
+        mPongSender.stop();
+
         try
         {
             // Close the raw socket.
@@ -1897,5 +2116,16 @@ public class WebSocket
         // Notify the listeners that the web socket was disconnected.
         mListenerManager.callOnDisconnected(
             mServerCloseFrame, mClientCloseFrame, mStateManager.getClosedByServer());
+    }
+
+
+    private void finishAsynchronously()
+    {
+        new Thread() {
+            @Override
+            public void run() {
+                finish();
+            }
+        }.start();
     }
 }

@@ -2,6 +2,13 @@ CHANGES
 =======
 
 
+1.2-SNAPSHOT
+------------
+
+- Added getPingInterval/setPingInterval methods to WebSocket.
+- Added getPongInterval/setPongInterval methods to WebSocket.
+
+
 1.1 (2015-05-01)
 ----------------
 
