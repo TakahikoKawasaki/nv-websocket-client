@@ -51,7 +51,7 @@ JavaDoc
 Description
 -----------
 
-##### Create WebSocket
+#### Create WebSocket
 
 `WebSocket` class represents a web socket. Its instances are created by calling
 one of `createSocket` methods of a `WebSocketFactory` instance. `WebSocketFactory`
@@ -66,7 +66,7 @@ socket factories. Below is the simplest example to create a `WebSocket` instance
 WebSocket ws = new WebSocketFactory().createSocket("ws://localhost/endpoint");
 ```
 
-##### Register Listener
+#### Register Listener
 
 After creating a `WebSocket` instance, you should call `addListener` method
 to register a `WebSocketListener` that receives web socket events.
@@ -83,7 +83,8 @@ ws.addListener(new WebSocketAdapter() {
 });
 ```
 
-##### Configure WebSocket
+
+#### Configure WebSocket
 
 Before starting a WebSocket [opening handshake]
 (http://tools.ietf.org/html/rfc6455#section-4)) with the server, you can
@@ -98,7 +99,8 @@ configure the web socket instance by using the following methods.
 | `getSocket`    | Gets the underlying `Socket` instance to configure it. |
 | `setExtended`  | Disables validity checks on RSV1/RSV2/RSV3 and opcode. |
 
-##### Perform Opening Handshake
+
+#### Perform Opening Handshake
 
 By calling `connect()` method, a WebSocket opening handshake is performed
 synchronously. If an error occurred during the handshake, a
@@ -118,7 +120,8 @@ catch (WebSocketException e)
 }
 ```
 
-##### Send Frames
+
+#### Send Frames
 
 Web socket frames can be sent by `sendFrame` method. Other `sendXxx`
 methods such as `sendText` are aliases of `sendFrame` method. All of
@@ -181,7 +184,8 @@ ws.sendText("How ", false)
   .sendContinuation("you?", true);
 ```
 
-##### Send Ping/Pong Frames Periodically
+
+#### Send Ping/Pong Frames Periodically
 
 You can send ping frames periodically by calling `setPingInterval` method
 with an interval in milliseconds between ping frames. This method can be
@@ -196,7 +200,12 @@ ws.setPingInterval(60 * 1000);
 ws.setPingInterval(0);
 ```
 
-##### Disconnect WebSocket
+Likewise, you can send pong frames periodically by calling `setPongInterval`
+method. "_A Pong frame MAY be sent **unsolicited**._" ([RFC 6455, 5.5.3. Pong]
+(https://tools.ietf.org/html/rfc6455#section-5.5.3))
+
+
+#### Disconnect WebSocket
 
 Before a web socket is closed, a closing handshake is performed. A closing
 handshake is started (1) when the server sends a close frame to the client
