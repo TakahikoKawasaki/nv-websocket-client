@@ -60,7 +60,9 @@ public interface WebSocketListener
      *
      * @param headers
      *         HTTP headers received from the server. Keys of the map are
-     *         capitalized HTTP header names such as "SEC-WEBSOCKET-ACCEPT".
+     *         HTTP header names such as {@code "Sec-WebSocket-Accept"}.
+     *         Note that the comparator used by the map is {@link
+     *         String#CASE_INSENSITIVE_ORDER}.
      */
     void onConnected(WebSocket websocket, Map<String, List<String>> headers);
 

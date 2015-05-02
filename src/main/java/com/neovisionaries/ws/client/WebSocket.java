@@ -28,9 +28,9 @@ import java.net.Socket;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import com.neovisionaries.ws.client.StateManager.CloseInitiator;
 
 
@@ -1581,7 +1581,10 @@ public class WebSocket
 
     private Map<String, List<String>> readHttpHeaders(WebSocketInputStream input) throws WebSocketException
     {
-        Map<String, List<String>> headers = new HashMap<String, List<String>>();
+        // Create a map of HTTP headers. Keys are case-insensitive.
+        Map<String, List<String>> headers =
+            new TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER);
+
         StringBuilder builder = null;
         String line;
 
@@ -1655,8 +1658,8 @@ public class WebSocket
             return;
         }
 
-        // Name. (Capitalize)
-        String name = pair[0].trim().toUpperCase();
+        // Name. (Remove leading and trailing spaces)
+        String name = pair[0].trim();
 
         // Value. (Remove leading and trailing spaces)
         String value = pair[1].trim();
