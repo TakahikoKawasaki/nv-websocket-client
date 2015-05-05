@@ -15,7 +15,8 @@ High-quality WebSocket client implementation in Java which
 - provides a factory class which utilizes javax.net.SocketFactory interface,
 - provides a rich listener interface to hook web socket events,
 - has fine-grained error codes for fine-grained controllability on errors,
-- and allows to disable validity checks on RSV1/RSV2/RSV3 bits and opcode of frames.
+- allows to disable validity checks on RSV1/RSV2/RSV3 bits and opcode of frames,
+- and supports HTTP proxy, especially "Secure WebSocket" (`wss`) through "Secure Proxy" (`https`).
 
 
 License
@@ -51,18 +52,85 @@ JavaDoc
 Description
 -----------
 
+#### Create WebSocketFactory
+
+`WebSocketFactory` is a factory class that creates `WebSocket` instances. The
+first step is to create a `WebSocketFactory` instance.
+
+```java
+// Create a WebSocketFactory instance.
+WebSocketFactory factory = new WebSocketFactory();
+```
+
+By default, `WebSocketFactory` uses `SocketFactory.getDefault()` for non-secure
+WebSocket connections (`ws:`) and `SSLSocketFactory.getDefault()` for secure
+WebSocket connections (`wss:`). You can change this default behavior by using
+`WebSocketFactory.setSocketFactory` method, `WebSocketFactory.setSSLSocketFactory`
+method and `WebSocketFactory.setSSLContext` method. The following is an example
+to set a custom SSL context to a `WebSocketFactory` instance. See the
+[description](http://takahikokawasaki.github.io/nv-websocket-client/com/neovisionaries/ws/client/WebSocketFactory.html#createSocket(java.net.URI)) of `WebSocketFactory.createSocket` method for details.
+
+```java
+// Create a custom SSL context.
+SSLContext context = NaiveSSLContext.getInstance("TLS");
+
+// Set the custom SSL context.
+factory.setSSLContext(context);
+```
+
+[NaiveSSLContext](https://gist.github.com/TakahikoKawasaki/d07de2218b4b81bf65ac)
+used in the above example is a factory class to create an `SSLContext` which
+naively accepts all certificates without verification. It's enough for testing
+purposes. When you see an error message "unable to find valid certificate path
+to requested target" while testing, try `NaiveSSLContext`.
+
+
+#### HTTP Proxy
+
+If a WebSocket endpoint needs to be accessed via an HTTP proxy, information
+about the proxy server has to be set to a `WebSocketFactory` instance before
+creating a `WebSocket` instance. Proxy settings are represented by
+`ProxySettings` class. A `WebSocketFactory` instance has an associated
+`ProxySettings` instance and it can be obtained by calling
+`WebSocketFactory.getProxySettings()` method.
+
+```java
+// Get the associated ProxySettings instance.
+ProxySettings settings = factory.getProxySettings();
+```
+
+`ProxySettings` class has methods to set information about a proxy server such
+as `setHost` method and `setPort` method. The following is an example to set a
+secure (`https`) proxy server.
+
+```java
+// Set a proxy server.
+settings.setServer("https://proxy.example.com");
+```
+
+If credentials are required for authentication at a proxy server, `setId`
+method and `setPassword` method, or `setCredentials` method can be used to set
+the credentials. Note that, however, the current implementation supports only
+Basic Authentication.
+
+```java
+// Set credentials for authentication at a proxy server.
+settings.setCredentials(id, password);
+```
+
+
 #### Create WebSocket
 
 `WebSocket` class represents a web socket. Its instances are created by calling
-one of `createSocket` methods of a `WebSocketFactory` instance. `WebSocketFactory`
-class provides methods such as `setSSLSocketFactory` to configure the underlying
-socket factories. Below is the simplest example to create a `WebSocket` instance.
+one of `createSocket` methods of a `WebSocketFactory` instance. Below is the
+simplest example to create a `WebSocket` instance.
 
 ```java
 // Create a web socket. The scheme part can be one of the following:
 // 'ws', 'wss', 'http' and 'https' (case-insensitive). The user info
 // part, if any, is interpreted as expected. If a raw socket failed
-// to be created, an IOException is thrown.
+// to be created, or if HTTP proxy handshake or SSL handshake failed,
+// an IOException is thrown.
 WebSocket ws = new WebSocketFactory().createSocket("ws://localhost/endpoint");
 ```
 
@@ -309,17 +377,15 @@ Limitations
   the maximum length of the payload part of a frame is (2^63 - 1), but this
   library cannot treat frames whose payload length is greater than (2^31 - 1).
 
+* HTTP response codes other than "101 Switching Protocols" from a WebSocket
+  endpoint are not supported. Note that this means redirection (3xx) is not
+  supported.
+
 
 See Also
 --------
 
 - [RFC 6455](http://tools.ietf.org/html/rfc6455)
-
-
-ToDo
-----
-
-Proxy support.
 
 
 Author

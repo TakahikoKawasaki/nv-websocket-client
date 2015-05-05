@@ -22,6 +22,9 @@ import static com.neovisionaries.ws.client.WebSocketOpcode.CONTINUATION;
 import static com.neovisionaries.ws.client.WebSocketOpcode.PING;
 import static com.neovisionaries.ws.client.WebSocketOpcode.PONG;
 import static com.neovisionaries.ws.client.WebSocketOpcode.TEXT;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.SecureRandom;
 
@@ -142,5 +145,74 @@ class Misc
         }
 
         return String.format("0x%X", opcode);
+    }
+
+
+    public static String readLine(InputStream in, String charset) throws IOException
+    {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        while (true)
+        {
+            // Read one byte from the stream.
+            int b = in.read();
+
+            // If the end of the stream was reached.
+            if (b == -1)
+            {
+                if (baos.size() == 0)
+                {
+                    // No more line.
+                    return null;
+                }
+                else
+                {
+                    // The end of the line was reached.
+                    break;
+                }
+            }
+
+            if (b == '\n')
+            {
+                // The end of the line was reached.
+                break;
+            }
+
+            if (b != '\r')
+            {
+                // Normal character.
+                baos.write(b);
+                continue;
+            }
+
+            // Read one more byte.
+            int b2 = in.read();
+
+            // If the end of the stream was reached.
+            if (b2 == -1)
+            {
+                // Treat the '\r' as a normal character.
+                baos.write(b);
+
+                // The end of the line was reached.
+                break;
+            }
+
+            // If '\n' follows the '\r'.
+            if (b2 == '\n')
+            {
+                // The end of the line was reached.
+                break;
+            }
+
+            // Treat the '\r' as a normal character.
+            baos.write(b);
+
+            // Append the byte which follows the '\r'.
+            baos.write(b2);
+        }
+
+        // Convert the byte array to a string.
+        return baos.toString(charset);
     }
 }

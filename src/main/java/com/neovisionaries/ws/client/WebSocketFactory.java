@@ -23,6 +23,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 
@@ -31,9 +32,15 @@ import javax.net.ssl.SSLSocketFactory;
  */
 public class WebSocketFactory
 {
-    private SocketFactory mSocketFactory;
-    private SSLSocketFactory mSSLSocketFactory;
-    private SSLContext mSSLContext;
+    private final SocketFactorySettings mSocketFactorySettings;
+    private final ProxySettings mProxySettings;
+
+
+    public WebSocketFactory()
+    {
+        mSocketFactorySettings = new SocketFactorySettings();
+        mProxySettings         = new ProxySettings(this);
+    }
 
 
     /**
@@ -45,7 +52,7 @@ public class WebSocketFactory
      */
     public SocketFactory getSocketFactory()
     {
-        return mSocketFactory;
+        return mSocketFactorySettings.getSocketFactory();
     }
 
 
@@ -61,7 +68,7 @@ public class WebSocketFactory
      */
     public WebSocketFactory setSocketFactory(SocketFactory factory)
     {
-        mSocketFactory = factory;
+        mSocketFactorySettings.setSocketFactory(factory);
 
         return this;
     }
@@ -76,7 +83,7 @@ public class WebSocketFactory
      */
     public SSLSocketFactory getSSLSocketFactory()
     {
-        return mSSLSocketFactory;
+        return mSocketFactorySettings.getSSLSocketFactory();
     }
 
 
@@ -92,7 +99,7 @@ public class WebSocketFactory
      */
     public WebSocketFactory setSSLSocketFactory(SSLSocketFactory factory)
     {
-        mSSLSocketFactory = factory;
+        mSocketFactorySettings.setSSLSocketFactory(factory);
 
         return this;
     }
@@ -106,7 +113,7 @@ public class WebSocketFactory
      */
     public SSLContext getSSLContext()
     {
-        return mSSLContext;
+        return mSocketFactorySettings.getSSLContext();
     }
 
 
@@ -122,9 +129,25 @@ public class WebSocketFactory
      */
     public WebSocketFactory setSSLContext(SSLContext context)
     {
-        mSSLContext = context;
+        mSocketFactorySettings.setSSLContext(context);
 
         return this;
+    }
+
+
+    /**
+     * Get the proxy settings.
+     *
+     * @return
+     *         The proxy settings.
+     *
+     * @since 1.3
+     *
+     * @see ProxySettings
+     */
+    public ProxySettings getProxySettings()
+    {
+        return mProxySettings;
     }
 
 
@@ -146,7 +169,8 @@ public class WebSocketFactory
      *         The given URI is {@code null} or violates RFC 2396.
      *
      * @throws IOException
-     *         Failed to create a socket.
+     *         Failed to create a socket. Or, HTTP proxy handshake or SSL
+     *         handshake failed.
      */
     public WebSocket createSocket(String uri) throws IOException
     {
@@ -177,7 +201,8 @@ public class WebSocketFactory
      *         The given URL is {@code null} or failed to be converted into a URI.
      *
      * @throws IOException
-     *         Failed to create a socket.
+     *         Failed to create a socket. Or, HTTP proxy handshake or SSL
+     *         handshake failed.
      */
     public WebSocket createSocket(URL url) throws IOException
     {
@@ -246,7 +271,8 @@ public class WebSocketFactory
      *         The given URI is {@code null} or violates RFC 2396.
      *
      * @throws IOException
-     *         Failed to create a socket.
+     *         Failed to create a socket. Or, HTTP proxy handshake or SSL
+     *         handshake failed.
      */
     public WebSocket createSocket(URI uri) throws IOException
     {
@@ -332,11 +358,92 @@ public class WebSocketFactory
 
     private Socket createRawSocket(String host, int port, boolean secure) throws IOException
     {
-        // Determine the port number.
+        // Determine the port number. Especially, if 'port' is -1,
+        // it is converted to 80 or 443.
         port = determinePort(port, secure);
 
-        // Determine the socket factory.
-        SocketFactory factory = determineSocketFactory(secure);
+        // True if a proxy server should be used.
+        boolean proxied = (mProxySettings.getHost() != null);
+
+        // See "Figure 2 -- Proxy server traversal decision tree" at
+        // http://www.infoq.com/articles/Web-Sockets-Proxy-Servers
+
+        if (proxied)
+        {
+            // Connect to the proxy server and perform the proxy handshake.
+            // As necessary, perform the SSL handshake in the tunnel.
+            return createProxiedRawSocket(host, port, secure);
+        }
+        else
+        {
+            // Connect to the WebSocket endpoint directly.
+            return createDirectRawSocket(host, port, secure);
+        }
+    }
+
+
+    private Socket createProxiedRawSocket(String host, int port, boolean secure) throws IOException
+    {
+        // Determine the port number of the proxy server.
+        // Especially, if getPort() returns -1, the value
+        // is converted to 80 or 443.
+        int proxyPort = determinePort(mProxySettings.getPort(), mProxySettings.isSecure());
+
+        // Select a socket factory.
+        SocketFactory factory = mProxySettings.selectSocketFactory();
+
+        // Let the socket factory create a socket.
+        Socket socket = factory.createSocket(mProxySettings.getHost(), proxyPort);
+
+        try
+        {
+            // Perform proxy handshake (and SSL handshake as necessary).
+            return doProxyHandshake(socket, host, port, secure);
+        }
+        catch (IOException e)
+        {
+            try
+            {
+                socket.close();
+            }
+            catch (IOException ioe)
+            {
+            }
+
+            throw e;
+        }
+    }
+
+
+    private Socket doProxyHandshake(Socket socket, String host, int port, boolean secure) throws IOException
+    {
+        // Delegate the task to ProxyHandshaker.
+        new ProxyHandshaker(socket, host, port, mProxySettings).perform();
+
+        // If TLS handshake is needed in the tunnel.
+        if (secure)
+        {
+            // Get an SSL socket factory to create an SSL socket which
+            // performs the SSL handshake with the WebSocket endpoint.
+            SSLSocketFactory sslSocketFactory =
+                (SSLSocketFactory)mSocketFactorySettings.selectSocketFactory(secure);
+
+            // Overlay the existing socket.
+            socket = sslSocketFactory.createSocket(socket, host, port, true);
+
+            // Start the SSL handshake manually. As for the reason, see
+            // http://docs.oracle.com/javase/7/docs/technotes/guides/security/jsse/samples/sockets/client/SSLSocketClient.java
+            ((SSLSocket)socket).startHandshake();
+        }
+
+        return socket;
+    }
+
+
+    private Socket createDirectRawSocket(String host, int port, boolean secure) throws IOException
+    {
+        // Select a socket factory.
+        SocketFactory factory = mSocketFactorySettings.selectSocketFactory(secure);
 
         // Let the socket factory create a socket.
         return factory.createSocket(host, port);
@@ -358,32 +465,6 @@ public class WebSocketFactory
         {
             return 80;
         }
-    }
-
-
-    private SocketFactory determineSocketFactory(boolean secure)
-    {
-        if (secure)
-        {
-            if (mSSLContext != null)
-            {
-                return mSSLContext.getSocketFactory();
-            }
-
-            if (mSSLSocketFactory != null)
-            {
-                return mSSLSocketFactory;
-            }
-
-            return SSLSocketFactory.getDefault();
-        }
-
-        if (mSocketFactory != null)
-        {
-            return mSocketFactory;
-        }
-
-        return SocketFactory.getDefault();
     }
 
 

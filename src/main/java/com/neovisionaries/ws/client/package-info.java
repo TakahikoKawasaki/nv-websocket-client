@@ -11,7 +11,9 @@
  * <li>provides a factory class which utilizes {@link javax.net.SocketFactory} interface,
  * <li>provides a rich listener interface to hook web socket events,
  * <li>has fine-grained error codes for fine-grained controllability on errors,
- * <li>and allows to disable validity checks on RSV1/RSV2/RSV3 bits and opcode of frames.
+ * <li>allows to disable validity checks on RSV1/RSV2/RSV3 bits and opcode of frames,
+ * <li>and supports HTTP proxy, especially "Secure WebSocket" (<code>wss</code>) through
+ *     "Secure Proxy" (<code>https</code>).
  * </ul>
  *
  * <p>

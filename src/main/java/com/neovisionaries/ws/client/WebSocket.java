@@ -37,22 +37,124 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
 /**
  * Web socket.
  *
+ * <h3>Create WebSocketFactory</h3>
+ *
+ * <p>
+ * {@link WebSocketFactory} is a factory class that creates
+ * {@link WebSocket} instances. The first step is to create a
+ * {@code WebSocketFactory} instance.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Create a WebSocketFactory instance.</span>
+ * WebSocketFactory factory = new {@link WebSocketFactory#WebSocketFactory()
+ * WebSocketFactory()};</pre>
+ * </blockquote>
+ *
+ * <p>
+ * By default, {@code WebSocketFactory} uses {@link
+ * javax.net.SocketFactory SocketFactory}{@code .}{@link
+ * javax.net.SocketFactory#getDefault() getDefault()} for
+ * non-secure WebSocket connections ({@code ws:}) and {@link
+ * javax.net.ssl.SSLSocketFactory SSLSocketFactory}{@code
+ * .}{@link javax.net.ssl.SSLSocketFactory#getDefault()
+ * getDefault()} for secure WebSocket connections ({@code
+ * wss:}). You can change this default behavior by using
+ * {@code WebSocketFactory.}{@link
+ * WebSocketFactory#setSocketFactory(javax.net.SocketFactory)
+ * setSocketFactory} method, {@code WebSocketFactory.}{@link
+ * WebSocketFactory#setSSLSocketFactory(javax.net.ssl.SSLSocketFactory)
+ * setSSLSocketFactory} method and {@code WebSocketFactory.}{@link
+ * WebSocketFactory#setSSLContext(javax.net.ssl.SSLContext)
+ * setSSLContext} method. The following is an example to set
+ * a custom SSL context to a {@code WebSocketFactory} instance.
+ * See the description of {@code WebSocketFactory.}{@link
+ * WebSocketFactory#createSocket(URI) createSocket} method for details.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Create a custom SSL context.</span>
+ * SSLContext context = <a href="https://gist.github.com/TakahikoKawasaki/d07de2218b4b81bf65ac"
+ * >NaiveSSLContext</a>.getInstance(<span style="color:darkred;">"TLS"</span>);
+ *
+ * <span style="color: green;">// Set the custom SSL context.</span>
+ * factory.{@link WebSocketFactory#setSSLContext(javax.net.ssl.SSLContext)
+ * setSSLContext}(context);</pre>
+ * </blockquote>
+ *
+ * <p>
+ * <a href="https://gist.github.com/TakahikoKawasaki/d07de2218b4b81bf65ac"
+ * >NaiveSSLContext</a> used in the above example is a factory class to
+ * create an {@link javax.net.ssl.SSLContext SSLContext} which naively
+ * accepts all certificates without verification. It's enough for testing
+ * purposes. When you see an error message
+ * "unable to find valid certificate path to requested target" while
+ * testing, try {@code NaiveSSLContext}.
+ * </p>
+ *
+ * <h3>HTTP Proxy</h3>
+ *
+ * <p>
+ * If a WebSocket endpoint needs to be accessed via an HTTP proxy,
+ * information about the proxy server has to be set to a {@code
+ * WebSocketFactory} instance before creating a {@code WebSocket}
+ * instance. Proxy settings are represented by {@link ProxySettings}
+ * class. A {@code WebSocketFactory} instance has an associated
+ * {@code ProxySettings} instance and it can be obtained by calling
+ * {@code WebSocketFactory.}{@link WebSocketFactory#getProxySettings()
+ * getProxySettings()} method.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Get the associated ProxySettings instance.</span>
+ * {@link ProxySettings} settings = factory.{@link
+ * WebSocketFactory#getProxySettings() getProxySettings()};</pre>
+ * </blockquote>
+ *
+ * <p>
+ * {@code ProxySettings} class has methods to set information about
+ * a proxy server such as {@link ProxySettings#setHost(String) setHost}
+ * method and {@link ProxySettings#setPort(int) setPort} method. The
+ * following is an example to set a secure (<code>https</code>) proxy
+ * server.
+ * </p>
+ *
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Set a proxy server.</span>
+ * settings.{@link ProxySettings#setServer(String)
+ * setServer}(<span style="color:darkred;">"https://proxy.example.com"</span>);</pre>
+ * </blockquote>
+ *
+ * <p>
+ * If credentials are required for authentication at a proxy server,
+ * {@link ProxySettings#setId(String) setId} method and {@link
+ * ProxySettings#setPassword(String) setPassword} method, or
+ * {@link ProxySettings#setCredentials(String, String) setCredentials}
+ * method can be used to set the credentials. Note that, however,
+ * the current implementation supports only Basic Authentication.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Set credentials for authentication at a proxy server.</span>
+ * settings.{@link ProxySettings#setCredentials(String, String)
+ * setCredentials}(id, password);
+ * </pre>
+ * </blockquote>
+ *
  * <h3>Create WebSocket</h3>
  *
  * <p>
  * {@link WebSocket} class represents a web socket. Its instances are
  * created by calling one of {@code createSocket} methods of a {@link
- * WebSocketFactory} instance. {@code WebSocketFactory} class provides
- * methods such as {@link WebSocketFactory#setSSLSocketFactory(javax.net.ssl.SSLSocketFactory)
- * setSSLSocketFactory} to configure the underlying socket factories.
- * Below is the simplest example to create a {@code WebSocket} instance.
+ * WebSocketFactory} instance. Below is the simplest example to create
+ * a {@code WebSocket} instance.
  * </p>
  *
  * <blockquote>
  * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Create a web socket. The scheme part can be one of the following:
  * // 'ws', 'wss', 'http' and 'https' (case-insensitive). The user info
  * // part, if any, is interpreted as expected. If a raw socket failed
- * // to be created, an IOException is thrown.</span>
+ * // to be created, or if HTTP proxy handshake or SSL handshake failed,
+ * // an IOException is thrown.</span>
  * WebSocket ws = new {@link WebSocketFactory#WebSocketFactory()
  * WebSocketFactory()}
  *     .{@link WebSocketFactory#createSocket(String)
@@ -265,6 +367,8 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * </blockquote>
  *
  * @see <a href="https://tools.ietf.org/html/rfc6455">RFC 6455 (The WebSocket Protocol)</a>
+ *
+ * @author Takahiko Kawasaki
  */
 public class WebSocket
 {
@@ -1555,7 +1659,7 @@ public class WebSocket
                 "The status line of the opening handshake response is empty.");
         }
 
-        // Expect "HTTP/1.1 101 Switching Protocols
+        // Expect "HTTP/1.1 101 Switching Protocols"
         String[] elements = line.split(" +", 3);
 
         if (elements.length < 2)
@@ -1572,7 +1676,7 @@ public class WebSocket
             // The status code of the opening handshake response is not Switching Protocols.
             throw new WebSocketException(
                 WebSocketError.NOT_SWITCHING_PROTOCOLS,
-                "The status code of the opening handshake response is not Switching Protocols. The status line is: " + line);
+                "The status code of the opening handshake response is not '101 Switching Protocols'. The status line is: " + line);
         }
 
         // OK. The server can speak the WebSocket protocol.

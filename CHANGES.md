@@ -4,6 +4,7 @@ CHANGES
 1.3-SNAPSHOT
 ------------
 
+- Supported HTTP proxy.
 - Changed the implementation class of the second argument of
   WebSocketListener.onConnected method from HashMap to TreeMap
   with String.CASE_INSENSITIVE_ORDER.
