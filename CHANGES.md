@@ -1,8 +1,8 @@
 CHANGES
 =======
 
-1.3-SNAPSHOT
-------------
+1.3 (2015-05-06)
+----------------
 
 - Supported HTTP proxy.
 - Changed the implementation class of the second argument of
