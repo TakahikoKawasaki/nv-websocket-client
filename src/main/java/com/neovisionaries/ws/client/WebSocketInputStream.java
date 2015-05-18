@@ -141,15 +141,21 @@ class WebSocketInputStream extends FilterInputStream
     private void readBytes(byte[] buffer, int length) throws IOException, WebSocketException
     {
         // Read
-        int count = read(buffer, 0, length);
-
-        if (count != length)
-        {
-            // The end of the stream has been reached unexpectedly.
-            throw new WebSocketException(
-                WebSocketError.INSUFFICENT_DATA,
-                "The end of the stream has been reached unexpectedly.");
-        }
+    	int total = 0;
+    	while (total < length)
+    	{
+    		int count = read(buffer, total, length-total);
+    		
+	        if (count <= 0)
+	        {
+	            // The end of the stream has been reached unexpectedly.
+	            throw new WebSocketException(
+	                WebSocketError.INSUFFICENT_DATA,
+	                "The end of the stream has been reached unexpectedly.");
+	        }
+	        
+	        total += count;
+    	}
     }
 
 
