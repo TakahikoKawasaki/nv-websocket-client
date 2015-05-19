@@ -1,6 +1,14 @@
 CHANGES
 =======
 
+1.4 (2015-05-19)
+----------------
+
+- Fixed a bug in `WebSocketInputStream.java` which did not
+  consider the case where `read` returns less bytes than
+  required. ([PR#2](https://github.com/TakahikoKawasaki/nv-websocket-client/pull/2))
+
+
 1.3 (2015-05-06)
 ----------------
 

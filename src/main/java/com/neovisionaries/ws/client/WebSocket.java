@@ -245,6 +245,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * <pre style="border-left: solid 5px lightgray;"> try
  * {
  *     <span style="color: green;">// Perform an opening handshake.</span>
+ *     <span style="color: green;">// This method blocks until the opening handshake is finished.</span>
  *     ws.{@link #connect()};
  * }
  * catch ({@link WebSocketException} e)
@@ -268,14 +269,14 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *
  * <blockquote>
  * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Send a text frame.</span>
- * ws.{@link #sendText(String) sendText}(<span class="color: darkred;">"Hello."</span>);
+ * ws.{@link #sendText(String) sendText}(<span style="color: darkred;">"Hello."</span>);
  *
  * <span style="color: green;">// Send a binary frame.</span>
  * byte[] binary = ......;
  * ws.{@link #sendBinary(byte[]) sendBinary}(binary);
  *
  * <span style="color: green;">// Send a ping frame.</span>
- * ws.{@link #sendPing(String) sendPing}(<span class="color: darkred;">"Are you there?"</span>);</pre>
+ * ws.{@link #sendPing(String) sendPing}(<span style="color: darkred;">"Are you there?"</span>);</pre>
  * </blockquote>
  *
  * <p>
@@ -367,6 +368,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * </blockquote>
  *
  * @see <a href="https://tools.ietf.org/html/rfc6455">RFC 6455 (The WebSocket Protocol)</a>
+ * @see <a href="https://github.com/TakahikoKawasaki/nv-websocket-client">[GitHub] nv-websocket-client</a>
  *
  * @author Takahiko Kawasaki
  */

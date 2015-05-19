@@ -32,8 +32,17 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>1.3</version>
+    <version>1.4</version>
 </dependency>
+```
+
+Gradle
+------
+
+```Gradle
+dependencies {
+    compile 'com.neovisionaries:nv-websocket-client:1.4'
+}
 ```
 
 
@@ -155,7 +164,7 @@ ws.addListener(new WebSocketAdapter() {
 #### Configure WebSocket
 
 Before starting a WebSocket [opening handshake]
-(http://tools.ietf.org/html/rfc6455#section-4)) with the server, you can
+(http://tools.ietf.org/html/rfc6455#section-4) with the server, you can
 configure the web socket instance by using the following methods.
 
 | METHOD         | DESCRIPTION                                            |
@@ -180,6 +189,7 @@ write web socket frames asynchronously.
 try
 {
     // Perform an opening handshake.
+    // This method blocks until the opening handshake is finished.
     ws.connect();
 }
 catch (WebSocketException e)
