@@ -1166,7 +1166,7 @@ public class WebSocket
      * </p>
      *
      * <p>
-     * If you want to send a text frame that are to be followed by
+     * If you want to send a text frame that is to be followed by
      * continuation frames, use {@link #sendText(String, boolean)
      * setText(String payload, boolean fin)} with {@code fin=false}.
      * </p>
@@ -1220,7 +1220,7 @@ public class WebSocket
      * </p>
      *
      * <p>
-     * If you want to send a binary frame that are to be followed by
+     * If you want to send a binary frame that is to be followed by
      * continuation frames, use {@link #sendBinary(byte[], boolean)
      * setBinary(byte[] payload, boolean fin)} with {@code fin=false}.
      * </p>
