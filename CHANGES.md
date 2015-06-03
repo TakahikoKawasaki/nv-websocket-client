@@ -1,6 +1,14 @@
 CHANGES
 =======
 
+1.5 (2015-06-04)
+----------------
+
+- Added flush(), isAutoFlush() and setAutoFlush(boolean) methods to WebSocket.
+- Added variants of WebSocket.disconnect method.
+
+
+----------------
 1.4 (2015-05-19)
 ----------------
 

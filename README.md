@@ -32,7 +32,7 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>1.4</version>
+    <version>1.5</version>
 </dependency>
 ```
 
@@ -41,7 +41,7 @@ Gradle
 
 ```Gradle
 dependencies {
-    compile 'com.neovisionaries:nv-websocket-client:1.4'
+    compile 'com.neovisionaries:nv-websocket-client:1.5'
 }
 ```
 
@@ -281,6 +281,26 @@ ws.setPingInterval(0);
 Likewise, you can send pong frames periodically by calling `setPongInterval`
 method. "_A Pong frame MAY be sent **unsolicited**._" ([RFC 6455, 5.5.3. Pong]
 (https://tools.ietf.org/html/rfc6455#section-5.5.3))
+
+
+### Auto Flush
+
+By default, a frame is automatically flushed to the server immediately
+after `sendFrame` method is executed. This automatic flush can be disabled
+by calling `setAutoFlush(false)`.
+
+```java
+// Disable auto-flush.
+ws.setAutoFlush(false);
+```
+
+To flush frames manually, call `flush()` method. Note that this method
+works asynchronously.
+
+```java
+// Flush frames to the server manually.
+ws.flush();
+```
 
 
 #### Disconnect WebSocket
