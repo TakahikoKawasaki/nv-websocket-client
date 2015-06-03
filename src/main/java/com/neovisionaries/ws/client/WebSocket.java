@@ -119,6 +119,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * server.
  * </p>
  *
+ * <blockquote>
  * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Set a proxy server.</span>
  * settings.{@link ProxySettings#setServer(String)
  * setServer}(<span style="color:darkred;">"https://proxy.example.com"</span>);</pre>
@@ -353,6 +354,30 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * >RFC 6455, 5.5.3. Pong</a>)
  * </p>
  *
+ * <h3>Auto Flush</h3>
+ *
+ * <p>
+ * By default, a frame is automatically flushed to the server immediately after
+ * {@link #sendFrame(WebSocketFrame) sendFrame} method is executed. This automatic
+ * flush can be disabled by calling {@link #setAutoFlush(boolean) setAutoFlush}{@code
+ * (false)}.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Disable auto-flush.</span>
+ * ws.{@link #setAutoFlush(boolean) setAutoFlush}(false);</pre>
+ * </blockquote>
+ *
+ * <p>
+ * To flush frames manually, call {@link #flush()} method. Note that this method
+ * works asynchronously.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Flush frames to the server manually.</span>
+ * ws.{@link #flush()};</pre>
+ * </blockquote>
+ *
  * <h3>Disconnect WebSocket</h3>
  *
  * <p>
@@ -390,6 +415,7 @@ public class WebSocket
     private List<WebSocketExtension> mAgreedExtensions;
     private String mAgreedProtocol;
     private boolean mExtended;
+    private boolean mAutoFlush = true;
     private boolean mOnConnectedCalled;
     private boolean mReadingThreadStarted;
     private boolean mWritingThreadStarted;
@@ -611,6 +637,69 @@ public class WebSocket
     public WebSocket setExtended(boolean extended)
     {
         mExtended = extended;
+
+        return this;
+    }
+
+
+    /**
+     * Check if flush is performed automatically after {@link
+     * #sendFrame(WebSocketFrame)} is done. The default value is
+     * {@code true}.
+     *
+     * @return
+     *         {@code true} if flush is performed automatically.
+     *
+     * @since 1.5
+     */
+    public boolean isAutoFlush()
+    {
+        return mAutoFlush;
+    }
+
+
+    /**
+     * Enable or disable auto-flush of sent frames.
+     *
+     * @param auto
+     *         {@code true} to enable auto-flush. {@code false} to
+     *         disable it.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.5
+     */
+    public WebSocket setAutoFlush(boolean auto)
+    {
+        mAutoFlush = auto;
+
+        return this;
+    }
+
+
+    /**
+     * Flush frames to the server. Flush is performed asynchronously.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.5
+     */
+    public WebSocket flush()
+    {
+        synchronized (mStateManager)
+        {
+            WebSocketState state = mStateManager.getState();
+
+            if (state != OPEN && state != CLOSING)
+            {
+                return this;
+            }
+
+            // Request flush.
+            mWritingThread.queueFlush();
+        }
 
         return this;
     }

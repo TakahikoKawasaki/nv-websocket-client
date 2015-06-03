@@ -30,10 +30,12 @@ class WritingThread extends Thread
     private static final int SHOULD_SEND     = 0;
     private static final int SHOULD_STOP     = 1;
     private static final int SHOULD_CONTINUE = 2;
+    private static final int SHOULD_FLUSH    = 3;
     private final WebSocket mWebSocket;
     private final List<WebSocketFrame> mFrames;
     private boolean mStopRequested;
     private WebSocketFrame mCloseFrame;
+    private boolean mFlushNeeded;
 
 
     public WritingThread(WebSocket websocket)
@@ -80,6 +82,11 @@ class WritingThread extends Thread
             {
                 break;
             }
+            else if (result == SHOULD_FLUSH)
+            {
+                flushIgnoreError();
+                continue;
+            }
             else if (result == SHOULD_CONTINUE)
             {
                 continue;
@@ -88,7 +95,7 @@ class WritingThread extends Thread
             try
             {
                 // Send frames.
-                sendFrames();
+                sendFrames(false);
             }
             catch (WebSocketException e)
             {
@@ -100,7 +107,7 @@ class WritingThread extends Thread
         try
         {
             // Send remaining frames, if any.
-            sendFrames();
+            sendFrames(true);
         }
         catch (WebSocketException e)
         {
@@ -139,6 +146,36 @@ class WritingThread extends Thread
     }
 
 
+    public void queueFlush()
+    {
+        synchronized (this)
+        {
+            mFlushNeeded = true;
+
+            // Wake up this thread.
+            notifyAll();
+        }
+    }
+
+
+    private void flushIgnoreError()
+    {
+        try
+        {
+            flush();
+        }
+        catch (IOException e)
+        {
+        }
+    }
+
+
+    private void flush() throws IOException
+    {
+        mWebSocket.getOutput().flush();
+    }
+
+
     private int waitForFrames()
     {
         synchronized (this)
@@ -158,6 +195,13 @@ class WritingThread extends Thread
             // If the list of web socket frames
             if (mFrames.size() == 0)
             {
+                // Check mFlushNeeded before calling wait().
+                if (mFlushNeeded)
+                {
+                    mFlushNeeded = false;
+                    return SHOULD_FLUSH;
+                }
+
                 try
                 {
                     // Wait until a new frame is added to the list
@@ -176,6 +220,12 @@ class WritingThread extends Thread
 
             if (mFrames.size() == 0)
             {
+                if (mFlushNeeded)
+                {
+                    mFlushNeeded = false;
+                    return SHOULD_FLUSH;
+                }
+
                 // Spurious wakeup.
                 return SHOULD_CONTINUE;
             }
@@ -185,7 +235,7 @@ class WritingThread extends Thread
     }
 
 
-    private void sendFrames() throws WebSocketException
+    private void sendFrames(boolean last) throws WebSocketException
     {
         List<WebSocketFrame> frames;
 
@@ -197,21 +247,37 @@ class WritingThread extends Thread
             mFrames.clear();
         }
 
-        if (frames.size() == 0)
-        {
-            return;
-        }
+        boolean closeFrameFound = false;
 
         for (WebSocketFrame frame : frames)
         {
             // Send the frame to the server.
             sendFrame(frame);
+
+            // If the frame is a close frame.
+            if (frame.isCloseFrame())
+            {
+                closeFrameFound = true;
+            }
+        }
+
+        boolean flush = (last || mWebSocket.isAutoFlush() || closeFrameFound);
+
+        synchronized (this)
+        {
+            flush |= mFlushNeeded;
+            mFlushNeeded = false;
+        }
+
+        if (!flush)
+        {
+            return;
         }
 
         try
         {
             // Flush
-            mWebSocket.getOutput().flush();
+            flush();
         }
         catch (IOException e)
         {
