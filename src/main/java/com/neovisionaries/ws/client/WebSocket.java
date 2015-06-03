@@ -852,10 +852,99 @@ public class WebSocket
     /**
      * Disconnect the web socket.
      *
+     * <p>
+     * This method is an alias of {@link #disconnect(int, String)
+     * disconnect}{@code (}{@link WebSocketCloseCode#NORMAL}{@code , null)}.
+     * </p>
+     *
      * @return
      *         {@code this} object.
      */
     public WebSocket disconnect()
+    {
+        return disconnect(WebSocketCloseCode.NORMAL, null);
+    }
+
+
+    /**
+     * Disconnect the web socket.
+     *
+     * <p>
+     * This method is an alias of {@link #disconnect(int, String)
+     * disconnect}{@code (closeCode, null)}.
+     * </p>
+     *
+     * @param closeCode
+     *         The close code embedded in a <a href=
+     *         "https://tools.ietf.org/html/rfc6455#section-5.5.1">close frame</a>
+     *         which this WebSocket client will send to the server.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.5
+     */
+    public WebSocket disconnect(int closeCode)
+    {
+        return disconnect(closeCode, null);
+    }
+
+
+    /**
+     * Disconnect the web socket.
+     *
+     * <p>
+     * This method is an alias of {@link #disconnect(int, String)
+     * disconnect}{@code (}{@link WebSocketCloseCode#NORMAL}{@code , reason)}.
+     * </p>
+     *
+     * @param reason
+     *         The reason embedded in a <a href=
+     *         "https://tools.ietf.org/html/rfc6455#section-5.5.1">close frame</a>
+     *         which this WebSocket client will send to the server. Note that
+     *         the length of the bytes which represents the given reason must
+     *         not exceed 125. In other words, {@code (reason.}{@link
+     *         String#getBytes(String) getBytes}{@code ("UTF-8").length <= 125)}
+     *         must be true.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.5
+     */
+    public WebSocket disconnect(String reason)
+    {
+        return disconnect(WebSocketCloseCode.NORMAL, reason);
+    }
+
+
+    /**
+     * Disconnect the web socket.
+     *
+     * @param closeCode
+     *         The close code embedded in a <a href=
+     *         "https://tools.ietf.org/html/rfc6455#section-5.5.1">close frame</a>
+     *         which this WebSocket client will send to the server.
+     *
+     * @param reason
+     *         The reason embedded in a <a href=
+     *         "https://tools.ietf.org/html/rfc6455#section-5.5.1">close frame</a>
+     *         which this WebSocket client will send to the server. Note that
+     *         the length of the bytes which represents the given reason must
+     *         not exceed 125. In other words, {@code (reason.}{@link
+     *         String#getBytes(String) getBytes}{@code ("UTF-8").length <= 125)}
+     *         must be true.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @see WebSocketCloseCode
+     *
+     * @see <a href="https://tools.ietf.org/html/rfc6455#section-5.5.1">RFC 6455, 5.5.1. Close</a>
+     *
+     * @since 1.5
+     */
+    public WebSocket disconnect(int closeCode, String reason)
     {
         synchronized (mStateManager)
         {
@@ -885,9 +974,7 @@ public class WebSocket
             mStateManager.changeToClosing(CloseInitiator.CLIENT);
 
             // Create a close frame.
-            WebSocketFrame frame = WebSocketFrame.createCloseFrame(
-                WebSocketCloseCode.NORMAL,
-                "The client initiated the closing handshake.");
+            WebSocketFrame frame = WebSocketFrame.createCloseFrame(closeCode, reason);
 
             // Send the close frame to the server.
             sendFrame(frame);
