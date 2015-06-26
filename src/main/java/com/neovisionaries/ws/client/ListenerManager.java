@@ -33,6 +33,12 @@ class ListenerManager
     }
 
 
+    public List<WebSocketListener> getListeners()
+    {
+        return mListeners;
+    }
+
+
     public void addListener(WebSocketListener listener)
     {
         if (listener == null)

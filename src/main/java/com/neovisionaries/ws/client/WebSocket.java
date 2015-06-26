@@ -400,9 +400,10 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
 public class WebSocket
 {
     private static final String ACCEPT_MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+    private final WebSocketFactory mWebSocketFactory;
     private final Socket mSocket;
     private final StateManager mStateManager;
-    private final HandshakeBuilder mHandshakeBuilder;
+    private HandshakeBuilder mHandshakeBuilder;
     private final ListenerManager mListenerManager;
     private final PingSender mPingSender;
     private final PongSender mPongSender;
@@ -425,14 +426,56 @@ public class WebSocket
     private WebSocketFrame mClientCloseFrame;
 
 
-    WebSocket(boolean secure, String userInfo, String host, String path, Socket socket)
+    WebSocket(WebSocketFactory factory, boolean secure, String userInfo, String host, String path, Socket socket)
     {
+        mWebSocketFactory = factory;
         mSocket           = socket;
         mStateManager     = new StateManager();
         mHandshakeBuilder = new HandshakeBuilder(secure, userInfo, host, path);
         mListenerManager  = new ListenerManager(this);
         mPingSender       = new PingSender(this);
         mPongSender       = new PongSender(this);
+    }
+
+
+    /**
+     * Create a new {@code WebSocket} instance that has the same settings
+     * as this instance. Note that, however, settings you made on the raw
+     * socket are not copied.
+     *
+     * <p>
+     * The {@link WebSocketFactory} instance that you used to create this
+     * {@code WebSocket} instance is used.
+     * </p>
+     *
+     * @return
+     *         A new {@code WebSocket} instance.
+     *
+     * @throws IOException
+     *         {@link WebSocketFactory#createSocket(URI)} threw an exception.
+     *
+     * @since 1.6
+     */
+    public WebSocket recreate() throws IOException
+    {
+        WebSocket instance = mWebSocketFactory.createSocket(getURI());
+
+        // Copy the settings.
+        instance.mHandshakeBuilder = new HandshakeBuilder(mHandshakeBuilder);
+        instance.setPingInterval(getPingInterval());
+        instance.setPongInterval(getPongInterval());
+
+        // Copy listeners.
+        List<WebSocketListener> listeners = mListenerManager.getListeners();
+        synchronized (listeners)
+        {
+            for (WebSocketListener listener : listeners)
+            {
+                instance.addListener(listener);
+            }
+        }
+
+        return instance;
     }
 
 
@@ -885,6 +928,17 @@ public class WebSocket
      * Note that if the URI passed to {@link WebSocketFactory}{@code
      * .createSocket} method contains the user-info part, you don't have to
      * call {@code setUserInfo} method.
+     * </p>
+     *
+     * <p>
+     * Note that this method can be called at most only once regardless of
+     * whether this method succeeded or failed. If you want to re-connect to
+     * the WebSocket endpoint, you have to create a new {@code WebSocket}
+     * instance again by calling one of {@code createSocket} methods of a
+     * {@link WebSocketFactory}. You may find {@link #recreate()} method
+     * useful if you want to create a new {@code WebSocket} instance that
+     * has the same settings as this instance. (But settings you made on
+     * the raw socket are not copied.)
      * </p>
      *
      * @return

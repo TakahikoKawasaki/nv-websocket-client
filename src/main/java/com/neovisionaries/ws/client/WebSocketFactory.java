@@ -483,6 +483,6 @@ public class WebSocketFactory
             path = path + "?" + query;
         }
 
-        return new WebSocket(secure, userInfo, host, path, socket);
+        return new WebSocket(this, secure, userInfo, host, path, socket);
     }
 }

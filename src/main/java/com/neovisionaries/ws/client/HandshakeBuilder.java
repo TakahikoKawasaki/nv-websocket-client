@@ -27,6 +27,7 @@ import java.util.Set;
 class HandshakeBuilder
 {
     private static final String RN = "\r\n";
+    private boolean mSecure;
     private String mUserInfo;
     private final String mHost;
     private final String mPath;
@@ -39,6 +40,7 @@ class HandshakeBuilder
 
     public HandshakeBuilder(boolean secure, String userInfo, String host, String path)
     {
+        mSecure   = secure;
         mUserInfo = userInfo;
         mHost     = host;
         mPath     = path;
@@ -47,6 +49,20 @@ class HandshakeBuilder
         // 'path' may contain '?{query}' at its end.
         mUri = URI.create(String.format("%s://%s%s",
             (secure ? "wss" : "ws"), host, path));
+    }
+
+
+    public HandshakeBuilder(HandshakeBuilder source)
+    {
+        mSecure     = source.mSecure;
+        mUserInfo   = source.mUserInfo;
+        mHost       = source.mHost;
+        mPath       = source.mPath;
+        mUri        = source.mUri;
+        mKey        = source.mKey;
+        mProtocols  = copyProtocols(source.mProtocols);
+        mExtensions = copyExtensions(source.mExtensions);
+        mHeaders    = copyHeaders(source.mHeaders);
     }
 
 
@@ -267,5 +283,68 @@ class HandshakeBuilder
         {
             builder.append(pair[0]).append(": ").append(pair[1]).append(RN);
         }
+    }
+
+
+    private static Set<String> copyProtocols(Set<String> protocols)
+    {
+        if (protocols == null)
+        {
+            return null;
+        }
+
+        Set<String> newProtocols = new LinkedHashSet<String>(protocols.size());
+
+        newProtocols.addAll(protocols);
+
+        return newProtocols;
+    }
+
+
+    private static List<WebSocketExtension> copyExtensions(List<WebSocketExtension> extensions)
+    {
+        if (extensions == null)
+        {
+            return null;
+        }
+
+        List<WebSocketExtension> newExtensions =
+            new ArrayList<WebSocketExtension>(extensions.size());
+
+        for (WebSocketExtension extension : extensions)
+        {
+            newExtensions.add(new WebSocketExtension(extension));
+        }
+
+        return newExtensions;
+    }
+
+
+    private static List<String[]> copyHeaders(List<String[]> headers)
+    {
+        if (headers == null)
+        {
+            return null;
+        }
+
+        List<String[]> newHeaders = new ArrayList<String[]>(headers.size());
+
+        for (String[] header : headers)
+        {
+            newHeaders.add(copyHeader(header));
+        }
+
+        return newHeaders;
+    }
+
+
+    private static String[] copyHeader(String[] header)
+    {
+        String[] newHeader = new String[2];
+
+        newHeader[0] = header[0];
+        newHeader[1] = header[1];
+
+        return newHeader;
     }
 }
