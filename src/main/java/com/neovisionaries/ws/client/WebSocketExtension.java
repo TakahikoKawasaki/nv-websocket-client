@@ -27,7 +27,7 @@ import java.util.Map;
 public class WebSocketExtension
 {
     private final String mName;
-    private final Map<String, String> mParameters = new LinkedHashMap<String, String>();
+    private final Map<String, String> mParameters;
 
 
     /**
@@ -48,7 +48,32 @@ public class WebSocketExtension
             throw new IllegalArgumentException("'name' is not a valid token.");
         }
 
-        mName = name;
+        mName       = name;
+        mParameters = new LinkedHashMap<String, String>();
+    }
+
+
+    /**
+     * Copy constructor.
+     *
+     * @param source
+     *         A source extension. Must not be {@code null}.
+     *
+     * @throws IllegalArgumentException
+     *         The given argument is {@code null}.
+     *
+     * @since 1.6
+     */
+    public WebSocketExtension(WebSocketExtension source)
+    {
+        if (source == null)
+        {
+            // If the given instance is null.
+            throw new IllegalArgumentException("'source' is null.");
+        }
+
+        mName       = source.getName();
+        mParameters = new LinkedHashMap<String, String>(source.getParameters());
     }
 
 
