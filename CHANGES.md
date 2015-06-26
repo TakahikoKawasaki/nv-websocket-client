@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+1.6 (2015-06-26)
+----------------
+
+- Added WebSocket.recreate() method.
+- Added a copy constructor to WebSocketExtension.
+
+
 1.5 (2015-06-04)
 ----------------
 

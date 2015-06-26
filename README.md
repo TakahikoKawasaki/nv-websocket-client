@@ -32,7 +32,7 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>1.5</version>
+    <version>1.6</version>
 </dependency>
 ```
 
@@ -41,7 +41,7 @@ Gradle
 
 ```Gradle
 dependencies {
-    compile 'com.neovisionaries:nv-websocket-client:1.5'
+    compile 'com.neovisionaries:nv-websocket-client:1.6'
 }
 ```
 
@@ -314,6 +314,30 @@ frame manually).
 ```java
 // Close the web socket connection.
 ws.disconnect();
+```
+
+`disconnect()` method has some variants. If you want to change the close
+code and the reason phrase of the close frame that this client will send
+to the server, use a variant method such as `disconnect(int, String)`.
+`disconnect()` itself is an alias of
+`disconnect(WebSocketCloseCode.NORMAL, null)`.
+
+
+
+#### Reconnection
+
+`WebSocket.connect()` method can be called at most only once regardless of
+whether the method succeeded or failed. If you want to re-connect to the
+WebSocket endpoint, you have to create a new `WebSocket` instance again
+by calling one of `createSocket` methods of a `WebSocketFactory`. You may
+find `recreate()` method useful if you want to create a new `WebSocket`
+instance that has the same settings as the original instance. Note that,
+however, settings you made on the raw socket of the original `WebSocket`
+instance are not copied.
+
+```java
+// Create a new WebSocket instance and connect to the same endpoint.
+ws = ws.recreate().connect();
 ```
 
 

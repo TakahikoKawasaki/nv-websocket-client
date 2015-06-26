@@ -392,6 +392,31 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * ws.{@link #disconnect()};</pre>
  * </blockquote>
  *
+ * <p>
+ * {@code disconnect()} method has some variants. If you want to change the close code
+ * and the reason phrase of the close frame that this client will send to the server,
+ * use a variant method such as {@link #disconnect(int, String)}. {@code disconnect()}
+ * method itself is an alias of {@code disconnect(}{@link WebSocketCloseCode}{@code
+ * .NORMAL, null)}.
+ * </p>
+ *
+ * <h3>Reconnection</h3>
+ *
+ * <p>
+ * {@code connect()} method can be called at most only once regardless of whether the
+ * method succeeded or failed. If you want to re-connect to the WebSocket endpoint,
+ * you have to create a new {@code WebSocket} instance again by calling one of {@code
+ * createSocket} methods of a {@code WebSocketFactory}. You may find {@link #recreate()}
+ * method useful if you want to create a new {@code WebSocket} instance that has the
+ * same settings as the original instance. Note that, however, settings you made on
+ * the raw socket of the original {@code WebSocket} instance are not copied.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Create a new WebSocket instance and connect to the same endpoint.</span>
+ * ws = ws.{@link #recreate()}.{@link #connect()};</pre>
+ * </blockquote>
+ *
  * @see <a href="https://tools.ietf.org/html/rfc6455">RFC 6455 (The WebSocket Protocol)</a>
  * @see <a href="https://github.com/TakahikoKawasaki/nv-websocket-client">[GitHub] nv-websocket-client</a>
  *
