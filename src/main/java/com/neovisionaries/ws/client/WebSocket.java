@@ -31,6 +31,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import com.neovisionaries.ws.client.StateManager.CloseInitiator;
 
 
@@ -254,6 +258,46 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *     <span style="color: green;">// Failed.</span>
  * }</pre>
  * </blockquote>
+ *
+ * <h3>Asynchronous Opening Handshake</h3>
+ *
+ * <p>
+ * {@link #connect(ExecutorService)} method is an asynchronous version
+ * of {@code connect()}. The method performs a WebSocket opening handshake
+ * asynchronously using the given {@link ExecutorService}.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Prepare an ExecutorService.</span>
+ * {@link ExecutorService} es = {@link java.util.concurrent.Executors Executors}.{@link
+ * java.util.concurrent.Executors#newSingleThreadExecutor() newSingleThreadExecutor()};
+ *
+ * <span style="color: green;">// Perform an opening handshake asynchronously.</span>
+ * {@link Future}{@code <WebSocket>} future = ws.{@link #connect(ExecutorService) connect}(es);
+ *
+ * try
+ * {
+ *     <span style="color: green;">// Wait for the opening handshake to complete.</span>
+ *     future.get();
+ * }
+ * catch ({@link java.util.concurrent.ExecutionException ExecutionException} e)
+ * {
+ *     if (e.getCause() instanceof {@link WebSocketException})
+ *     {
+ *         ......
+ *     }
+ * }</pre>
+ * </blockquote>
+ *
+ * <p>
+ * The implementation of {@code connect(ExecutorService)} method creates
+ * a {@link java.util.concurrent.Callable Callable}{@code <WebSocket>}
+ * instance by calling {@link #connectable()} method and passes the
+ * instance to {@link ExecutorService#submit(Callable) submit(Callable)}
+ * method of the given {@code ExecutorService}. What the implementation
+ * of {@link Callable#call() call()} method of the {@code Callable}
+ * instance does is just to call the synchronous {@code connect()}.
+ * </p>
  *
  * <h3>Send Frames</h3>
  *
@@ -1014,6 +1058,55 @@ public class WebSocket
         startThreads();
 
         return this;
+    }
+
+
+    /**
+     * Execute {@link #connect()} asynchronously using the given {@link
+     * ExecutorService}. This method is just an alias of the following.
+     *
+     * <blockquote>
+     * <code>executorService.{@link ExecutorService#submit(Callable) submit}({@link #connectable()})</code>
+     * </blockquote>
+     *
+     * @param executorService
+     *         An {@link ExecutorService} to execute a task created by
+     *         {@link #connectable()}.
+     *
+     * @return
+     *         The value returned from {@link ExecutorService#submit(Callable)}.
+     *
+     * @throws NullPointerException
+     *         If the given {@link ExecutorService} is {@code null}.
+     *
+     * @throws RejectedExecutionException
+     *         If the given {@link ExecutorService} rejected the task
+     *         created by {@link #connectable()}.
+     *
+     * @since 1.7
+     */
+    public Future<WebSocket> connect(ExecutorService executorService)
+    {
+        return executorService.submit(connectable());
+    }
+
+
+    /**
+     * Get a new {@link Callable}{@code <}{@link WebSocket}{@code >} instance
+     * whose {@link Callable#call() call()} method calls {@link #connect()}
+     * method of this {@code WebSocket} instance.
+     *
+     * @return
+     *         A new {@link Callable}{@code <}{@link WebSocket}{@code >} instance
+     *         for asynchronous {@link #connect()}.
+     *
+     * @see #connect(ExecutorService)
+     *
+     * @since 1.7
+     */
+    public Callable<WebSocket> connectable()
+    {
+        return new Connectable(this);
     }
 
 
