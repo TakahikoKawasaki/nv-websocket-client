@@ -32,7 +32,7 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>1.6</version>
+    <version>1.7</version>
 </dependency>
 ```
 
@@ -41,7 +41,7 @@ Gradle
 
 ```Gradle
 dependencies {
-    compile 'com.neovisionaries:nv-websocket-client:1.6'
+    compile 'com.neovisionaries:nv-websocket-client:1.7'
 }
 ```
 
@@ -197,6 +197,40 @@ catch (WebSocketException e)
     // Failed.
 }
 ```
+
+
+#### Asynchronous Opening Handshake
+
+`connect(ExecutorService)` method is an asynchronous version of `connect()`.
+The method performs a WebSocket opening handshake asynchronously using the
+given `ExecutorService`.
+
+```java
+// Prepare an ExecutorService.
+ExecutorService es = Executors.newSingleThreadExecutor();
+
+// Perform an opening handshake asynchronously.
+Future<WebSocket> future = ws.connect(es);
+
+try
+{
+    // Wait for the opening handshake to complete.
+    future.get();
+}
+catch (ExecutionException e)
+{
+    if (e.getCause() instanceof WebSocketException)
+    {
+        ......
+    }
+}
+```
+
+The implementation of `connect(ExecutorService)` method creates a
+`Callable<WebSocket>` instance by calling `connectable()` method and
+passes the instance to `submit(Callable)` method of the given
+`ExecutorService`. What the implementation of `call()` method of the
+`Callable` instance does is just to call the synchronous `connect()`.
 
 
 #### Send Frames
