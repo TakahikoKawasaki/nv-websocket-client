@@ -40,6 +40,12 @@ public class WebSocketAdapter implements WebSocketListener
 
 
     @Override
+    public void onConnectError(WebSocket websocket, WebSocketException exception)
+    {
+    }
+
+
+    @Override
     public void onDisconnected(WebSocket websocket,
         WebSocketFrame serverCloseFrame, WebSocketFrame clientCloseFrame,
         boolean closedByServer)

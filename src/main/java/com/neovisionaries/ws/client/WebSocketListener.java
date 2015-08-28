@@ -68,6 +68,29 @@ public interface WebSocketListener
 
 
     /**
+     * Called when {@link WebSocket#connectAsynchronously()} failed.
+     *
+     * <p>
+     * Note that this method is called only when {@code connectAsynchronously()}
+     * was used and the {@link WebSocket#connect() connect()} executed in the
+     * background thread failed. Neither direct synchronous {@code connect()}
+     * nor {@link WebSocket#connect(java.util.concurrent.ExecutorService)
+     * connect(ExecutorService)} will trigger this callback method.
+     * </p>
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param cause
+     *         The exception thrown by {@link WebSocket#connect() connect()}
+     *         method.
+     *
+     * @since 1.8
+     */
+    void onConnectError(WebSocket websocket, WebSocketException cause);
+
+
+    /**
      * Called after the web socket connection was closed.
      *
      * @param websocket

@@ -262,9 +262,29 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * <h3>Asynchronous Opening Handshake</h3>
  *
  * <p>
- * {@link #connect(ExecutorService)} method is an asynchronous version
- * of {@code connect()}. The method performs a WebSocket opening handshake
- * asynchronously using the given {@link ExecutorService}.
+ * The simplest way to call {@code connect()} method asynchronously is to
+ * use {@link #connectAsynchronously()} method. The implementation of the
+ * method creates a thread and calls {@code connect()} method in the thread.
+ * When the {@code connect()} call failed, {@link
+ * WebSocketListener#onConnectError(WebSocket, WebSocketException)
+ * onConnectError()} of {@code WebSocketListener} would be called. Note that
+ * {@code onConnectError()} is called only when {@code connectAsynchronously()}
+ * was used and the {@code connect()} call executed in the background thread
+ * failed. Neither direct synchronous {@code connect()} nor
+ * {@link WebSocket#connect(java.util.concurrent.ExecutorService)
+ * connect(ExecutorService)} (described below) will trigger the callback method.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Perform an opening handshake asynchronously.</span>
+ * ws.{@link #connectAsynchronously()};
+ * </pre>
+ * </blockquote>
+ *
+ * <p>
+ * Another way to call {@code connect()} method asynchronously is to use
+ * {@link #connect(ExecutorService)} method. The method performs a WebSocket
+ * opening handshake asynchronously using the given {@link ExecutorService}.
  * </p>
  *
  * <blockquote>
@@ -1083,6 +1103,8 @@ public class WebSocket
      *         If the given {@link ExecutorService} rejected the task
      *         created by {@link #connectable()}.
      *
+     * @see #connectAsynchronously()
+     *
      * @since 1.7
      */
     public Future<WebSocket> connect(ExecutorService executorService)
@@ -1108,6 +1130,26 @@ public class WebSocket
     {
         return new Connectable(this);
     }
+
+
+    /**
+     * Execute {@link #connect()} asynchronously by creating a new thread and
+     * calling {@code connect()} in the thread. If {@code connect()} failed,
+     * {@link WebSocketListener#onConnectError(WebSocket, WebSocketException)
+     * onConnectError()} method of {@link WebSocketListener} is called.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.8
+     */
+    public WebSocket connectAsynchronously()
+    {
+        new ConnectThread(this).start();
+
+        return this;
+    }
+
 
 
     /**

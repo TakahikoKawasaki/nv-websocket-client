@@ -89,6 +89,24 @@ class ListenerManager
     }
 
 
+    public void callOnConnectError(WebSocketException cause)
+    {
+        synchronized (mListeners)
+        {
+            for (WebSocketListener listener : mListeners)
+            {
+                try
+                {
+                    listener.onConnectError(mWebSocket, cause);
+                }
+                catch (Throwable t)
+                {
+                }
+            }
+        }
+    }
+
+
     public void callOnDisconnected(
         WebSocketFrame serverCloseFrame, WebSocketFrame clientCloseFrame,
         boolean closedByServer)
