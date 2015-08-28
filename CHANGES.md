@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+1.8 (2015-08-28)
+----------------
+
+- Added `connectAsynchronously()` method to `WebSocket`.
+- Added `onConnectError(WebSocket, WebSocketException)` to `WebSocketListener`.
+
+
 1.7 (2015-08-28)
 ----------------
 
