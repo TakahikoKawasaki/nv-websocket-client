@@ -371,7 +371,6 @@ to the server, use a variant method such as `disconnect(int, String)`.
 `disconnect(WebSocketCloseCode.NORMAL, null)`.
 
 
-
 #### Reconnection
 
 `WebSocket.connect()` method can be called at most only once regardless of
@@ -387,6 +386,48 @@ instance are not copied.
 // Create a new WebSocket instance and connect to the same endpoint.
 ws = ws.recreate().connect();
 ```
+
+
+#### Error Handling
+
+`WebSocketListener` has some `onXxxError()` methods such as `onFrameError()`
+and `onSendError()`. Among such methods, `onError()` is a special one. It
+is always called before any other `onXxxError()` is called. For example,
+in the implementation of `run()` method of `ReadingThread`, `Throwable` is
+caught and `onError()` and `onUnexpectedError()` are called in this order.
+The following is the implementation.
+
+```java
+@Override
+public void run()
+{
+    try
+    {
+        main();
+    }
+    catch (Throwable t)
+    {
+        // An uncaught throwable was detected in the reading thread.
+        WebSocketException cause = new WebSocketException(
+            WebSocketError.UNEXPECTED_ERROR_IN_READING_THREAD,
+            "An uncaught throwable was detected in the reading thread", t);
+
+        // Notify the listeners.
+        ListenerManager manager = mWebSocket.getListenerManager();
+        manager.callOnError(cause);
+        manager.callOnUnexpectedError(cause);
+    }
+}
+```
+
+So, you can handle all error cases in `onError()` method.
+
+All `onXxxError()` methods receive a `WebSocketException` instance as the
+second argument (the first argument is a `WebSocket` instance). The exception
+class provides `getError()` method which returns a `WebSocketError` enum entry.
+Entries in `WebSocketError` enum are possible causes of errors that may occur
+in the implementation of this library. The error causes are so granular that
+they can make it easy for you to find the root cause when an error occurs.
 
 
 Sample Application
