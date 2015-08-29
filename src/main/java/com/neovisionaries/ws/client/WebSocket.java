@@ -180,7 +180,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Register a listener to receive web socket events.</span>
  * ws.{@link #addListener(WebSocketListener) addListener}(new {@link
  * WebSocketAdapter#WebSocketAdapter() WebSocketAdapter()} {
- *     {@code @}Override
+ *     <span style="color: gray;">{@code @}Override</span>
  *     public void {@link WebSocketListener#onTextMessage(WebSocket, String)
  *     onTextMessage}(WebSocket websocket, String message) {
  *         <span style="color: green;">// Received a text message.</span>
@@ -480,6 +480,56 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Create a new WebSocket instance and connect to the same endpoint.</span>
  * ws = ws.{@link #recreate()}.{@link #connect()};</pre>
  * </blockquote>
+ *
+ * <h3>Error Handling</h3>
+ *
+ * <p>
+ * {@code WebSocketListener} has some {@code onXxxError()} methods such as {@link
+ * WebSocketListener#onFrameError() onFrameError()} and {@link
+ * WebSocketListener#onSendError() onSendError()}. Among such methods, {@link
+ * WebSocketListener#onError() onError()} is a special one. It is always called before
+ * any other {@code onXxxError()} is called. For example, in the implementation of
+ * {@code run()} method of {@code ReadingThread}, {@code Throwable} is caught and
+ * {@code onError()} and {@link WebSocketListener#onUnexpectedError()
+ * onUnexpectedError()} are called in this order. The following is the implementation.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: gray;">{@code @}Override</span>
+ * public void run()
+ * {
+ *     try
+ *     {
+ *         main();
+ *     }
+ *     catch (Throwable t)
+ *     {
+ *         <span style="color: green;">// An uncaught throwable was detected in the reading thread.</span>
+ *         {@link WebSocketException} cause = new WebSocketException(
+ *             {@link WebSocketError}.{@link WebSocketError#UNEXPECTED_ERROR_IN_READING_THREAD UNEXPECTED_ERROR_IN_READING_THREAD},
+ *             <span style="color: darkred;">"An uncaught throwable was detected in the reading thread"</span>, t);
+ *
+ *         <span style="color: green;">// Notify the listeners.</span>
+ *         ListenerManager manager = mWebSocket.getListenerManager();
+ *         manager.callOnError(cause);
+ *         manager.callOnUnexpectedError(cause);
+ *     }
+ * }</pre>
+ * </blockquote>
+ *
+ * <p>
+ * So, you can handle all error cases in {@code onError()} method.
+ * </p>
+ *
+ * <p>
+ * All {@code onXxxError()} methods receive a {@link WebSocketException} instance
+ * as the second argument (the first argument is a {@code WebSocket} instance). The
+ * exception class provides {@link WebSocketException#getError() getError()} method
+ * which returns a {@link WebSocketError} enum entry. Entries in {@code WebSocketError}
+ * enum are possible causes of errors that may occur in the implementation of this
+ * library. The error causes are so granular that they can make it easy for you to
+ * find the root cause when an error occurs.
+ * </p>
  *
  * @see <a href="https://tools.ietf.org/html/rfc6455">RFC 6455 (The WebSocket Protocol)</a>
  * @see <a href="https://github.com/TakahikoKawasaki/nv-websocket-client">[GitHub] nv-websocket-client</a>
