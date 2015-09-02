@@ -65,6 +65,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -83,6 +84,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -101,6 +103,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -122,6 +125,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -140,6 +144,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -158,6 +163,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -176,6 +182,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -194,6 +201,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -212,6 +220,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -230,6 +239,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -248,6 +258,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -266,6 +277,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -284,6 +296,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -302,6 +315,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -320,6 +334,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -338,6 +353,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -356,6 +372,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -374,6 +391,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -392,6 +410,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -410,6 +429,7 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
         }
@@ -428,8 +448,21 @@ class ListenerManager
                 }
                 catch (Throwable t)
                 {
+                    callHandleCallbackError(listener, t);
                 }
             }
+        }
+    }
+
+
+    private void callHandleCallbackError(WebSocketListener listener, Throwable cause)
+    {
+        try
+        {
+            listener.handleCallbackError(mWebSocket, cause);
+        }
+        catch (Throwable t)
+        {
         }
     }
 }

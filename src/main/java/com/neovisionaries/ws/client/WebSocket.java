@@ -181,7 +181,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * ws.{@link #addListener(WebSocketListener) addListener}(new {@link
  * WebSocketAdapter#WebSocketAdapter() WebSocketAdapter()} {
  *     <span style="color: gray;">{@code @}Override</span>
- *     public void {@link WebSocketListener#onTextMessage(WebSocket, String)
+ *     public void {@link WebSocketListener#onTextMessage(WebSocket, String) throws Exception
  *     onTextMessage}(WebSocket websocket, String message) {
  *         <span style="color: green;">// Received a text message.</span>
  *         ......
@@ -485,12 +485,15 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *
  * <p>
  * {@code WebSocketListener} has some {@code onXxxError()} methods such as {@link
- * WebSocketListener#onFrameError() onFrameError()} and {@link
- * WebSocketListener#onSendError() onSendError()}. Among such methods, {@link
- * WebSocketListener#onError() onError()} is a special one. It is always called before
- * any other {@code onXxxError()} is called. For example, in the implementation of
- * {@code run()} method of {@code ReadingThread}, {@code Throwable} is caught and
- * {@code onError()} and {@link WebSocketListener#onUnexpectedError()
+ * WebSocketListener#onFrameError(WebSocket, WebSocketException, WebSocketFrame)
+ * onFrameError()} and {@link
+ * WebSocketListener#onSendError(WebSocket, WebSocketException, WebSocketFrame)
+ * onSendError()}. Among such methods, {@link
+ * WebSocketListener#onError(WebSocket, WebSocketException) onError()} is a special
+ * one. It is always called before any other {@code onXxxError()} is called. For
+ * example, in the implementation of {@code run()} method of {@code ReadingThread},
+ * {@code Throwable} is caught and {@code onError()} and {@link
+ * WebSocketListener#onUnexpectedError(WebSocket, WebSocketException)
  * onUnexpectedError()} are called in this order. The following is the implementation.
  * </p>
  *
@@ -530,6 +533,21 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * library. The error causes are so granular that they can make it easy for you to
  * find the root cause when an error occurs.
  * </p>
+ *
+ * <p>
+ * {@code Throwable}s thrown by implementations of {@code onXXX()} callback methods
+ * are passed to {@link WebSocketListener#handleCallbackError(WebSocket, Throwable)
+ * handleCallbackError()} of {@code WebSocketListener}.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: gray;">{@code @}Override</span>
+ * public void {@link WebSocketListener#handleCallbackError(WebSocket, Throwable)
+ * handleCallbackError}(WebSocket websocket, Throwable cause) throws Exception
+ * {
+ *     <span style="color: green;">// Throwables thrown by onXxx() callback methods come here.</span>
+ * }</pre>
+ * </blockquote>
  *
  * @see <a href="https://tools.ietf.org/html/rfc6455">RFC 6455 (The WebSocket Protocol)</a>
  * @see <a href="https://github.com/TakahikoKawasaki/nv-websocket-client">[GitHub] nv-websocket-client</a>
