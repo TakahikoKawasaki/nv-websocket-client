@@ -543,8 +543,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * <blockquote>
  * <pre style="border-left: solid 5px lightgray;"> <span style="color: gray;">{@code @}Override</span>
  * public void {@link WebSocketListener#handleCallbackError(WebSocket, Throwable)
- * handleCallbackError}(WebSocket websocket, Throwable cause) throws Exception
- * {
+ * handleCallbackError}(WebSocket websocket, Throwable cause) throws Exception {
  *     <span style="color: green;">// Throwables thrown by onXxx() callback methods come here.</span>
  * }</pre>
  * </blockquote>

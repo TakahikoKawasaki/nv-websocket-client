@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+1.9 (2015-09-03)
+----------------
+
+- Added `throws Exception` to all methods of `WebSocketListener`.
+- Added `handleCallbackError()` to `WebSocketListener`.
+
+
 1.8 (2015-08-28)
 ----------------
 

@@ -32,7 +32,7 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>1.8</version>
+    <version>1.9</version>
 </dependency>
 ```
 
@@ -41,7 +41,7 @@ Gradle
 
 ```Gradle
 dependencies {
-    compile 'com.neovisionaries:nv-websocket-client:1.8'
+    compile 'com.neovisionaries:nv-websocket-client:1.9'
 }
 ```
 
@@ -153,7 +153,7 @@ to register a `WebSocketListener` that receives web socket events.
 // Register a listener to receive web socket events.
 ws.addListener(new WebSocketAdapter() {
     @Override
-    public void onTextMessage(WebSocket websocket, String message) {
+    public void onTextMessage(WebSocket websocket, String message) throws Exception {
         // Received a text message.
         ......
     }
@@ -428,6 +428,15 @@ class provides `getError()` method which returns a `WebSocketError` enum entry.
 Entries in `WebSocketError` enum are possible causes of errors that may occur
 in the implementation of this library. The error causes are so granular that
 they can make it easy for you to find the root cause when an error occurs.
+
+`Throwable`s thrown by implementations of `onXxx()` callback methods are
+passed to `handleCallbackError()` of `WebSocketListener`.
+
+```java
+public void handleCallbackError(WebSocket websocket, Throwable cause) throws Exception {
+    // Throwables thrown by onXxx() callback methods come here.
+}
+```
 
 
 Sample Application
