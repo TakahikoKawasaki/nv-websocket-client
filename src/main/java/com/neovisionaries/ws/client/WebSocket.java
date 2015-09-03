@@ -2701,7 +2701,7 @@ public class WebSocket
             // Close the raw socket.
             mSocket.close();
         }
-        catch (IOException e)
+        catch (Throwable t)
         {
         }
 
