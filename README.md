@@ -77,7 +77,7 @@ WebSocket connections (`wss:`). You can change this default behavior by using
 `WebSocketFactory.setSocketFactory` method, `WebSocketFactory.setSSLSocketFactory`
 method and `WebSocketFactory.setSSLContext` method. The following is an example
 to set a custom SSL context to a `WebSocketFactory` instance. See the
-[description](http://takahikokawasaki.github.io/nv-websocket-client/com/neovisionaries/ws/client/WebSocketFactory.html#createSocket(java.net.URI)) of `WebSocketFactory.createSocket` method for details.
+[description](http://takahikokawasaki.github.io/nv-websocket-client/com/neovisionaries/ws/client/WebSocketFactory.html#createSocket-java.net.URI-) of `WebSocketFactory.createSocket` method for details.
 
 ```java
 // Create a custom SSL context.
