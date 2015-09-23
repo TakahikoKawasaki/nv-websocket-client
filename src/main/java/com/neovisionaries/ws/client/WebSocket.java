@@ -166,6 +166,36 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * createWebSocket}(<span style="color: darkred;">"ws://localhost/endpoint"</span>);</pre>
  * </blockquote>
  *
+ * <p>
+ * There are two ways to set a timeout value for socket connection. The
+ * first way is to call {@link WebSocketFactory#setConnectionTimeout(int)
+ * setConnectionTimeout(int timeout)} method of {@code WebSocketFactory}.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Create a web socket factory and set 5000 milliseconds as a timeout
+ * // value for socket connection.</span>
+ * WebSocketFactory factory = new WebSocketFactory().{@link
+ * WebSocketFactory#setConnectionTimeout(int) setConnectionTimeout}(5000);
+ *
+ * <span style="color: green;">// Create a web socket. The timeout value set above is used.</span>
+ * WebSocket ws = factory.{@link WebSocketFactory#createSocket(String)
+ * createWebSocket}(<span style="color: darkred;">"ws://localhost/endpoint"</span>);</pre>
+ * </blockquote>
+ *
+ * <p>
+ * The other way is to give a timeout value to a {@code createSocket} method.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Create a web socket factory. The timeout value remains 0.</span>
+ * WebSocketFactory factory = new WebSocketFactory();
+ *
+ * <span style="color: green;">// Create a web socket with a socket connection timeout value.</span>
+ * WebSocket ws = factory.{@link WebSocketFactory#createSocket(String, int)
+ * createWebSocket}(<span style="color: darkred;">"ws://localhost/endpoint"</span>, 5000);</pre>
+ * </blockquote>
+ *
  * <h3>Register Listener</h3>
  *
  * <p>
@@ -480,6 +510,13 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Create a new WebSocket instance and connect to the same endpoint.</span>
  * ws = ws.{@link #recreate()}.{@link #connect()};</pre>
  * </blockquote>
+ *
+ * <p>
+ * There is a variant of {@code recreate()} method that takes a timeout value for
+ * socket connection. If you want to use a timeout value that is different from the
+ * one used when the existing {@code WebSocket} instance was created, use {@link
+ * #recreate(int) recreate(int timeout)} method.
+ * </p>
  *
  * <h3>Error Handling</h3>
  *

@@ -32,7 +32,7 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>1.9</version>
+    <version>1.10</version>
 </dependency>
 ```
 
@@ -41,7 +41,7 @@ Gradle
 
 ```Gradle
 dependencies {
-    compile 'com.neovisionaries:nv-websocket-client:1.9'
+    compile 'com.neovisionaries:nv-websocket-client:1.10'
 }
 ```
 
@@ -142,6 +142,32 @@ simplest example to create a `WebSocket` instance.
 // an IOException is thrown.
 WebSocket ws = new WebSocketFactory().createSocket("ws://localhost/endpoint");
 ```
+
+There are two ways to set a timeout value for socket connection. The first way
+is to call `setConnectionTimeout(int timeout)` method of `WebSocketFactory`.
+
+```java
+// Create a web socket factory and set 5000 milliseconds as a timeout
+// value for socket connection.
+WebSocketFactory factory = new WebSocketFactory().setConnectionTimeout(5000);
+
+// Create a web socket. The timeout value set above is used.
+WebSocket ws = factory.createSocket("ws://localhost/endpoint");
+```
+
+The other way is to give a timeout value to a `createSocket` method.
+
+```java
+// Create a web socket factory. The timeout value remains 0.
+WebSocketFactory factory = new WebSocketFactory();
+
+// Create a web socket with a socket connection timeout value.
+WebSocket ws = factory.createSocket("ws://localhost/endpoint", 5000);
+```
+
+The timeout value is passed to `connect(SocketAddress, int)` method of
+`java.net.Socket`.
+
 
 #### Register Listener
 
@@ -387,6 +413,11 @@ instance are not copied.
 ws = ws.recreate().connect();
 ```
 
+There is a variant of `recreate()` method that takes a timeout value for
+socket connection. If you want to use a timeout value that is different
+from the one used when the existing `WebSocket` instance was created,
+use `recreate(int timeout)` method.
+
 
 #### Error Handling
 
@@ -461,6 +492,11 @@ public class EchoClient
      */
     private static final String SERVER = "ws://echo.websocket.org";
 
+    /**
+     * The timeout value in milliseconds for socket connection.
+     */
+    private static final int TIMEOUT = 5000;
+
 
     /**
      * The entry point of this command line application.
@@ -501,8 +537,10 @@ public class EchoClient
     private static WebSocket connect() throws IOException, WebSocketException
     {
         return new WebSocketFactory()
+            .setConnectionTimeout(TIMEOUT)
             .createSocket(SERVER)
             .addListener(new WebSocketAdapter() {
+                // A text message arrived from the server.
                 public void onTextMessage(WebSocket websocket, String message) {
                     System.out.println(message);
                 }

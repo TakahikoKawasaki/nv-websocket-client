@@ -1,6 +1,17 @@
 CHANGES
 =======
 
+1.10 (2015-09-24)
+-----------------
+
+- Added `WebSocket.recreate(int timeout)` method.
+- Added `WebSocketFactory.getConnectionTimeout()` method.
+- Added `WebSocketFactory.setConnectionTimeout(int timeout)` method.
+- Added `WebSocketFactory.createSocket(String uri, int timeout)` method.
+- Added `WebSocketFactory.createSocket(URL url, int timeout)` method.
+- Added `WebSocketFactory.createSocket(URI uri, int timeout)` method.
+
+
 1.9 (2015-09-03)
 ----------------
 
