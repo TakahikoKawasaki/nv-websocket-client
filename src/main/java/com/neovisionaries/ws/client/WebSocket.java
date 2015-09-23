@@ -558,6 +558,7 @@ public class WebSocket
     private static final String ACCEPT_MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
     private final WebSocketFactory mWebSocketFactory;
     private final Socket mSocket;
+    private final int mConnectionTimeout;
     private final StateManager mStateManager;
     private HandshakeBuilder mHandshakeBuilder;
     private final ListenerManager mListenerManager;
@@ -582,15 +583,17 @@ public class WebSocket
     private WebSocketFrame mClientCloseFrame;
 
 
-    WebSocket(WebSocketFactory factory, boolean secure, String userInfo, String host, String path, Socket socket)
+    WebSocket(WebSocketFactory factory, boolean secure, String userInfo,
+            String host, String path, Socket socket, int timeout)
     {
-        mWebSocketFactory = factory;
-        mSocket           = socket;
-        mStateManager     = new StateManager();
-        mHandshakeBuilder = new HandshakeBuilder(secure, userInfo, host, path);
-        mListenerManager  = new ListenerManager(this);
-        mPingSender       = new PingSender(this);
-        mPongSender       = new PongSender(this);
+        mWebSocketFactory  = factory;
+        mSocket            = socket;
+        mConnectionTimeout = timeout;
+        mStateManager      = new StateManager();
+        mHandshakeBuilder  = new HandshakeBuilder(secure, userInfo, host, path);
+        mListenerManager   = new ListenerManager(this);
+        mPingSender        = new PingSender(this);
+        mPongSender        = new PongSender(this);
     }
 
 
@@ -601,7 +604,14 @@ public class WebSocket
      *
      * <p>
      * The {@link WebSocketFactory} instance that you used to create this
-     * {@code WebSocket} instance is used.
+     * {@code WebSocket} instance is used again.
+     * </p>
+     *
+     * <p>
+     * This method calls {@link #recreate(int)} with the timeout value that
+     * was used when this instance was created. If you want to create a
+     * socket connection with a different timeout value, use {@link
+     * #recreate(int)} method instead.
      * </p>
      *
      * @return
@@ -614,7 +624,43 @@ public class WebSocket
      */
     public WebSocket recreate() throws IOException
     {
-        WebSocket instance = mWebSocketFactory.createSocket(getURI());
+        return recreate(mConnectionTimeout);
+    }
+
+
+    /**
+     * Create a new {@code WebSocket} instance that has the same settings
+     * as this instance. Note that, however, settings you made on the raw
+     * socket are not copied.
+     *
+     * <p>
+     * The {@link WebSocketFactory} instance that you used to create this
+     * {@code WebSocket} instance is used again.
+     * </p>
+     *
+     * @return
+     *         A new {@code WebSocket} instance.
+     *
+     * @param timeout
+     *         The timeout value in milliseconds for socket timeout.
+     *         A timeout of zero is interpreted as an infinite timeout.
+     *
+     * @throws IllegalArgumentException
+     *         The given timeout value is negative.
+     *
+     * @throws IOException
+     *         {@link WebSocketFactory#createSocket(URI)} threw an exception.
+     *
+     * @since 1.10
+     */
+    public WebSocket recreate(int timeout) throws IOException
+    {
+        if (timeout < 0)
+        {
+            throw new IllegalArgumentException("The given timeout value is negative.");
+        }
+
+        WebSocket instance = mWebSocketFactory.createSocket(getURI(), timeout);
 
         // Copy the settings.
         instance.mHandshakeBuilder = new HandshakeBuilder(mHandshakeBuilder);

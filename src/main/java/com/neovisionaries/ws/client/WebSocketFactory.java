@@ -17,6 +17,7 @@ package com.neovisionaries.ws.client;
 
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -34,6 +35,7 @@ public class WebSocketFactory
 {
     private final SocketFactorySettings mSocketFactorySettings;
     private final ProxySettings mProxySettings;
+    private int mConnectionTimeout;
 
 
     public WebSocketFactory()
@@ -152,11 +154,60 @@ public class WebSocketFactory
 
 
     /**
+     * Get the timeout value in milliseconds for socket connection.
+     * The default value is 0 and it means an infinite timeout.
+     *
+     * <p>
+     * When a {@code createSocket} method which does not have {@code
+     * timeout} argument is called, the value returned by this method
+     * is used as a timeout value for socket connection.
+     * </p>
+     *
+     * @return
+     *         The connection timeout value in milliseconds.
+     *
+     * @since 1.10
+     */
+    public int getConnectionTimeout()
+    {
+        return mConnectionTimeout;
+    }
+
+
+    /**
+     * Set the timeout value in milliseconds for socket connection.
+     * A timeout of zero is interpreted as an infinite timeout.
+     *
+     * @param timeout
+     *         The connection timeout value in milliseconds.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @throws IllegalArgumentException
+     *         The given timeout value is negative.
+     *
+     * @since 1.10
+     */
+    public WebSocketFactory setConnectionTimeout(int timeout)
+    {
+        if (timeout < 0)
+        {
+            throw new IllegalArgumentException("timeout value cannot be negative.");
+        }
+
+        mConnectionTimeout = timeout;
+
+        return this;
+    }
+
+
+    /**
      * Create a web socket.
      *
      * <p>
-     * This method is an alias of {@link #createSocket(URI) createSocket}{@code
-     * (}{@link URI#create(String) URI.create}{@code (uri))}.
+     * This method is an alias of {@link #createSocket(String, int)
+     * createSocket}{@code (uri, }{@link #getConnectionTimeout()}{@code )}.
      * </p>
      *
      * @param uri
@@ -174,12 +225,7 @@ public class WebSocketFactory
      */
     public WebSocket createSocket(String uri) throws IOException
     {
-        if (uri == null)
-        {
-            throw new IllegalArgumentException("The given URI is null.");
-        }
-
-        return createSocket(URI.create(uri));
+        return createSocket(uri, getConnectionTimeout());
     }
 
 
@@ -187,8 +233,52 @@ public class WebSocketFactory
      * Create a web socket.
      *
      * <p>
-     * This method is an alias of {@link #createSocket(URI) createSocket}{@code
-     * (url.}{@link URL#toURI() toURI()}{@code ))}.
+     * This method is an alias of {@link #createSocket(URI, int) createSocket}{@code
+     * (}{@link URI#create(String) URI.create}{@code (uri), timeout)}.
+     * </p>
+     *
+     * @param uri
+     *         The URI of the web socket endpoint on the server side.
+     *
+     * @param timeout
+     *         The timeout value in milliseconds for socket connection.
+     *         A timeout of zero is interpreted as an infinite timeout.
+     *
+     * @return
+     *         A web socket.
+     *
+     * @throws IllegalArgumentException
+     *         The given URI is {@code null} or violates RFC 2396, or
+     *         the given timeout value is negative.
+     *
+     * @throws IOException
+     *         Failed to create a socket. Or, HTTP proxy handshake or SSL
+     *         handshake failed.
+     *
+     * @since 1.10
+     */
+    public WebSocket createSocket(String uri, int timeout) throws IOException
+    {
+        if (uri == null)
+        {
+            throw new IllegalArgumentException("The given URI is null.");
+        }
+
+        if (timeout < 0)
+        {
+            throw new IllegalArgumentException("The given timeout value is negative.");
+        }
+
+        return createSocket(URI.create(uri), timeout);
+    }
+
+
+    /**
+     * Create a web socket.
+     *
+     * <p>
+     * This method is an alias of {@link #createSocket(URL, int) createSocket}{@code
+     * (url, }{@link #getConnectionTimeout()}{@code )}.
      * </p>
      *
      * @param url
@@ -206,14 +296,52 @@ public class WebSocketFactory
      */
     public WebSocket createSocket(URL url) throws IOException
     {
+        return createSocket(url, getConnectionTimeout());
+    }
+
+
+    /**
+     * Create a web socket.
+     *
+     * <p>
+     * This method is an alias of {@link #createSocket(URI, int) createSocket}{@code
+     * (url.}{@link URL#toURI() toURI()}{@code , timeout)}.
+     * </p>
+     *
+     * @param url
+     *         The URL of the web socket endpoint on the server side.
+     *
+     * @param timeout
+     *         The timeout value in milliseconds for socket connection.
+     *
+     * @return
+     *         A web socket.
+     *
+     * @throws IllegalArgumentException
+     *         The given URL is {@code null} or failed to be converted into a URI,
+     *         or the given timeout value is negative.
+     *
+     * @throws IOException
+     *         Failed to create a socket. Or, HTTP proxy handshake or SSL
+     *         handshake failed.
+     *
+     * @since 1.10
+     */
+    public WebSocket createSocket(URL url, int timeout) throws IOException
+    {
         if (url == null)
         {
             throw new IllegalArgumentException("The given URL is null.");
         }
 
+        if (timeout < 0)
+        {
+            throw new IllegalArgumentException("The given timeout value is negative.");
+        }
+
         try
         {
-            return createSocket(url.toURI());
+            return createSocket(url.toURI(), timeout);
         }
         catch (URISyntaxException e)
         {
@@ -223,7 +351,8 @@ public class WebSocketFactory
 
 
     /**
-     * Create a web socket.
+     * Create a web socket. This method is an alias of {@link #createSocket(URI, int)
+     * createSocket}{@code (uri, }{@link #getConnectionTimeout()}{@code )}.
      *
      * <p>
      * A socket factory (= a {@link SocketFactory} instance) to create a raw
@@ -276,9 +405,78 @@ public class WebSocketFactory
      */
     public WebSocket createSocket(URI uri) throws IOException
     {
+        return createSocket(uri, getConnectionTimeout());
+    }
+
+
+    /**
+     * Create a web socket.
+     *
+     * <p>
+     * A socket factory (= a {@link SocketFactory} instance) to create a raw
+     * socket (= a {@link Socket} instance) is determined as described below.
+     * </p>
+     *
+     * <ol>
+     * <li>
+     *   If the scheme of the URI is either {@code wss} or {@code https},
+     *   <ol type="i">
+     *     <li>
+     *       If an {@link SSLContext} instance has been set by {@link
+     *       #setSSLContext(SSLContext)}, the value returned from {@link
+     *       SSLContext#getSocketFactory()} method of the instance is used.
+     *     <li>
+     *       Otherwise, if an {@link SSLSocketFactory} instance has been
+     *       set by {@link #setSSLSocketFactory(SSLSocketFactory)}, the
+     *       instance is used.
+     *     <li>
+     *       Otherwise, the value returned from {@link SSLSocketFactory#getDefault()}
+     *       is used.
+     *   </ol>
+     * <li>
+     *   Otherwise (= the scheme of the URI is either {@code ws} or {@code http}),
+     *   <ol type="i">
+     *     <li>
+     *       If a {@link SocketFactory} instance has been set by {@link
+     *       #setSocketFactory(SocketFactory)}, the instance is used.
+     *     <li>
+     *       Otherwise, the value returned from {@link SocketFactory#getDefault()}
+     *       is used.
+     *   </ol>
+     * </ol>
+     *
+     * @param uri
+     *         The URI of the web socket endpoint on the server side.
+     *         The scheme part of the URI must be one of {@code ws},
+     *         {@code wss}, {@code http} and {@code https}
+     *         (case-insensitive).
+     *
+     * @param timeout
+     *         The timeout value in milliseconds for socket connection.
+     *
+     * @return
+     *         A web socket.
+     *
+     * @throws IllegalArgumentException
+     *         The given URI is {@code null} or violates RFC 2396, or
+     *         the given timeout value is negative.
+     *
+     * @throws IOException
+     *         Failed to create a socket. Or, HTTP proxy handshake or SSL
+     *         handshake failed.
+     *
+     * @since 1.10
+     */
+    public WebSocket createSocket(URI uri, int timeout) throws IOException
+    {
         if (uri == null)
         {
             throw new IllegalArgumentException("The given URI is null.");
+        }
+
+        if (timeout < 0)
+        {
+            throw new IllegalArgumentException("The given timeout value is negative.");
         }
 
         // Split the URI.
@@ -289,12 +487,12 @@ public class WebSocketFactory
         String path     = uri.getPath();
         String query    = uri.getQuery();
 
-        return createSocket(scheme, userInfo, host, port, path, query);
+        return createSocket(scheme, userInfo, host, port, path, query, timeout);
     }
 
 
     private WebSocket createSocket(
-        String scheme, String userInfo, String host, int port, String path, String query) throws IOException
+        String scheme, String userInfo, String host, int port, String path, String query, int timeout) throws IOException
     {
         // True if 'scheme' is 'wss' or 'https'.
         boolean secure = isSecureConnectionRequired(scheme);
@@ -309,10 +507,10 @@ public class WebSocketFactory
         path = determinePath(path);
 
         // Create a Socket instance.
-        Socket socket = createRawSocket(host, port, secure);
+        Socket socket = createRawSocket(host, port, secure, timeout);
 
         // Create a WebSocket instance.
-        return createWebSocket(secure, userInfo, host, port, path, query, socket);
+        return createWebSocket(secure, userInfo, host, port, path, query, socket, timeout);
     }
 
 
@@ -356,7 +554,7 @@ public class WebSocketFactory
     }
 
 
-    private Socket createRawSocket(String host, int port, boolean secure) throws IOException
+    private Socket createRawSocket(String host, int port, boolean secure, int timeout) throws IOException
     {
         // Determine the port number. Especially, if 'port' is -1,
         // it is converted to 80 or 443.
@@ -372,17 +570,17 @@ public class WebSocketFactory
         {
             // Connect to the proxy server and perform the proxy handshake.
             // As necessary, perform the SSL handshake in the tunnel.
-            return createProxiedRawSocket(host, port, secure);
+            return createProxiedRawSocket(host, port, secure, timeout);
         }
         else
         {
             // Connect to the WebSocket endpoint directly.
-            return createDirectRawSocket(host, port, secure);
+            return createDirectRawSocket(host, port, secure, timeout);
         }
     }
 
 
-    private Socket createProxiedRawSocket(String host, int port, boolean secure) throws IOException
+    private Socket createProxiedRawSocket(String host, int port, boolean secure, int timeout) throws IOException
     {
         // Determine the port number of the proxy server.
         // Especially, if getPort() returns -1, the value
@@ -393,7 +591,10 @@ public class WebSocketFactory
         SocketFactory factory = mProxySettings.selectSocketFactory();
 
         // Let the socket factory create a socket.
-        Socket socket = factory.createSocket(mProxySettings.getHost(), proxyPort);
+        Socket socket = factory.createSocket();
+
+        // Connect to the host.
+        socket.connect(new InetSocketAddress(mProxySettings.getHost(), proxyPort), timeout);
 
         try
         {
@@ -440,13 +641,18 @@ public class WebSocketFactory
     }
 
 
-    private Socket createDirectRawSocket(String host, int port, boolean secure) throws IOException
+    private Socket createDirectRawSocket(String host, int port, boolean secure, int timeout) throws IOException
     {
         // Select a socket factory.
         SocketFactory factory = mSocketFactorySettings.selectSocketFactory(secure);
 
         // Let the socket factory create a socket.
-        return factory.createSocket(host, port);
+        Socket socket = factory.createSocket();
+
+        // Connect to the host.
+        socket.connect(new InetSocketAddress(host, port), timeout);
+
+        return socket;
     }
 
 
@@ -469,7 +675,8 @@ public class WebSocketFactory
 
 
     private WebSocket createWebSocket(
-        boolean secure, String userInfo, String host, int port, String path, String query, Socket socket)
+        boolean secure, String userInfo, String host, int port, String path, String query,
+        Socket socket, int timeout)
     {
         // The value for "Host" HTTP header.
         if (0 <= port)
@@ -483,6 +690,6 @@ public class WebSocketFactory
             path = path + "?" + query;
         }
 
-        return new WebSocket(this, secure, userInfo, host, path, socket);
+        return new WebSocket(this, secure, userInfo, host, path, socket, timeout);
     }
 }
