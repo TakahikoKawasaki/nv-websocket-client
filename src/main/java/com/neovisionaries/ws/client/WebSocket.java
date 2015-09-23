@@ -196,6 +196,12 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * createWebSocket}(<span style="color: darkred;">"ws://localhost/endpoint"</span>, 5000);</pre>
  * </blockquote>
  *
+ * <p>
+ * The timeout value is passed to {@link Socket#connect(java.net.SocketAddress, int)
+ * connect}{@code (}{@link java.net.SocketAddress SocketAddress}{@code , int)}
+ * method of {@link java.net.Socket}.
+ * </p>
+ *
  * <h3>Register Listener</h3>
  *
  * <p>
@@ -211,8 +217,8 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * ws.{@link #addListener(WebSocketListener) addListener}(new {@link
  * WebSocketAdapter#WebSocketAdapter() WebSocketAdapter()} {
  *     <span style="color: gray;">{@code @}Override</span>
- *     public void {@link WebSocketListener#onTextMessage(WebSocket, String) throws Exception
- *     onTextMessage}(WebSocket websocket, String message) {
+ *     public void {@link WebSocketListener#onTextMessage(WebSocket, String)
+ *     onTextMessage}(WebSocket websocket, String message) throws Exception {
  *         <span style="color: green;">// Received a text message.</span>
  *         ......
  *     }
