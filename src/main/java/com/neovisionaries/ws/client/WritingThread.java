@@ -59,7 +59,7 @@ class WritingThread extends Thread
             // An uncaught throwable was detected in the writing thread.
             WebSocketException cause = new WebSocketException(
                 WebSocketError.UNEXPECTED_ERROR_IN_WRITING_THREAD,
-                "An uncaught throwable was detected in the writing thread", t);
+                "An uncaught throwable was detected in the writing thread: " + t.getMessage(), t);
 
             // Notify the listeners.
             ListenerManager manager = mWebSocket.getListenerManager();
@@ -284,7 +284,7 @@ class WritingThread extends Thread
             // Flushing frames to the server failed.
             WebSocketException cause = new WebSocketException(
                 WebSocketError.FLUSH_ERROR,
-                "Flushing frames to the server failed", e);
+                "Flushing frames to the server failed: " + e.getMessage(), e);
 
             // Notify the listeners.
             ListenerManager manager = mWebSocket.getListenerManager();
@@ -340,7 +340,7 @@ class WritingThread extends Thread
             // An I/O error occurred when a frame was tried to be sent.
             WebSocketException cause = new WebSocketException(
                 WebSocketError.IO_ERROR_IN_WRITING,
-                "An I/O error occurred when a frame was tried to be sent.", e);
+                "An I/O error occurred when a frame was tried to be sent: " + e.getMessage(), e);
 
             // Notify the listeners.
             ListenerManager manager = mWebSocket.getListenerManager();

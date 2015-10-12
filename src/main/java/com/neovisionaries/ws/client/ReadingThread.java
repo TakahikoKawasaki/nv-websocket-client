@@ -63,7 +63,7 @@ class ReadingThread extends Thread
             // An uncaught throwable was detected in the reading thread.
             WebSocketException cause = new WebSocketException(
                 WebSocketError.UNEXPECTED_ERROR_IN_READING_THREAD,
-                "An uncaught throwable was detected in the reading thread", t);
+                "An uncaught throwable was detected in the reading thread: " + t.getMessage(), t);
 
             // Notify the listeners.
             ListenerManager manager = mWebSocket.getListenerManager();
@@ -208,12 +208,12 @@ class ReadingThread extends Thread
             // Call onTextMessage() method of the listeners.
             callOnTextMessage(message);
         }
-        catch (Throwable e)
+        catch (Throwable t)
         {
             // Failed to convert payload data into a string.
             WebSocketException wse = new WebSocketException(
                 WebSocketError.TEXT_MESSAGE_CONSTRUCTION_ERROR,
-                "Failed to convert payload data into a string.", e);
+                "Failed to convert payload data into a string: " + t.getMessage(), t);
 
             // Notify the listeners that text message construction failed.
             callOnError(wse);
@@ -311,7 +311,7 @@ class ReadingThread extends Thread
                 // Interruption occurred while a frame was being read from the web socket.
                 wse = new WebSocketException(
                     WebSocketError.INTERRUPTED_IN_READING,
-                    "Interruption occurred while a frame was being read from the web socket.", e);
+                    "Interruption occurred while a frame was being read from the web socket: " + e.getMessage(), e);
             }
         }
         catch (IOException e)
@@ -319,7 +319,7 @@ class ReadingThread extends Thread
             // An I/O error occurred while a frame was being read from the web socket.
             wse = new WebSocketException(
                 WebSocketError.IO_ERROR_IN_READING,
-                "An I/O error occurred while a frame was being read from the web socket.", e);
+                "An I/O error occurred while a frame was being read from the web socket: " + e.getMessage(), e);
         }
         catch (WebSocketException e)
         {
@@ -706,7 +706,7 @@ class ReadingThread extends Thread
         // Create a WebSocketException which has a cause.
         WebSocketException wse = new WebSocketException(
             WebSocketError.MESSAGE_CONSTRUCTION_ERROR,
-            "Failed to concatenate payloads of multiple frames to construct a message.", cause);
+            "Failed to concatenate payloads of multiple frames to construct a message: " + cause.getMessage(), cause);
 
         // Notify the listeners that message construction failed.
         callOnError(wse);

@@ -141,21 +141,22 @@ class WebSocketInputStream extends FilterInputStream
     private void readBytes(byte[] buffer, int length) throws IOException, WebSocketException
     {
         // Read
-    	int total = 0;
-    	while (total < length)
-    	{
-    		int count = read(buffer, total, length-total);
-    		
-	        if (count <= 0)
-	        {
-	            // The end of the stream has been reached unexpectedly.
-	            throw new WebSocketException(
-	                WebSocketError.INSUFFICENT_DATA,
-	                "The end of the stream has been reached unexpectedly.");
-	        }
-	        
-	        total += count;
-    	}
+        int total = 0;
+
+        while (total < length)
+        {
+            int count = read(buffer, total, length - total);
+
+            if (count <= 0)
+            {
+                // The end of the stream has been reached unexpectedly.
+                throw new WebSocketException(
+                        WebSocketError.INSUFFICENT_DATA,
+                        "The end of the stream has been reached unexpectedly.");
+            }
+
+            total += count;
+        }
     }
 
 
@@ -192,7 +193,7 @@ class WebSocketInputStream extends FilterInputStream
             skipQuietly(payloadLength);
             throw new WebSocketException(
                 WebSocketError.INSUFFICIENT_MEMORY_FOR_PAYLOAD,
-                "OutOfMemoryError occurred during a trial to allocate a memory area for a frame's payload.");
+                "OutOfMemoryError occurred during a trial to allocate a memory area for a frame's payload: " + e.getMessage(), e);
         }
 
         // Read the payload.

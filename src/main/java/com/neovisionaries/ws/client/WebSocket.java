@@ -2080,7 +2080,7 @@ public class WebSocket
             // Failed to get the input stream of the raw socket.
             throw new WebSocketException(
                 WebSocketError.SOCKET_INPUT_STREAM_FAILURE,
-                "Failed to get the input stream of the raw socket.", e);
+                "Failed to get the input stream of the raw socket: " + e.getMessage(), e);
         }
     }
 
@@ -2099,7 +2099,7 @@ public class WebSocket
             // Failed to get the output stream from the raw socket.
             throw new WebSocketException(
                 WebSocketError.SOCKET_OUTPUT_STREAM_FAILURE,
-                "Failed to get the output stream from the raw socket.", e);
+                "Failed to get the output stream from the raw socket: " + e.getMessage(), e);
         }
     }
 
@@ -2149,7 +2149,7 @@ public class WebSocket
             // Failed to send an opening handshake request to the server.
             throw new WebSocketException(
                 WebSocketError.OPENING_HAHDSHAKE_REQUEST_FAILURE,
-                "Failed to send an opening handshake request to the server.", e);
+                "Failed to send an opening handshake request to the server: " + e.getMessage(), e);
         }
     }
 
@@ -2196,7 +2196,7 @@ public class WebSocket
             // Failed to read an opening handshake response from the server.
             throw new WebSocketException(
                 WebSocketError.OPENING_HANDSHAKE_RESPONSE_FAILURE,
-                "Failed to read an opening handshake response from the server.", e);
+                "Failed to read an opening handshake response from the server: " + e.getMessage(), e);
         }
 
         if (line == null || line.length() == 0)
@@ -2251,7 +2251,7 @@ public class WebSocket
                 // An error occurred while HTTP header section was being read.
                 throw new WebSocketException(
                     WebSocketError.HTTP_HEADER_FAILURE,
-                    "An error occurred while HTTP header section was being read.", e);
+                    "An error occurred while HTTP header section was being read: " + e.getMessage(), e);
             }
 
             // If the end of the header section was reached.
