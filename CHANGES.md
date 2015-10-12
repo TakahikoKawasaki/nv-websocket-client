@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+1.12 (2015-10-12)
+-----------------
+
+- Fixed a bug in `WebSocketFactory`. `getRawPath()` and `getRawQuery()`
+  should be used instead of `getPath()` and `getQuery()`.
+
+
 1.11 (2015-10-12)
 -----------------
 
