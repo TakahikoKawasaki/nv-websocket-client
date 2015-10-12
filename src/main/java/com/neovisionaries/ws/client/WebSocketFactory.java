@@ -484,8 +484,8 @@ public class WebSocketFactory
         String userInfo = uri.getUserInfo();
         String host     = uri.getHost();
         int port        = uri.getPort();
-        String path     = uri.getPath();
-        String query    = uri.getQuery();
+        String path     = uri.getRawPath();
+        String query    = uri.getRawQuery();
 
         return createSocket(scheme, userInfo, host, port, path, query, timeout);
     }
