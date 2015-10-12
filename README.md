@@ -32,7 +32,7 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>1.10</version>
+    <version>1.11</version>
 </dependency>
 ```
 
@@ -41,7 +41,7 @@ Gradle
 
 ```Gradle
 dependencies {
-    compile 'com.neovisionaries:nv-websocket-client:1.10'
+    compile 'com.neovisionaries:nv-websocket-client:1.11'
 }
 ```
 
@@ -75,9 +75,16 @@ By default, `WebSocketFactory` uses `SocketFactory.getDefault()` for non-secure
 WebSocket connections (`ws:`) and `SSLSocketFactory.getDefault()` for secure
 WebSocket connections (`wss:`). You can change this default behavior by using
 `WebSocketFactory.setSocketFactory` method, `WebSocketFactory.setSSLSocketFactory`
-method and `WebSocketFactory.setSSLContext` method. The following is an example
-to set a custom SSL context to a `WebSocketFactory` instance. See the
-[description](http://takahikokawasaki.github.io/nv-websocket-client/com/neovisionaries/ws/client/WebSocketFactory.html#createSocket-java.net.URI-) of `WebSocketFactory.createSocket` method for details.
+method and `WebSocketFactory.setSSLContext` method. Note that you don't have to
+call a `setSSL*` method at all if you use the default SSL configuration. Also
+note that calling `setSSLSocketFactory` method has no meaning if you have called
+`setSSLContext` method. See the
+[description](http://takahikokawasaki.github.io/nv-websocket-client/com/neovisionaries/ws/client/WebSocketFactory.html#createSocket-java.net.URI-)
+of `WebSocketFactory.createSocket(URI)` method for details.
+
+The following is an example to set a custom SSL context to a `WebSocketFactory`
+instance. (Again, you don't have to call a `setSSL*` method if you use the default
+SSL configuration.)
 
 ```java
 // Create a custom SSL context.
@@ -418,6 +425,10 @@ socket connection. If you want to use a timeout value that is different
 from the one used when the existing `WebSocket` instance was created,
 use `recreate(int timeout)` method.
 
+Note that you should not trigger reconnection in `onError()` method because
+`onError()` may be called multiple times due to one error. Instead,
+`onDisconnected()` is the right place to trigger reconnection.
+
 
 #### Error Handling
 
@@ -451,7 +462,10 @@ public void run()
 }
 ```
 
-So, you can handle all error cases in `onError()` method.
+So, you can handle all error cases in `onError()` method. However, note that
+`onError()` may be called multiple times due to one error, so don't try to
+trigger reconnection in `onError()`. Instead, `onDisconnected()` is the right
+place to trigger reconnection.
 
 All `onXxxError()` methods receive a `WebSocketException` instance as the
 second argument (the first argument is a `WebSocket` instance). The exception

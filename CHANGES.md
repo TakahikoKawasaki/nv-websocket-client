@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+1.11 (2015-10-12)
+-----------------
+
+- Changed some error messages of `WebSocketException`.
+  (Appended `cause.getMessage()` in cases where a cause is available.)
+
+
 1.10 (2015-09-24)
 -----------------
 

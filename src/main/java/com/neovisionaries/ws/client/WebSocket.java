@@ -70,10 +70,19 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * WebSocketFactory#setSSLSocketFactory(javax.net.ssl.SSLSocketFactory)
  * setSSLSocketFactory} method and {@code WebSocketFactory.}{@link
  * WebSocketFactory#setSSLContext(javax.net.ssl.SSLContext)
- * setSSLContext} method. The following is an example to set
- * a custom SSL context to a {@code WebSocketFactory} instance.
- * See the description of {@code WebSocketFactory.}{@link
- * WebSocketFactory#createSocket(URI) createSocket} method for details.
+ * setSSLContext} method. Note that you don't have to call a {@code
+ * setSSL*} method at all if you use the default SSL configuration.
+ * Also note that calling {@code setSSLSocketFactory} method has no
+ * meaning if you have called {@code setSSLContext} method. See the
+ * description of {@code WebSocketFactory.}{@link
+ * WebSocketFactory#createSocket(URI) createSocket(URI)} method for
+ * details.
+ * </p>
+ *
+ * <p>
+ * The following is an example to set a custom SSL context to a
+ * {@code WebSocketFactory} instance. (Again, you don't have to call a
+ * {@code setSSL*} method if you use the default SSL configuration.)
  * </p>
  *
  * <blockquote>
@@ -524,6 +533,14 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * #recreate(int) recreate(int timeout)} method.
  * </p>
  *
+ * <p>
+ * Note that you should not trigger reconnection in {@link
+ * WebSocketListener#onError(WebSocket, WebSocketException) onError()} method
+ * because {@code onError()} may be called multiple times due to one error. Instead,
+ * {@link WebSocketListener#onDisconnected(WebSocket, WebSocketFrame, WebSocketFrame,
+ * boolean) onDisconnected()} is the right place to trigger reconnection.
+ * </p>
+ *
  * <h3>Error Handling</h3>
  *
  * <p>
@@ -564,7 +581,11 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * </blockquote>
  *
  * <p>
- * So, you can handle all error cases in {@code onError()} method.
+ * So, you can handle all error cases in {@code onError()} method. However, note
+ * that {@code onError()} may be called multiple times due to one error, so don't
+ * try to trigger reconnection in {@code onError()}. Instead, {@link
+ * WebSocketListener#onDisconnected(WebSocket, WebSocketFrame, WebSocketFrame, boolean)
+ * onDiconnected()} is the right place to trigger reconnection.
  * </p>
  *
  * <p>
