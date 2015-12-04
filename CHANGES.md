@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+1.13 (2015-12-04)
+-----------------
+
+- Added `WebSocket.removeListener(WebSocketListener)` method.
+- Added `WebSocket.clearListeners()` method.
+
+
 1.12 (2015-10-12)
 -----------------
 
