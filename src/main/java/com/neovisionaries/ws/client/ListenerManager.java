@@ -53,6 +53,29 @@ class ListenerManager
     }
 
 
+    public void removeListener(WebSocketListener listener)
+    {
+        if (listener == null)
+        {
+            return;
+        }
+
+        synchronized (mListeners)
+        {
+            mListeners.remove(listener);
+        }
+    }
+
+
+    public void clearListeners()
+    {
+        synchronized (mListeners)
+        {
+            mListeners.clear();
+        }
+    }
+
+
     public void callOnStateChanged(WebSocketState newState)
     {
         synchronized (mListeners)

@@ -1137,6 +1137,41 @@ public class WebSocket
 
 
     /**
+     * Remove a listener from this web socket.
+     *
+     * @param listener
+     *         A listener to remove. {@code null} won't cause an error.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.13
+     */
+    public WebSocket removeListener(WebSocketListener listener)
+    {
+        mListenerManager.removeListener(listener);
+
+        return this;
+    }
+
+
+    /**
+     * Remove all the listeners from this web socket.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.13
+     */
+    public WebSocket clearListeners()
+    {
+        mListenerManager.clearListeners();
+
+        return this;
+    }
+
+
+    /**
      * Get the raw socket which this web socket uses internally.
      *
      * @return
