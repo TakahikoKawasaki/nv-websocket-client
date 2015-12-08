@@ -889,6 +889,31 @@ public class WebSocket
 
 
     /**
+     * Add a value for {@code Sec-WebSocket-Extension}. The input string
+     * should comply with the format described in <a href=
+     * "https://tools.ietf.org/html/rfc6455#section-9.1">9.1. Negotiating
+     * Extensions</a> in <a href="https://tools.ietf.org/html/rfc6455"
+     * >RFC 6455</a>.
+     *
+     * @param extension
+     *         A string that represents a WebSocket extension. If it does
+     *         not comply with RFC 6455, no value is added to {@code
+     *         Sec-WebSocket-Extension}.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.14
+     */
+    public WebSocket addExtension(String extension)
+    {
+        mHandshakeBuilder.addExtension(extension);
+
+        return this;
+    }
+
+
+    /**
      * Remove an extension from {@code Sec-WebSocket-Extension}.
      *
      * @param extension

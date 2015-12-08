@@ -205,6 +205,21 @@ public class WebSocketExtension
     }
 
 
+    /**
+     * Parse a string as a {@link WebSocketExtesion}. The input string
+     * should comply with the format described in <a href=
+     * "https://tools.ietf.org/html/rfc6455#section-9.1">9.1. Negotiating
+     * Extensions</a> in <a href="https://tools.ietf.org/html/rfc6455"
+     * >RFC 6455</a>.
+     *
+     * @param string
+     *         A string that represents a WebSocket extension.
+     *
+     * @return
+     *         A new {@link WebSocketExtension} instance that represents
+     *         the given string. If the input string does not comply with
+     *         RFC 6455, {@code null} is returned.
+     */
     public static WebSocketExtension parse(String string)
     {
         if (string == null)

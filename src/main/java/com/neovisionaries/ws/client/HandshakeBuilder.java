@@ -177,6 +177,12 @@ class HandshakeBuilder
     }
 
 
+    public void addExtension(String extension)
+    {
+        addExtension(WebSocketExtension.parse(extension));
+    }
+
+
     public void removeExtension(WebSocketExtension extension)
     {
         if (extension == null)
