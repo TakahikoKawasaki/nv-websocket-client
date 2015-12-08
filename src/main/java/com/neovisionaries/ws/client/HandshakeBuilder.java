@@ -73,15 +73,51 @@ class HandshakeBuilder
             throw new IllegalArgumentException("'protocol' must be a non-empty string with characters in the range U+0021 to U+007E not including separator characters.");
         }
 
-        if (mProtocols == null)
+        synchronized (this)
         {
-            // 'LinkedHashSet' is used because the elements
-            // "MUST all be unique strings" and must be
-            // "ordered by preference. See RFC 6455, p18, 10.
-            mProtocols = new LinkedHashSet<String>();
+            if (mProtocols == null)
+            {
+                // 'LinkedHashSet' is used because the elements
+                // "MUST all be unique strings" and must be
+                // "ordered by preference. See RFC 6455, p18, 10.
+                mProtocols = new LinkedHashSet<String>();
+            }
+
+            mProtocols.add(protocol);
+        }
+    }
+
+
+    public void removeProtocol(String protocol)
+    {
+        if (protocol == null)
+        {
+            return;
         }
 
-        mProtocols.add(protocol);
+        synchronized (this)
+        {
+            if (mProtocols == null)
+            {
+                return;
+            }
+
+            mProtocols.remove(protocol);
+
+            if (mProtocols.size() == 0)
+            {
+                mProtocols = null;
+            }
+        }
+    }
+
+
+    public void clearProtocols()
+    {
+        synchronized (this)
+        {
+            mProtocols = null;
+        }
     }
 
 
@@ -110,12 +146,15 @@ class HandshakeBuilder
 
     public boolean containsProtocol(String protocol)
     {
-        if (mProtocols == null)
+        synchronized (this)
         {
-            return false;
-        }
+            if (mProtocols == null)
+            {
+                return false;
+            }
 
-        return mProtocols.contains(protocol);
+            return mProtocols.contains(protocol);
+        }
     }
 
 
@@ -126,31 +165,131 @@ class HandshakeBuilder
             return;
         }
 
-        if (mExtensions == null)
+        synchronized (this)
         {
-            mExtensions = new ArrayList<WebSocketExtension>();
-        }
+            if (mExtensions == null)
+            {
+                mExtensions = new ArrayList<WebSocketExtension>();
+            }
 
-        mExtensions.add(extension);
+            mExtensions.add(extension);
+        }
     }
 
 
-    public boolean containsExtension(String extensionName)
+    public void removeExtension(WebSocketExtension extension)
     {
-        if (mExtensions == null)
+        if (extension == null)
+        {
+            return;
+        }
+
+        synchronized (this)
+        {
+            if (mExtensions == null)
+            {
+                return;
+            }
+
+            mExtensions.remove(extension);
+
+            if (mExtensions.size() == 0)
+            {
+                mExtensions = null;
+            }
+        }
+    }
+
+
+    public void removeExtensions(String name)
+    {
+        if (name == null)
+        {
+            return;
+        }
+
+        synchronized (this)
+        {
+            if (mExtensions == null)
+            {
+                return;
+            }
+
+            List<WebSocketExtension> extensionsToRemove = new ArrayList<WebSocketExtension>();
+
+            for (WebSocketExtension extension : mExtensions)
+            {
+                if (extension.getName().equals(name))
+                {
+                    extensionsToRemove.add(extension);
+                }
+            }
+
+            for (WebSocketExtension extension : extensionsToRemove)
+            {
+                mExtensions.remove(extension);
+            }
+
+            if (mExtensions.size() == 0)
+            {
+                mExtensions = null;
+            }
+        }
+    }
+
+
+    public void clearExtensions()
+    {
+        synchronized (this)
+        {
+            mExtensions = null;
+        }
+    }
+
+
+    public boolean containsExtension(WebSocketExtension extension)
+    {
+        if (extension == null)
         {
             return false;
         }
 
-        for (WebSocketExtension extension : mExtensions)
+        synchronized (this)
         {
-            if (extension.getName().equals(extensionName))
+            if (mExtensions == null)
             {
-                return true;
+                return false;
             }
+
+            return mExtensions.contains(extension);
+        }
+    }
+
+
+    public boolean containsExtension(String name)
+    {
+        if (name == null)
+        {
+            return false;
         }
 
-        return false;
+        synchronized (this)
+        {
+            if (mExtensions == null)
+            {
+                return false;
+            }
+
+            for (WebSocketExtension extension : mExtensions)
+            {
+                if (extension.getName().equals(name))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 
 
@@ -166,18 +305,70 @@ class HandshakeBuilder
             value = "";
         }
 
-        if (mHeaders == null)
+        synchronized (this)
         {
-            mHeaders = new ArrayList<String[]>();
+            if (mHeaders == null)
+            {
+                mHeaders = new ArrayList<String[]>();
+            }
+
+            mHeaders.add(new String[] { name, value });
+        }
+    }
+
+
+    public void removeHeaders(String name)
+    {
+        if (name == null || name.length() == 0)
+        {
+            return;
         }
 
-        mHeaders.add(new String[] { name, value });
+        synchronized (this)
+        {
+            if (mHeaders == null)
+            {
+                return;
+            }
+
+            List<String[]> headersToRemove = new ArrayList<String[]>();
+
+            for (String[] header : mHeaders)
+            {
+                if (header[0].equals(name))
+                {
+                    headersToRemove.add(header);
+                }
+            }
+
+            for (String[] header : headersToRemove)
+            {
+                mHeaders.remove(header);
+            }
+
+            if (mHeaders.size() == 0)
+            {
+                mHeaders = null;
+            }
+        }
+    }
+
+
+    public void clearHeaders()
+    {
+        synchronized (this)
+        {
+            mHeaders = null;
+        }
     }
 
 
     public void setUserInfo(String userInfo)
     {
-        mUserInfo = userInfo;
+        synchronized (this)
+        {
+            mUserInfo = userInfo;
+        }
     }
 
 
@@ -196,6 +387,15 @@ class HandshakeBuilder
         String userInfo = String.format("%s:%s", id, password);
 
         setUserInfo(userInfo);
+    }
+
+
+    public void clearUserInfo()
+    {
+        synchronized (this)
+        {
+            mUserInfo = null;
+        }
     }
 
 

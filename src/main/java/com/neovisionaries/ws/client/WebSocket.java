@@ -837,6 +837,41 @@ public class WebSocket
 
 
     /**
+     * Remove a protocol from {@code Sec-WebSocket-Protocol}.
+     *
+     * @param protocol
+     *         A protocol name. {@code null} is silently ignored.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.14
+     */
+    public WebSocket removeProtocol(String protocol)
+    {
+        mHandshakeBuilder.removeProtocol(protocol);
+
+        return this;
+    }
+
+
+    /**
+     * Remove all protocols from {@code Sec-WebSocket-Protocol}.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.14
+     */
+    public WebSocket clearProtocols()
+    {
+        mHandshakeBuilder.clearProtocols();
+
+        return this;
+    }
+
+
+    /**
      * Add a value for {@code Sec-WebSocket-Extension}.
      *
      * @param extension
@@ -854,10 +889,66 @@ public class WebSocket
 
 
     /**
-     * Add a pair of HTTP header.
+     * Remove an extension from {@code Sec-WebSocket-Extension}.
+     *
+     * @param extension
+     *         An extension to remove. {@code null} is silently ignored.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.14
+     */
+    public WebSocket removeExtension(WebSocketExtension extension)
+    {
+        mHandshakeBuilder.removeExtension(extension);
+
+        return this;
+    }
+
+
+    /**
+     * Remove extensions from {@code Sec-WebSocket-Extension} by
+     * an extension name.
      *
      * @param name
-     *         An HTTP header name.
+     *         An extension name. {@code null} is silently ignored.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.14
+     */
+    public WebSocket removeExtensions(String name)
+    {
+        mHandshakeBuilder.removeExtensions(name);
+
+        return this;
+    }
+
+
+    /**
+     * Remove all extensions from {@code Sec-WebSocket-Extension}.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.14
+     */
+    public WebSocket clearExtensions()
+    {
+        mHandshakeBuilder.clearExtensions();
+
+        return this;
+    }
+
+
+    /**
+     * Add a pair of extra HTTP header.
+     *
+     * @param name
+     *         An HTTP header name. When {@code null} or an empty
+     *         string is given, no header is added.
      *
      * @param value
      *         The value of the HTTP header.
@@ -868,6 +959,41 @@ public class WebSocket
     public WebSocket addHeader(String name, String value)
     {
         mHandshakeBuilder.addHeader(name, value);
+
+        return this;
+    }
+
+
+    /**
+     * Remove pairs of extra HTTP headers.
+     *
+     * @param name
+     *         An HTTP header name. {@code null} is silently ignored.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.14
+     */
+    public WebSocket removeHeaders(String name)
+    {
+        mHandshakeBuilder.removeHeaders(name);
+
+        return this;
+    }
+
+
+    /**
+     * Clear all extra HTTP headers.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.14
+     */
+    public WebSocket clearHeaders()
+    {
+        mHandshakeBuilder.clearHeaders();
 
         return this;
     }
@@ -906,6 +1032,22 @@ public class WebSocket
     public WebSocket setUserInfo(String id, String password)
     {
         mHandshakeBuilder.setUserInfo(id, password);
+
+        return this;
+    }
+
+
+    /**
+     * Clear the credentials to connect to the web socket endpoint.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.14
+     */
+    public WebSocket clearUserInfo()
+    {
+        mHandshakeBuilder.clearUserInfo();
 
         return this;
     }

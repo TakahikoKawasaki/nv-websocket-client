@@ -1,6 +1,19 @@
 CHANGES
 =======
 
+1.14-SNAPSHOT
+-------------
+
+- Added `WebSocket.clearExtensions()` method.
+- Added `WebSocket.clearHeaders()` method.
+- Added `WebSocket.clearProtocols()` method.
+- Added `WebSocket.clearUserInfo()` method.
+- Added `WebSocket.removeExtension(WebSocketExtension)` method.
+- Added `WebSocket.removeExtensions(String)` method.
+- Added `WebSocket.removeHeaders(String)` method.
+- Added `WebSocket.removeProtocol(String)` method.
+
+
 1.13 (2015-12-04)
 -----------------
 
