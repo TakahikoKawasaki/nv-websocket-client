@@ -1,10 +1,12 @@
 CHANGES
 =======
 
-1.14-SNAPSHOT
--------------
+1.14 (2015-12-10)
+-----------------
 
+- Performance tuning on `ListenerManager`.
 - Added `WebSocket.addExtension(String)` method.
+- Added `WebSocket.addListeners(List<WebSocketListener>)` method.
 - Added `WebSocket.clearExtensions()` method.
 - Added `WebSocket.clearHeaders()` method.
 - Added `WebSocket.clearProtocols()` method.
@@ -12,6 +14,7 @@ CHANGES
 - Added `WebSocket.removeExtension(WebSocketExtension)` method.
 - Added `WebSocket.removeExtensions(String)` method.
 - Added `WebSocket.removeHeaders(String)` method.
+- Added `WebSocket.removeListeners(List<WebSocketListener>)` method.
 - Added `WebSocket.removeProtocol(String)` method.
 
 

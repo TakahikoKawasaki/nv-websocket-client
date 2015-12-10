@@ -32,7 +32,7 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>1.13</version>
+    <version>1.14</version>
 </dependency>
 ```
 
@@ -41,7 +41,7 @@ Gradle
 
 ```Gradle
 dependencies {
-    compile 'com.neovisionaries:nv-websocket-client:1.13'
+    compile 'com.neovisionaries:nv-websocket-client:1.14'
 }
 ```
 
