@@ -735,10 +735,7 @@ public class WebSocket
         List<WebSocketListener> listeners = mListenerManager.getListeners();
         synchronized (listeners)
         {
-            for (WebSocketListener listener : listeners)
-            {
-                instance.addListener(listener);
-            }
+            instance.addListeners(listeners);
         }
 
         return instance;
@@ -1304,6 +1301,26 @@ public class WebSocket
 
 
     /**
+     * Add listeners.
+     *
+     * @param listeners
+     *         Listeners to add. {@code null} is silently ignored.
+     *         {@code null} elements in the list are ignored, too.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.14
+     */
+    public WebSocket addListeners(List<WebSocketListener> listeners)
+    {
+        mListenerManager.addListeners(listeners);
+
+        return this;
+    }
+
+
+    /**
      * Remove a listener from this web socket.
      *
      * @param listener
@@ -1317,6 +1334,26 @@ public class WebSocket
     public WebSocket removeListener(WebSocketListener listener)
     {
         mListenerManager.removeListener(listener);
+
+        return this;
+    }
+
+
+    /**
+     * Remove listeners.
+     *
+     * @param listeners
+     *         Listeners to remove. {@code null} is silently ignored.
+     *         {@code null} elements in the list are ignored, too.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.14
+     */
+    public WebSocket removeListeners(List<WebSocketListener> listeners)
+    {
+        mListenerManager.removeListeners(listeners);
 
         return this;
     }

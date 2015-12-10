@@ -26,6 +26,9 @@ class ListenerManager
     private final WebSocket mWebSocket;
     private final List<WebSocketListener> mListeners = new ArrayList<WebSocketListener>();
 
+    private boolean mSyncNeeded = true;
+    private List<WebSocketListener> mCopiedListeners;
+
 
     public ListenerManager(WebSocket websocket)
     {
@@ -49,6 +52,30 @@ class ListenerManager
         synchronized (mListeners)
         {
             mListeners.add(listener);
+            mSyncNeeded = true;
+        }
+    }
+
+
+    public void addListeners(List<WebSocketListener> listeners)
+    {
+        if (listeners == null)
+        {
+            return;
+        }
+
+        synchronized (mListeners)
+        {
+            for (WebSocketListener listener : listeners)
+            {
+                if (listener == null)
+                {
+                    continue;
+                }
+
+                mListeners.add(listener);
+                mSyncNeeded = true;
+            }
         }
     }
 
@@ -62,7 +89,35 @@ class ListenerManager
 
         synchronized (mListeners)
         {
-            mListeners.remove(listener);
+            if (mListeners.remove(listener))
+            {
+                mSyncNeeded = true;
+            }
+        }
+    }
+
+
+    public void removeListeners(List<WebSocketListener> listeners)
+    {
+        if (listeners == null)
+        {
+            return;
+        }
+
+        synchronized (mListeners)
+        {
+            for (WebSocketListener listener : listeners)
+            {
+                if (listener == null)
+                {
+                    continue;
+                }
+
+                if (mListeners.remove(listener))
+                {
+                    mSyncNeeded = true;
+                }
+            }
         }
     }
 
@@ -71,25 +126,55 @@ class ListenerManager
     {
         synchronized (mListeners)
         {
+            if (mListeners.size() == 0)
+            {
+                return;
+            }
+
             mListeners.clear();
+            mSyncNeeded = true;
+        }
+    }
+
+
+    private List<WebSocketListener> getSynchronizedListeners()
+    {
+        synchronized (mListeners)
+        {
+            if (mSyncNeeded == false)
+            {
+                return mCopiedListeners;
+            }
+
+            // Copy mListeners to copiedListeners.
+            List<WebSocketListener> copiedListeners =
+                    new ArrayList<WebSocketListener>(mListeners.size());
+
+            for (WebSocketListener listener : mListeners)
+            {
+                copiedListeners.add(listener);
+            }
+
+            // Synchronize.
+            mCopiedListeners = copiedListeners;
+            mSyncNeeded      = false;
+
+            return copiedListeners;
         }
     }
 
 
     public void callOnStateChanged(WebSocketState newState)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onStateChanged(mWebSocket, newState);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onStateChanged(mWebSocket, newState);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
@@ -97,18 +182,15 @@ class ListenerManager
 
     public void callOnConnected(Map<String, List<String>> headers)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onConnected(mWebSocket, headers);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onConnected(mWebSocket, headers);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
@@ -116,18 +198,15 @@ class ListenerManager
 
     public void callOnConnectError(WebSocketException cause)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onConnectError(mWebSocket, cause);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onConnectError(mWebSocket, cause);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
@@ -137,19 +216,16 @@ class ListenerManager
         WebSocketFrame serverCloseFrame, WebSocketFrame clientCloseFrame,
         boolean closedByServer)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onDisconnected(
-                        mWebSocket, serverCloseFrame, clientCloseFrame, closedByServer);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onDisconnected(
+                    mWebSocket, serverCloseFrame, clientCloseFrame, closedByServer);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
@@ -157,18 +233,15 @@ class ListenerManager
 
     public void callOnFrame(WebSocketFrame frame)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onFrame(mWebSocket, frame);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onFrame(mWebSocket, frame);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
@@ -176,18 +249,15 @@ class ListenerManager
 
     public void callOnContinuationFrame(WebSocketFrame frame)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onContinuationFrame(mWebSocket, frame);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onContinuationFrame(mWebSocket, frame);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
@@ -195,18 +265,15 @@ class ListenerManager
 
     public void callOnTextFrame(WebSocketFrame frame)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onTextFrame(mWebSocket, frame);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onTextFrame(mWebSocket, frame);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
@@ -214,18 +281,15 @@ class ListenerManager
 
     public void callOnBinaryFrame(WebSocketFrame frame)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onBinaryFrame(mWebSocket, frame);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onBinaryFrame(mWebSocket, frame);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
@@ -233,18 +297,15 @@ class ListenerManager
 
     public void callOnCloseFrame(WebSocketFrame frame)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onCloseFrame(mWebSocket, frame);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onCloseFrame(mWebSocket, frame);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
@@ -252,18 +313,15 @@ class ListenerManager
 
     public void callOnPingFrame(WebSocketFrame frame)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onPingFrame(mWebSocket, frame);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onPingFrame(mWebSocket, frame);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
@@ -271,18 +329,15 @@ class ListenerManager
 
     public void callOnPongFrame(WebSocketFrame frame)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onPongFrame(mWebSocket, frame);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onPongFrame(mWebSocket, frame);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
@@ -290,18 +345,15 @@ class ListenerManager
 
     public void callOnTextMessage(String message)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onTextMessage(mWebSocket, message);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onTextMessage(mWebSocket, message);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
@@ -309,18 +361,15 @@ class ListenerManager
 
     public void callOnBinaryMessage(byte[] message)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onBinaryMessage(mWebSocket, message);
-                }
-                catch (Throwable t)
-                {
+                listener.onBinaryMessage(mWebSocket, message);
+            }
+            catch (Throwable t)
+            {
                     callHandleCallbackError(listener, t);
-                }
             }
         }
     }
@@ -328,18 +377,15 @@ class ListenerManager
 
     public void callOnFrameSent(WebSocketFrame frame)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onFrameSent(mWebSocket, frame);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onFrameSent(mWebSocket, frame);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
@@ -347,18 +393,15 @@ class ListenerManager
 
     public void callOnFrameUnsent(WebSocketFrame frame)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onFrameUnsent(mWebSocket, frame);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onFrameUnsent(mWebSocket, frame);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
@@ -366,18 +409,15 @@ class ListenerManager
 
     public void callOnError(WebSocketException cause)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onError(mWebSocket, cause);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onError(mWebSocket, cause);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
@@ -385,18 +425,15 @@ class ListenerManager
 
     public void callOnFrameError(WebSocketException cause, WebSocketFrame frame)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onFrameError(mWebSocket, cause, frame);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onFrameError(mWebSocket, cause, frame);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
@@ -404,18 +441,15 @@ class ListenerManager
 
     public void callOnMessageError(WebSocketException cause, List<WebSocketFrame> frames)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onMessageError(mWebSocket, cause, frames);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onMessageError(mWebSocket, cause, frames);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
@@ -423,18 +457,15 @@ class ListenerManager
 
     public void callOnTextMessageError(WebSocketException cause, byte[] data)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onTextMessageError(mWebSocket, cause, data);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onTextMessageError(mWebSocket, cause, data);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
@@ -442,18 +473,15 @@ class ListenerManager
 
     public void callOnSendError(WebSocketException cause, WebSocketFrame frame)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onSendError(mWebSocket, cause, frame);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onSendError(mWebSocket, cause, frame);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
@@ -461,18 +489,15 @@ class ListenerManager
 
     public void callOnUnexpectedError(WebSocketException cause)
     {
-        synchronized (mListeners)
+        for (WebSocketListener listener : getSynchronizedListeners())
         {
-            for (WebSocketListener listener : mListeners)
+            try
             {
-                try
-                {
-                    listener.onUnexpectedError(mWebSocket, cause);
-                }
-                catch (Throwable t)
-                {
-                    callHandleCallbackError(listener, t);
-                }
+                listener.onUnexpectedError(mWebSocket, cause);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
             }
         }
     }
