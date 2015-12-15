@@ -1,6 +1,12 @@
 CHANGES
 =======
 
+1.15-SNAPSHOT
+-------------
+
+- OSGi support. `Bundle-SymbolicName` is `com.neovisionaries.ws.client`.
+
+
 1.14 (2015-12-10)
 -----------------
 
@@ -85,7 +91,6 @@ CHANGES
 - Added variants of `WebSocket.disconnect` method.
 
 
-----------------
 1.4 (2015-05-19)
 ----------------
 

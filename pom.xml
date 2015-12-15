@@ -5,11 +5,9 @@
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
     <version>1.15-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
-    <description>
-        WebSocket client implementation in Java.
-    </description>
+    <description>WebSocket client implementation in Java.</description>
     <url>https://github.com/TakahikoKawasaki/nv-websocket-client</url>
 
     <licenses>
@@ -29,7 +27,7 @@
         <connection>scm:git:git@github.com:TakahikoKawasaki/nv-websocket-client.git</connection>
         <developerConnection>scm:git:git@github.com:TakahikoKawasaki/nv-websocket-client.git</developerConnection>
         <url>git@github.com:TakahikoKawasaki/nv-websocket-client.git</url>
-      <tag>HEAD</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
@@ -97,7 +95,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
+                <version>3.2</version>
                 <configuration>
                     <source>1.5</source>
                     <target>1.5</target>
@@ -190,7 +188,18 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>2.5.3</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>${project.groupId}.ws.client</Bundle-SymbolicName>
+                    </instructions>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
-
