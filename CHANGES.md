@@ -5,6 +5,8 @@ CHANGES
 -------------
 
 - OSGi support. `Bundle-SymbolicName` is `com.neovisionaries.ws.client`.
+- Added `PERMESSAGE_DEFLATE_UNSUPPORTED_PARAMETER` to `WebSocketError`.
+- Added `PERMESSAGE_DEFLATE_INVALID_MAX_WINDOW_BITS` to `WebSocketError`.
 
 
 1.14 (2015-12-10)

@@ -299,5 +299,31 @@ public enum WebSocketError
      * frames to the server).
      */
     UNEXPECTED_ERROR_IN_WRITING_THREAD,
+
+
+    /**
+     * {@code permessage-deflate} extension contains an unsupported parameter.
+     *
+     * <p>
+     * See <a href="https://tools.ietf.org/html/rfc7692#section-7">7. The
+     * "permessage-deflate" Extension</a> in
+     * <a href="https://tools.ietf.org/html/rfc7692">RFC 7692</a> for details.
+     * </p>
+     */
+    PERMESSAGE_DEFLATE_UNSUPPORTED_PARAMETER,
+
+
+    /**
+     * The value of {@code server_max_window_bits} parameter or {@code
+     * client_max_window_bits} parameter of {@code permessage-deflate}
+     * extension is invalid.
+     *
+     * <p>
+     * See <a href="https://tools.ietf.org/html/rfc7692#section-7.1.2">7.1.2.
+     * Limiting the LZ77 Sliding Window Size</a> in
+     * <a href="https://tools.ietf.org/html/rfc7692">RFC 7692</a> for details.
+     * </p>
+     */
+    PERMESSAGE_DEFLATE_INVALID_MAX_WINDOW_BITS,
     ;
 }

@@ -206,6 +206,14 @@ public class WebSocketExtension
 
 
     /**
+     * Validate this instance. This method is expected to be overridden.
+     */
+    void validate() throws WebSocketException
+    {
+    }
+
+
+    /**
      * Parse a string as a {@link WebSocketExtesion}. The input string
      * should comply with the format described in <a href=
      * "https://tools.ietf.org/html/rfc6455#section-9.1">9.1. Negotiating
@@ -245,8 +253,8 @@ public class WebSocketExtension
             return null;
         }
 
-        // The first element is the extension name.
-        WebSocketExtension extension = new WebSocketExtension(name);
+        // Create an instance for the extension name.
+        WebSocketExtension extension = createInstance(name);
 
         // For each "{key}[={value}]".
         for (int i = 1; i < elements.length; ++i)
@@ -300,5 +308,16 @@ public class WebSocketExtension
         }
 
         return Token.unquote(pair[1]);
+    }
+
+
+    private static WebSocketExtension createInstance(String name)
+    {
+        if (PerMessageDeflateExtension.EXTENSION_NAME.equals(name))
+        {
+            return new PerMessageDeflateExtension(name);
+        }
+
+        return new WebSocketExtension(name);
     }
 }

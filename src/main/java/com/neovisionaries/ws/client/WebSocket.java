@@ -2805,6 +2805,9 @@ public class WebSocket
                         "The extension contained in the Sec-WebSocket-Extensions header is not supported: " + name);
                 }
 
+                // Let the extension validate itself.
+                extension.validate();
+
                 // The extension has been agreed.
                 extensions.add(extension);
             }
