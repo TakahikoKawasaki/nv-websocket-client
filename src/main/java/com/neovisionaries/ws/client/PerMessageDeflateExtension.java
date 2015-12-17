@@ -19,7 +19,14 @@ package com.neovisionaries.ws.client;
 import java.util.Map;
 
 
-class PerMessageDeflateExtension extends WebSocketExtension
+/**
+ * Per-Message Deflate Extension (<a href="https://tools.ietf.org/html/rfc7692#section-7"
+ * >7&#46; The "permessage-deflate" Extension</a> in
+ * <a href="https://tools.ietf.org/html/rfc7692">RFC 7692</a>).
+ *
+ * @see <a href="https://tools.ietf.org/html/rfc7692#section-7">7&#46; The "permessage-deflate" Extension in RFC 7692</a>
+ */
+class PerMessageDeflateExtension extends PerMessageCompressionExtension
 {
     public static final String EXTENSION_NAME = "permessage-deflate";
 
@@ -165,5 +172,13 @@ class PerMessageDeflateExtension extends WebSocketExtension
     public int getClientWindowSize()
     {
         return mClientWindowSize;
+    }
+
+
+    @Override
+    protected byte[] decompress(byte[] compressed)
+    {
+        // TODO
+        return compressed;
     }
 }

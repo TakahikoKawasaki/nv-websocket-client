@@ -645,6 +645,7 @@ public class WebSocket
     private boolean mWritingThreadFinished;
     private WebSocketFrame mServerCloseFrame;
     private WebSocketFrame mClientCloseFrame;
+    private PerMessageCompressionExtension mPerMessageCompressionExtension;
 
 
     WebSocket(WebSocketFactory factory, boolean secure, String userInfo,
@@ -802,6 +803,9 @@ public class WebSocket
     }
 
 
+    /**
+     * Check if the current state is equal to the specified state.
+     */
     private boolean isInState(WebSocketState state)
     {
         synchronized (mStateManager)
@@ -1489,8 +1493,13 @@ public class WebSocket
         // Notify the listener of the state change.
         mListenerManager.callOnStateChanged(OPEN);
 
-        // Start threads that communicate with the server.
+        // HTTP headers in the response from the server.
         mServerHeaders = headers;
+
+        // Extensions.
+        mPerMessageCompressionExtension = findAgreedPerMessageCompressionExtension();
+
+        // Start threads that communicate with the server.
         startThreads();
 
         return this;
@@ -1565,7 +1574,6 @@ public class WebSocket
 
         return this;
     }
-
 
 
     /**
@@ -2298,6 +2306,9 @@ public class WebSocket
     }
 
 
+    /**
+     * Perform the opening handshake.
+     */
     private Map<String, List<String>> shakeHands() throws WebSocketException
     {
         // The raw socket created by WebSocketFactory.
@@ -2318,14 +2329,20 @@ public class WebSocket
         // Read the response from the server.
         Map<String, List<String>> headers = readHandshake(input, key);
 
-        // The handshake succeeded.
+        // Keep the input stream and the output stream to pass them
+        // to the reading thread and the writing thread later.
         mInput  = input;
         mOutput = output;
 
+        // The handshake succeeded.
         return headers;
     }
 
 
+    /**
+     * Open the input stream of the WebSocket connection.
+     * The stream is used by the reading thread.
+     */
     private WebSocketInputStream openInputStream(Socket socket) throws WebSocketException
     {
         try
@@ -2345,6 +2362,10 @@ public class WebSocket
     }
 
 
+    /**
+     * Open the output stream of the WebSocket connection.
+     * The stream is used by the writing thread.
+     */
     private WebSocketOutputStream openOutputStream(Socket socket) throws WebSocketException
     {
         try
@@ -2392,6 +2413,9 @@ public class WebSocket
     }
 
 
+    /**
+     * Send an opening handshake request to the WebSocket server.
+     */
     private void writeHandshake(WebSocketOutputStream output, String key) throws WebSocketException
     {
         // Generate an opening handshake sent to the server from this client.
@@ -2414,6 +2438,9 @@ public class WebSocket
     }
 
 
+    /**
+     * Receive an opening handshake response from the WebSocket server.
+     */
     private Map<String, List<String>> readHandshake(WebSocketInputStream input, String key) throws WebSocketException
     {
         // Read the status line.
@@ -2813,7 +2840,44 @@ public class WebSocket
             }
         }
 
+        // Check if extensions conflict with each other.
+        validateExtensionCombination(extensions);
+
         mAgreedExtensions = extensions;
+    }
+
+
+    private void validateExtensionCombination(List<WebSocketExtension> extensions) throws WebSocketException
+    {
+        // Currently, only duplication of per-message compression extensions is checked.
+
+        // A per-message compression extension found in the list.
+        WebSocketExtension pmce = null;
+
+        for (WebSocketExtension extension : extensions)
+        {
+            // If the extension is not a per-message compression extension.
+            if ((extension instanceof PerMessageCompressionExtension) == false)
+            {
+                continue;
+            }
+
+            // If the found per-message compression extension is the first one.
+            if (pmce == null)
+            {
+                // Found a per-message compression extension.
+                pmce = extension;
+                continue;
+            }
+
+            // Found the second per-message compression extension. Conflict.
+            String message = String.format(
+                "'%s' extension and '%s' extension conflict with each other.",
+                pmce.getName(), extension.getName());
+
+            // The extensions conflict with each other.
+            throw new WebSocketException(WebSocketError.EXTENSIONS_CONFLICT, message);
+        }
     }
 
 
@@ -2865,6 +2929,17 @@ public class WebSocket
     }
 
 
+    /**
+     * Start both the reading thread and the writing thread.
+     *
+     * <p>
+     * The reading thread will call {@link #onReadingThreadStarted()}
+     * as its first step. Likewise, the writing thread will call
+     * {@link #onWritingThreadStarted()} as its first step. After
+     * both the threads have started, {@link #onThreadsStarted()} is
+     * called.
+     * </p>
+     */
     private void startThreads()
     {
         ReadingThread readingThread = new ReadingThread(this);
@@ -2881,6 +2956,17 @@ public class WebSocket
     }
 
 
+    /**
+     * Stop both the reading thread and the writing thread.
+     *
+     * <p>
+     * The reading thread will call {@link #onReadingThreadFinished(WebSocketFrame)}
+     * as its last step. Likewise, the writing thread will call {@link
+     * #onWritingThreadFinished(WebSocketFrame)} as its last step.
+     * After both the threads have stopped, {@link #onThreadsFinished()}
+     * is called.
+     * </p>
+     */
     private void stopThreads()
     {
         ReadingThread readingThread;
@@ -2907,30 +2993,45 @@ public class WebSocket
     }
 
 
+    /**
+     * Get the input stream of the WebSocket connection.
+     */
     WebSocketInputStream getInput()
     {
         return mInput;
     }
 
 
+    /**
+     * Get the output stream of the WebSocket connection.
+     */
     WebSocketOutputStream getOutput()
     {
         return mOutput;
     }
 
 
+    /**
+     * Get the manager that manages the state of this {@code WebSocket} instance.
+     */
     StateManager getStateManager()
     {
         return mStateManager;
     }
 
 
+    /**
+     * Get the manager that manages registered listeners.
+     */
     ListenerManager getListenerManager()
     {
         return mListenerManager;
     }
 
 
+    /**
+     * Called by the reading thread as its first step.
+     */
     void onReadingThreadStarted()
     {
         synchronized (mThreadsLock)
@@ -2947,10 +3048,14 @@ public class WebSocket
             }
         }
 
+        // Both the reading thread and the writing thread have started.
         onThreadsStarted();
     }
 
 
+    /**
+     * Called by the writing thread as its first step.
+     */
     void onWritingThreadStarted()
     {
         synchronized (mThreadsLock)
@@ -2967,10 +3072,16 @@ public class WebSocket
             }
         }
 
+        // Both the reading thread and the writing thread have started.
         onThreadsStarted();
     }
 
 
+    /**
+     * Call {@link WebSocketListener#onConnected(WebSocket, Map)} method
+     * of the registered listeners if it has not been called yet. Either
+     * the reading thread or the writing thread calls this method.
+     */
     private void callOnConnectedIfNotYet()
     {
         // This method is called in synchronized (mThreadsLock) block.
@@ -2989,6 +3100,11 @@ public class WebSocket
     }
 
 
+    /**
+     * Called when both the reading thread and the writing thread have started.
+     * This method is called in the context of either the reading thread or
+     * the writing thread.
+     */
     private void onThreadsStarted()
     {
         // Start sending ping frames periodically.
@@ -3000,6 +3116,9 @@ public class WebSocket
     }
 
 
+    /**
+     * Called by the reading thread as its last step.
+     */
     void onReadingThreadFinished(WebSocketFrame closeFrame)
     {
         synchronized (mThreadsLock)
@@ -3014,10 +3133,14 @@ public class WebSocket
             }
         }
 
+        // Both the reading thread and the writing thread have finished.
         onThreadsFinished();
     }
 
 
+    /**
+     * Called by the writing thread as its last step.
+     */
     void onWritingThreadFinished(WebSocketFrame closeFrame)
     {
         synchronized (mThreadsLock)
@@ -3032,10 +3155,16 @@ public class WebSocket
             }
         }
 
+        // Both the reading thread and the writing thread have finished.
         onThreadsFinished();
     }
 
 
+    /**
+     * Called when both the reading thread and the writing thread have finished.
+     * This method is called in the context of either the reading thread or
+     * the writing thread.
+     */
     private void onThreadsFinished()
     {
         finish();
@@ -3072,6 +3201,9 @@ public class WebSocket
     }
 
 
+    /**
+     * Call {@link #finish()} from within a separate thread.
+     */
     private void finishAsynchronously()
     {
         new Thread() {
@@ -3080,5 +3212,33 @@ public class WebSocket
                 finish();
             }
         }.start();
+    }
+
+
+    /**
+     * Find a per-message compression extension from among the agreed extensions.
+     */
+    private PerMessageCompressionExtension findAgreedPerMessageCompressionExtension()
+    {
+        for (WebSocketExtension extension : mAgreedExtensions)
+        {
+            if (extension instanceof PerMessageCompressionExtension)
+            {
+                return (PerMessageCompressionExtension)extension;
+            }
+        }
+
+        return null;
+    }
+
+
+    /**
+     * Get the PerMessageCompressionExtension in the agreed extensions.
+     * This method returns null if a per-message compression extension
+     * is not found in the agreed extensions.
+     */
+    PerMessageCompressionExtension getPerMessageCompressionExtension()
+    {
+        return mPerMessageCompressionExtension;
     }
 }

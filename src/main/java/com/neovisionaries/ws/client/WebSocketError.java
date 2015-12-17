@@ -72,7 +72,7 @@ public enum WebSocketError
 
 
     /**
-     * The status code of the opening handshake response is not Switching Protocols.
+     * The status code of the opening handshake response is not {@code 101 Switching Protocols}.
      */
     NOT_SWITCHING_PROTOCOLS,
 
@@ -84,55 +84,64 @@ public enum WebSocketError
 
 
     /**
-     * The opening handshake response does not contain 'Upgrade' header.
+     * The opening handshake response does not contain {@code Upgrade} header.
      */
     NO_UPGRADE_HEADER,
 
 
     /**
-     * 'websocket' was not found in 'Upgrade' header.
+     * {@code websocket} was not found in {@code Upgrade} header.
      */
     NO_WEBSOCKET_IN_UPGRADE_HEADER,
 
 
     /**
-     * The opening handshake response does not contain 'Connection' header.
+     * The opening handshake response does not contain {@code Connection} header.
      */
     NO_CONNECTION_HEADER,
 
 
     /**
-     * 'Upgrade' was not found in 'Connection' header.
+     * {@code Upgrade} was not found in {@code Connection} header.
      */
     NO_UPGRADE_IN_CONNECTION_HEADER,
 
 
     /**
-     * The opening handshake response does not contain 'Sec-WebSocket-Accept' header.
+     * The opening handshake response does not contain {@code Sec-WebSocket-Accept} header.
      */
     NO_SEC_WEBSOCKET_ACCEPT_HEADER,
 
 
     /**
-     * The value of 'Sec-WebSocket-Accept' header is different from the expected one.
+     * The value of {@code Sec-WebSocket-Accept} header is different from the expected one.
      */
     UNEXPECTED_SEC_WEBSOCKET_ACCEPT_HEADER,
 
 
     /**
-     * The value in 'Sec-WebSocket-Extensions' failed to be parsed.
+     * The value in {@code Sec-WebSocket-Extensions} failed to be parsed.
      */
     EXTENSION_PARSE_ERROR,
 
 
     /**
-     * The extension contained in the Sec-WebSocket-Extensions header is not supported.
+     * The extension contained in {@code Sec-WebSocket-Extensions} header is not supported.
      */
     UNSUPPORTED_EXTENSION,
 
 
     /**
-     * The protocol contained in the Sec-WebSocket-Protocol header is not supported.
+     * The combination of the extensions contained in {@code Sec-WebSocket-Extensions} header
+     * causes conflicts.
+     *
+     * @since 1.15
+     */
+    EXTENSIONS_CONFLICT,
+
+
+    /**
+     * The protocol contained in {@code Sec-WebSocket-Protocol} header is not supported.
      */
     UNSUPPORTED_PROTOCOL,
 
@@ -156,7 +165,7 @@ public enum WebSocketError
 
 
     /**
-     * OutOfMemoryError occurred during a trial to allocate a memory area for a frame's payload.
+     * {@link OutOfMemoryError} occurred during a trial to allocate a memory area for a frame's payload.
      */
     INSUFFICIENT_MEMORY_FOR_PAYLOAD,
 
@@ -203,8 +212,36 @@ public enum WebSocketError
      * By calling {@link WebSocket#setExtended(boolean) WebSocket.setExtended}{@code
      * (true)}, you can skip the validity check of the RSV1/RSV2/RSV3 bits.
      * </p>
+     *
+     * <p>
+     * This error code is not used in version 1.15 and after.
+     * </p>
      */
     NON_ZERO_RESERVED_BITS,
+
+
+    /**
+     * A reserved bit of a frame has an unexpected value.
+     *
+     * <blockquote>
+     * <p>From RFC 6455, <a href="http://tools.ietf.org/html/rfc6455#section-5.2"
+     * >5.2 Base Framing Protocol</a>; RSV1, RSV2, RSV3:</p>
+     * <p><i>
+     * MUST be 0 unless an extension is negotiated that defines meanings
+     * for non-zero values.  If a nonzero value is received and none of
+     * the negotiated extensions defines the meaning of such a nonzero
+     * value, the receiving endpoint MUST Fail the WebSocket Connection.
+     * </i></p>
+     * </blockquote>
+     *
+     * <p>
+     * By calling {@link WebSocket#setExtended(boolean) WebSocket.setExtended}{@code
+     * (true)}, you can skip the validity check of the RSV1/RSV2/RSV3 bits.
+     * </p>
+     *
+     * @since 1.15
+     */
+    UNEXPECTED_RESERVED_BIT,
 
 
     /**
@@ -309,6 +346,8 @@ public enum WebSocketError
      * "permessage-deflate" Extension</a> in
      * <a href="https://tools.ietf.org/html/rfc7692">RFC 7692</a> for details.
      * </p>
+     *
+     * @since 1.15
      */
     PERMESSAGE_DEFLATE_UNSUPPORTED_PARAMETER,
 
@@ -323,6 +362,8 @@ public enum WebSocketError
      * Limiting the LZ77 Sliding Window Size</a> in
      * <a href="https://tools.ietf.org/html/rfc7692">RFC 7692</a> for details.
      * </p>
+     *
+     * @since 1.15
      */
     PERMESSAGE_DEFLATE_INVALID_MAX_WINDOW_BITS,
     ;

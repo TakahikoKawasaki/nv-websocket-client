@@ -41,6 +41,7 @@ class ReadingThread extends Thread
     private boolean mStopRequested;
     private WebSocketFrame mCloseFrame;
     private List<WebSocketFrame> mContinuation = new ArrayList<WebSocketFrame>();
+    private final PerMessageCompressionExtension mPMCE;
 
 
     public ReadingThread(WebSocket websocket)
@@ -48,6 +49,7 @@ class ReadingThread extends Thread
         super("ReadingThread");
 
         mWebSocket = websocket;
+        mPMCE      = websocket.getPerMessageCompressionExtension();
     }
 
 
@@ -378,16 +380,92 @@ class ReadingThread extends Thread
         // The specification requires that these bits "be 0 unless an extension
         // is negotiated that defines meanings for non-zero values".
 
-        if (frame.getRsv1() || frame.getRsv2() || frame.getRsv3())
-        {
-            String message = String.format(
-                "At least one of the reserved bits of a frame is set: RSV1=%s,RSV2=%s,RSV3=%s",
-                frame.getRsv1(), frame.getRsv2(), frame.getRsv3());
+        verifyReservedBit1(frame);
+        verifyReservedBit2(frame);
+        verifyReservedBit3(frame);
+    }
 
-            // At least one of the reserved bits of a frame is set.
-            throw new WebSocketException(
-                WebSocketError.NON_ZERO_RESERVED_BITS, message);
+
+    /**
+     * Verify the RSV1 bit of a frame.
+     */
+    private void verifyReservedBit1(WebSocketFrame frame) throws WebSocketException
+    {
+        // If a per-message compression extension has been agreed.
+        if (mPMCE != null)
+        {
+            // Verify the RSV1 bit using the rule described in RFC 7692.
+            boolean verified = verifyReservedBit1ForPMCE(frame);
+
+            if (verified)
+            {
+                return;
+            }
         }
+
+        if (frame.getRsv1() == false)
+        {
+            // No problem.
+            return;
+        }
+
+        // The RSV1 bit of a frame is set unexpectedly.
+        throw new WebSocketException(
+            WebSocketError.UNEXPECTED_RESERVED_BIT, "The RSV1 bit of a frame is set unexpectedly.");
+    }
+
+
+    /**
+     * Verify the RSV1 bit of a frame using the rule described in RFC 7692.
+     * See <a href="https://tools.ietf.org/html/rfc7692#section-6">6. Framing</a>
+     * in <a href="https://tools.ietf.org/html/rfc7692">RFC 7692</a> for details.
+     */
+    private boolean verifyReservedBit1ForPMCE(WebSocketFrame frame) throws WebSocketException
+    {
+        if (frame.isTextFrame() || frame.isBinaryFrame())
+        {
+            // The RSV1 of the first frame of a message is called
+            // "Per-Message Compressed" bit. It can be either 0 or 1.
+            // In other words, any value is okay.
+            return true;
+        }
+
+        // Further checking is required.
+        return false;
+    }
+
+
+    /**
+     * Verify the RSV2 bit of a frame.
+     */
+    private void verifyReservedBit2(WebSocketFrame frame) throws WebSocketException
+    {
+        if (frame.getRsv2() == false)
+        {
+            // No problem.
+            return;
+        }
+
+        // The RSV2 bit of a frame is set unexpectedly.
+        throw new WebSocketException(
+            WebSocketError.UNEXPECTED_RESERVED_BIT, "The RSV2 bit of a frame is set unexpectedly.");
+    }
+
+
+    /**
+     * Verify the RSV3 bit of a frame.
+     */
+    private void verifyReservedBit3(WebSocketFrame frame) throws WebSocketException
+    {
+        if (frame.getRsv3() == false)
+        {
+            // No problem.
+            return;
+        }
+
+        // The RSV3 bit of a frame is set unexpectedly.
+        throw new WebSocketException(
+            WebSocketError.UNEXPECTED_RESERVED_BIT, "The RSV3 bit of a frame is set unexpectedly.");
     }
 
 
@@ -562,6 +640,7 @@ class ReadingThread extends Thread
             // In this.verifyFrame(WebSocketFrame)
 
             case NON_ZERO_RESERVED_BITS:
+            case UNEXPECTED_RESERVED_BIT:
             case UNKNOWN_OPCODE:
             case FRAME_MASKED:
             case FRAGMENTED_CONTROL_FRAME:
@@ -637,8 +716,9 @@ class ReadingThread extends Thread
             return true;
         }
 
-        // Concatenate payloads of the frames.
-        byte[] data = concatenatePayloads(mContinuation);
+        // Concatenate payloads of the frames. Decompression is performed
+        // when necessary.
+        byte[] data = getMessage(mContinuation);
 
         // If the concatenation failed.
         if (data == null)
@@ -664,6 +744,30 @@ class ReadingThread extends Thread
 
         // Keep reading.
         return true;
+    }
+
+
+    private byte[] getMessage(List<WebSocketFrame> frames)
+    {
+        // Concatenate payloads of the frames.
+        byte[] data = concatenatePayloads(mContinuation);
+
+        // If the concatenation failed.
+        if (data == null)
+        {
+            // Stop reading.
+            return null;
+        }
+
+        // If a per-message compression extension is enabled and
+        // the Per-Message Compressed bit of the first frame is set.
+        if (mPMCE != null && frames.get(0).getRsv1())
+        {
+            // Decompress the data.
+            data = mPMCE.decompress(data);
+        }
+
+        return data;
     }
 
 
@@ -725,6 +829,23 @@ class ReadingThread extends Thread
     }
 
 
+    private byte[] getMessage(WebSocketFrame frame)
+    {
+        // The raw payload of the frame.
+        byte[] payload = frame.getPayload();
+
+        // If a per-message compression extension is enabled and
+        // the Per-Message Compressed bit of the frame is set.
+        if (mPMCE != null && frame.getRsv1())
+        {
+            // Decompress the payload.
+            payload = mPMCE.decompress(payload);
+        }
+
+        return payload;
+    }
+
+
     private boolean handleTextFrame(WebSocketFrame frame)
     {
         // Notify the listeners that a text frame was received.
@@ -740,8 +861,12 @@ class ReadingThread extends Thread
             return true;
         }
 
+        // Get the payload of the frame. Decompression is performed
+        // when necessary.
+        byte[] payload = getMessage(frame);
+
         // Notify the listeners that a text message was received.
-        callOnTextMessage(frame.getPayload());
+        callOnTextMessage(payload);
 
         // Keep reading.
         return true;
@@ -763,8 +888,12 @@ class ReadingThread extends Thread
             return true;
         }
 
+        // Get the payload of the frame. Decompression is performed
+        // when necessary.
+        byte[] payload = getMessage(frame);
+
         // Notify the listeners that a binary message was received.
-        callOnBinaryMessage(frame.getPayload());
+        callOnBinaryMessage(payload);
 
         // Keep reading.
         return true;
