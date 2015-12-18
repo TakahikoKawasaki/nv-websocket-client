@@ -3220,6 +3220,11 @@ public class WebSocket
      */
     private PerMessageCompressionExtension findAgreedPerMessageCompressionExtension()
     {
+        if (mAgreedExtensions == null)
+        {
+            return null;
+        }
+
         for (WebSocketExtension extension : mAgreedExtensions)
         {
             if (extension instanceof PerMessageCompressionExtension)
