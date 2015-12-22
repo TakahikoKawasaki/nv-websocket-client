@@ -658,8 +658,11 @@ public class WebSocketFrame
         switch (mOpcode)
         {
             case TEXT:
-                builder
-                    .append(",Payload=\"").append(getPayloadText()).append("\"");
+                appendPayloadText(builder);
+                break;
+
+            case BINARY:
+                appendPayloadBinary(builder);
                 break;
 
             case CLOSE:
@@ -670,6 +673,68 @@ public class WebSocketFrame
         }
 
         return builder.append(")").toString();
+    }
+
+
+    private boolean appendPayloadCommon(StringBuilder builder)
+    {
+        builder.append(",Payload=");
+
+        if (mPayload == null)
+        {
+            builder.append("null");
+
+            // Nothing more to append.
+            return true;
+        }
+
+        if (mRsv1)
+        {
+            // In the current implementation, mRsv1=true is allowed
+            // only when Per-Message Compression is applied.
+            builder.append("compressed");
+
+            // Nothing more to append.
+            return true;
+        }
+
+        // Continue.
+        return false;
+    }
+
+
+    private void appendPayloadText(StringBuilder builder)
+    {
+        if (appendPayloadCommon(builder))
+        {
+            // Nothing more to append.
+            return;
+        }
+
+        builder.append("\"");
+        builder.append(getPayloadText());
+        builder.append("\"");
+    }
+
+
+    private void appendPayloadBinary(StringBuilder builder)
+    {
+        if (appendPayloadCommon(builder))
+        {
+            // Nothing more to append.
+            return;
+        }
+
+        for (int i = 0; i < mPayload.length; ++i)
+        {
+            builder.append(String.format("%02X ", (0xFF & mPayload[i])));
+        }
+
+        if (mPayload.length != 0)
+        {
+            // Remove the last space.
+            builder.setLength(builder.length() - 1);
+        }
     }
 
 

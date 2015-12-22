@@ -9,6 +9,8 @@ CHANGES
 - Added `PERMESSAGE_DEFLATE_INVALID_MAX_WINDOW_BITS` to `WebSocketError`.
 - Added `PERMESSAGE_DEFLATE_UNSUPPORTED_PARAMETER` to `WebSocketError`.
 - Added `UNEXPECTED_RESERVED_BIT` to `WebSocketError`.
+- Modified `WebSocketFrame.toString()` to stringify payload of text and
+  binary frames.
 
 
 1.14 (2015-12-10)
