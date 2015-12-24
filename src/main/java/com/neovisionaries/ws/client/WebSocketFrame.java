@@ -666,9 +666,7 @@ public class WebSocketFrame
                 break;
 
             case CLOSE:
-                builder
-                    .append(",CloseCode=").append(getCloseCode())
-                    .append(",Reason=\"").append(getCloseReason()).append("\"");
+                appendPayloadClose(builder);
                 break;
         }
 
@@ -714,6 +712,25 @@ public class WebSocketFrame
         builder.append("\"");
         builder.append(getPayloadText());
         builder.append("\"");
+    }
+
+
+    private void appendPayloadClose(StringBuilder builder)
+    {
+        builder
+            .append(",CloseCode=").append(getCloseCode())
+            .append(",Reason=");
+
+        String reason = getCloseReason();
+
+        if (reason == null)
+        {
+            builder.append("null");
+        }
+        else
+        {
+            builder.append("\"").append(reason).append("\"");
+        }
     }
 
 
