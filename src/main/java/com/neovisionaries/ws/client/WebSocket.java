@@ -731,6 +731,8 @@ public class WebSocket
         instance.mHandshakeBuilder = new HandshakeBuilder(mHandshakeBuilder);
         instance.setPingInterval(getPingInterval());
         instance.setPongInterval(getPongInterval());
+        instance.mExtended = mExtended;
+        instance.mAutoFlush = mAutoFlush;
 
         // Copy listeners.
         List<WebSocketListener> listeners = mListenerManager.getListeners();

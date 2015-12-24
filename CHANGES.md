@@ -11,6 +11,7 @@ CHANGES
 - Added `UNEXPECTED_RESERVED_BIT` to `WebSocketError`.
 - Modified `WebSocketFrame.toString()` to stringify payload of text and
   binary frames.
+- Copied Extended and AutoFlush settings in `WebSocket.recreate(int)`.
 
 
 1.14 (2015-12-10)
