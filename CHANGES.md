@@ -12,6 +12,7 @@ CHANGES
 - Modified `WebSocketFrame.toString()` to stringify the payload better.
 - Copied Extended and AutoFlush settings in `WebSocket.recreate(int)`.
 - Added `onSendingFrame(WebSocket, WebSocketFrame)` to `WebSocketListener`.
+- Added `setFrameQueueSize(int)` to `WebSocket` for congestion control.
 
 
 1.14 (2015-12-10)

@@ -31,11 +31,13 @@ class WritingThread extends Thread
     private static final int SHOULD_STOP     = 1;
     private static final int SHOULD_CONTINUE = 2;
     private static final int SHOULD_FLUSH    = 3;
+    private static final int FLUSH_THRESHOLD = 1000;
     private final WebSocket mWebSocket;
     private final List<WebSocketFrame> mFrames;
     private boolean mStopRequested;
     private WebSocketFrame mCloseFrame;
     private boolean mFlushNeeded;
+    private boolean mStopped;
 
 
     public WritingThread(WebSocket websocket)
@@ -65,6 +67,13 @@ class WritingThread extends Thread
             ListenerManager manager = mWebSocket.getListenerManager();
             manager.callOnError(cause);
             manager.callOnUnexpectedError(cause);
+        }
+
+        synchronized (this)
+        {
+            // Mainly for queueFrame().
+            mStopped = true;
+            notifyAll();
         }
     }
 
@@ -132,10 +141,61 @@ class WritingThread extends Thread
     }
 
 
-    public void queueFrame(WebSocketFrame frame)
+    public boolean queueFrame(WebSocketFrame frame)
     {
         synchronized (this)
         {
+            while (true)
+            {
+                // If this thread has already stopped.
+                if (mStopped)
+                {
+                    // Frames won't be sent any more. Not queued.
+                    return false;
+                }
+
+                // If this thread has been requested to stop or has sent a
+                // close frame to the server.
+                if (mStopRequested || mCloseFrame != null)
+                {
+                    // Don't wait. Process the remaining task without delay.
+                    break;
+                }
+
+                // If the frame is a control frame.
+                if (frame.isControlFrame())
+                {
+                    // Queue the frame without blocking.
+                    break;
+                }
+
+                // Get the upper limit of the queue size.
+                int queueSize = mWebSocket.getFrameQueueSize();
+
+                // If the upper limit is not set.
+                if (queueSize == 0)
+                {
+                    // Add the frame to mFrames unconditionally.
+                    break;
+                }
+
+                // If the current queue size has not reached the upper limit.
+                if (mFrames.size() < queueSize)
+                {
+                    // Add the frame.
+                    break;
+                }
+
+                try
+                {
+                    // Wait until the queue gets spaces.
+                    wait();
+                }
+                catch (InterruptedException e)
+                {
+                }
+            }
+
             // Append the frame to the list of web socket frames
             // which are to be sent to the server.
             mFrames.add(frame);
@@ -143,6 +203,9 @@ class WritingThread extends Thread
             // Wake up this thread.
             notifyAll();
         }
+
+        // Queued.
+        return true;
     }
 
 
@@ -192,7 +255,7 @@ class WritingThread extends Thread
                 return SHOULD_STOP;
             }
 
-            // If the list of web socket frames
+            // If the list of web socket frames to be sent is empty.
             if (mFrames.size() == 0)
             {
                 // Check mFlushNeeded before calling wait().
@@ -245,9 +308,14 @@ class WritingThread extends Thread
             frames = new ArrayList<WebSocketFrame>(mFrames.size());
             frames.addAll(mFrames);
             mFrames.clear();
+
+            // Mainly for queueFrame().
+            notifyAll();
         }
 
         boolean closeFrameFound = false;
+
+        long timestamp = System.currentTimeMillis();
 
         for (WebSocketFrame frame : frames)
         {
@@ -259,6 +327,26 @@ class WritingThread extends Thread
             {
                 closeFrameFound = true;
             }
+
+            // True if flush is needed.
+            boolean flush = (last || mWebSocket.isAutoFlush() || closeFrameFound || mFlushNeeded);
+
+            // If there is no need to care about flush.
+            if (flush == false)
+            {
+                // Call sendFrame() without flushing.
+                continue;
+            }
+
+            long current = System.currentTimeMillis();
+
+            // If sending frames has taken too much time.
+            if (FLUSH_THRESHOLD < (current - timestamp))
+            {
+                // Flush without waiting for remaining frames to be sent.
+                doFlush();
+                timestamp = current;
+            }
         }
 
         boolean flush = (last || mWebSocket.isAutoFlush() || closeFrameFound);
@@ -269,11 +357,15 @@ class WritingThread extends Thread
             mFlushNeeded = false;
         }
 
-        if (!flush)
+        if (flush)
         {
-            return;
+            doFlush();
         }
+    }
 
+
+    private void doFlush() throws WebSocketException
+    {
         try
         {
             // Flush

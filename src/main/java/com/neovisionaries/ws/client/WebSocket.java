@@ -276,6 +276,10 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *       <td>{@link #setExtended(boolean) setExtended}</td>
  *       <td>Disables validity checks on RSV1/RSV2/RSV3 and opcode.</td>
  *     </tr>
+ *     <tr>
+ *       <td>{@link #setFrameQueueSize(int) setFrameQueueSize}</td>
+ *       <td>Set the size of the frame queue for <a href="#congestion_control">congestion control</a>.</td>
+ *     </tr>
  *   </tbody>
  * </table>
  * </blockquote>
@@ -370,7 +374,14 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * Web socket frames can be sent by {@link #sendFrame(WebSocketFrame)}
  * method. Other <code>send<i>Xxx</i></code> methods such as {@link
  * #sendText(String)} are aliases of {@code sendFrame} method. All of
- * the <code>send<i>Xxx</i></code> methods work asynchronously. Below
+ * the <code>send<i>Xxx</i></code> methods work asynchronously.
+ * However, under some conditions, <code>send<i>Xxx</i></code> methods
+ * may block. See <a href="#congestion_control">Congestion Control</a>
+ * for details.
+ * </p>
+ *
+ * <p>
+ * Below
  * are some examples of <code>send<i>Xxx</i></code> methods. Note that
  * in normal cases, you don't have to call {@link #sendClose()} method
  * and {@link #sendPong()} (or their variants) explicitly because they
@@ -486,6 +497,38 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Flush frames to the server manually.</span>
  * ws.{@link #flush()};</pre>
  * </blockquote>
+ *
+ * <h3 id="congestion_control">Congestion Control</h3>
+ *
+ * <p>
+ * <code>send<i>Xxx</i></code> methods queue a {@link WebSocketFrame} instance to the
+ * internal queue. By default, no upper limit is imposed on the queue size, so
+ * <code>send<i>Xxx</i></code> methods do not block. However, this behavior may cause
+ * a problem if your WebSocket client application sends too many WebSocket frames in
+ * a short time for the WebSocket server to process. In such a case, you may want
+ * <code>send<i>Xxx</i></code> methods to block when many frames are queued.
+ * </p>
+ *
+ * <p>
+ * You can set an upper limit on the internal queue by calling {@link #setFrameQueueSize(int)}
+ * method. As a result, if the number of frames in the queue has reached the upper limit
+ * when a <code>send<i>Xxx</i></code> method is called, the method blocks until the
+ * queue gets spaces. The code snippet below is an example to set 5 as the upper limit
+ * of the internal frame queue.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Set 5 as the frame queue size.</span>
+ * ws.{@link #setFrameQueueSize(int) setFrameQueueSize}(5);</pre>
+ * </blockquote>
+ *
+ * <p>
+ * Note that under some conditions, even if the queue is full, <code>send<i>Xxx</i></code>
+ * methods do not block. For example, in the case where the thread to send frames
+ * ({@code WritingThread}) is going to stop or has already stopped. In addition,
+ * method calls to send a <a href="https://tools.ietf.org/html/rfc6455#section-5.5"
+ * >control frame</a> (e.g. {@link #sendClose()} and {@link #sendPing()}) do not block.
+ * </p>
  *
  * <h3>Disconnect WebSocket</h3>
  *
@@ -638,6 +681,7 @@ public class WebSocket
     private String mAgreedProtocol;
     private boolean mExtended;
     private boolean mAutoFlush = true;
+    private int mFrameQueueSize;
     private boolean mOnConnectedCalled;
     private boolean mReadingThreadStarted;
     private boolean mWritingThreadStarted;
@@ -733,6 +777,7 @@ public class WebSocket
         instance.setPongInterval(getPongInterval());
         instance.mExtended = mExtended;
         instance.mAutoFlush = mAutoFlush;
+        instance.mFrameQueueSize = mFrameQueueSize;
 
         // Copy listeners.
         List<WebSocketListener> listeners = mListenerManager.getListeners();
@@ -1179,6 +1224,66 @@ public class WebSocket
             // Request flush.
             mWritingThread.queueFlush();
         }
+
+        return this;
+    }
+
+
+    /**
+     * Get the size of the frame queue. The default value is 0 and it means
+     * there is no limit on the queue size.
+     *
+     * @return
+     *         The size of the frame queue.
+     *
+     * @since 1.15
+     */
+    public int getFrameQueueSize()
+    {
+        return mFrameQueueSize;
+    }
+
+
+    /**
+     * Set the size of the frame queue. The default value is 0 and it means
+     * there is no limit on the queue size.
+     *
+     * <p>
+     * <code>send<i>Xxx</i></code> methods queue a {@link WebSocketFrame}
+     * instance to the internal queue. If the number of frames in the queue
+     * has reached the upper limit (which has been set by this method) when
+     * a <code>send<i>Xxx</i></code> method is called, the method blocks
+     * until the queue gets spaces.
+     * </p>
+     *
+     * <p>
+     * Under some conditions, even if the queue is full, <code>send<i>Xxx</i></code>
+     * methods do not block. For example, in the case where the thread to send
+     * frames ({@code WritingThread}) is going to stop or has already stopped.
+     * In addition, method calls to send a <a href=
+     * "https://tools.ietf.org/html/rfc6455#section-5.5">control frame</a> (e.g.
+     * {@link #sendClose()} and {@link #sendPing()}) do not block.
+     * </p>
+     *
+     * @param size
+     *         The queue size. 0 means no limit. Negative numbers are not allowed.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @throws IllegalArgumentException
+     *         {@code size} is negative.
+     *
+     * @since 1.15
+     */
+    public WebSocket setFrameQueueSize(int size) throws IllegalArgumentException
+    {
+        if (size < 0)
+        {
+            throw new IllegalArgumentException("size must not be negative.");
+        }
+
+        mFrameQueueSize = size;
 
         return this;
     }

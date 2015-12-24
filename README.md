@@ -200,14 +200,15 @@ Before starting a WebSocket [opening handshake]
 (http://tools.ietf.org/html/rfc6455#section-4) with the server, you can
 configure the web socket instance by using the following methods.
 
-| METHOD         | DESCRIPTION                                            |
-|----------------|--------------------------------------------------------|
-| `addProtocol`  | Adds an element to `Sec-WebSocket-Protocol`.           |
-| `addExtension` | Adds an element to `Sec-WebSocket-Extensions`.         |
-| `addHeader`    | Adds an arbitrary HTTP header.                         |
-| `setUserInfo`  | Adds `Authorization` header for Basic Authentication.  |
-| `getSocket`    | Gets the underlying `Socket` instance to configure it. |
-| `setExtended`  | Disables validity checks on RSV1/RSV2/RSV3 and opcode. |
+| METHOD              | DESCRIPTION                                             |
+|---------------------|---------------------------------------------------------|
+| `addProtocol`       | Adds an element to `Sec-WebSocket-Protocol`.            |
+| `addExtension`      | Adds an element to `Sec-WebSocket-Extensions`.          |
+| `addHeader`         | Adds an arbitrary HTTP header.                          |
+| `setUserInfo`       | Adds `Authorization` header for Basic Authentication.   |
+| `getSocket`         | Gets the underlying `Socket` instance to configure it.  |
+| `setExtended`       | Disables validity checks on RSV1/RSV2/RSV3 and opcode.  |
+| `setFrameQueueSize` | Set the size of the frame queue for congestion control. |
 
 
 #### Perform Opening Handshake
@@ -284,10 +285,14 @@ passes the instance to `submit(Callable)` method of the given
 
 Web socket frames can be sent by `sendFrame` method. Other `sendXxx`
 methods such as `sendText` are aliases of `sendFrame` method. All of
-the `sendXxx` methods work asynchronously. Below are some examples
-of `sendXxx` methods. Note that in normal cases, you don't have to
-call `sendClose` method and `sendPong` method (or their variants)
-explicitly because they are called automatically when appropriate.
+the `sendXxx` methods work asynchronously. However, under some
+conditions, `sendXxx` methods may block. See Congestion Control for
+details.
+
+Below are some examples of `sendXxx` methods. Note that in normal
+cases, you don't have to call `sendClose` method and `sendPong`
+method (or their variants) explicitly because they are called
+automatically when appropriate.
 
 ```java
 // Send a text frame.
@@ -382,6 +387,34 @@ works asynchronously.
 // Flush frames to the server manually.
 ws.flush();
 ```
+
+
+### Congestion Control
+
+`sendXxx` methods queue a `WebSocketFrame` instance to the internal queue.
+By default, no upper limit is imposed on the queue size, so `sendXxx`
+methods do not block. However, this behavior may cause a problem if your
+WebSocket client application sends too many WebSocket frames in a short
+time for the WebSocket server to process. In such a case, you may want
+`sendXxx` methods to block when many frames are queued.
+
+You can set an upper limit on the internal queue by calling
+`setFrameQueueSize(int)` method. As a result, if the number of frames
+in the queue has reached the upper limit when a `sendXxx` method is called,
+the method blocks until the queue gets spaces. The code snippet below is
+an example to set 5 as the upper limit of the internal frame queue.
+
+```java
+// Set 5 as the frame queue size.
+ws.setFrameQueueSize(5);
+```
+
+Note that under some conditions, even if the queue is full, `sendXxx`
+methods do not block. For example, in the case where the thread to send
+frames (`WritingThread`) is going to stop or has already stopped. In
+addition, method calls to send a
+[control frame](https://tools.ietf.org/html/rfc6455#section-5.5) (e.g.
+`sendClose()` and `sendPing()`) do not block.
 
 
 #### Disconnect WebSocket
