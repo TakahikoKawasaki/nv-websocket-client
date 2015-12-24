@@ -1,8 +1,8 @@
 CHANGES
 =======
 
-1.15-SNAPSHOT
--------------
+1.15 (2015-12-25)
+-----------------
 
 - OSGi support. `Bundle-SymbolicName` is `com.neovisionaries.ws.client`.
 - Added `EXTENSIONS_CONFLICT` to `WebSocketError`.
@@ -12,7 +12,8 @@ CHANGES
 - Modified `WebSocketFrame.toString()` to stringify the payload better.
 - Copied Extended and AutoFlush settings in `WebSocket.recreate(int)`.
 - Added `onSendingFrame(WebSocket, WebSocketFrame)` to `WebSocketListener`.
-- Added `setFrameQueueSize(int)` to `WebSocket` for congestion control.
+- Added `getFrameQueueSize()` and `setFrameQueueSize(int)` to `WebSocket`
+  for congestion control.
 
 
 1.14 (2015-12-10)
