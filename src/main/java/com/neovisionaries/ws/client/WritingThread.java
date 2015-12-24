@@ -298,6 +298,9 @@ class WritingThread extends Thread
 
     private void sendFrame(WebSocketFrame frame) throws WebSocketException
     {
+        // Notify the listeners that the frame is about to be sent.
+        mWebSocket.getListenerManager().callOnSendingFrame(frame);
+
         boolean unsent = false;
 
         synchronized (this)

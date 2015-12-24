@@ -108,6 +108,12 @@ public class WebSocketAdapter implements WebSocketListener
 
 
     @Override
+    public void onSendingFrame(WebSocket websocket, WebSocketFrame frame) throws Exception
+    {
+    }
+
+
+    @Override
     public void onFrameSent(WebSocket websocket, WebSocketFrame frame) throws Exception
     {
     }

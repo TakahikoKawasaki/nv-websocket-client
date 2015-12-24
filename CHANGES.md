@@ -12,6 +12,7 @@ CHANGES
 - Modified `WebSocketFrame.toString()` to stringify payload of text and
   binary frames.
 - Copied Extended and AutoFlush settings in `WebSocket.recreate(int)`.
+- Added `onSendingFrame(WebSocket, WebSocketFrame)` to `WebSocketListener`.
 
 
 1.14 (2015-12-10)

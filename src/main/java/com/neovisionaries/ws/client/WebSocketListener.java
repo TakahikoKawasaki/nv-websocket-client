@@ -275,6 +275,24 @@ public interface WebSocketListener
 
 
     /**
+     * Called before a web socket frame is sent.
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param frame
+     *         The frame to be sent.
+     *
+     * @throws Exception
+     *         An exception thrown by an implementation of this method.
+     *         The exception is passed to {@link #handleCallbackError(WebSocket, Throwable)}.
+     *
+     * @since 1.15
+     */
+    void onSendingFrame(WebSocket websocket, WebSocketFrame frame) throws Exception;
+
+
+    /**
      * Called when a web socket frame was sent to the server
      * (but not flushed yet).
      *

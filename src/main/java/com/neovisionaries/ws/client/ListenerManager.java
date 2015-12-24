@@ -375,6 +375,22 @@ class ListenerManager
     }
 
 
+    public void callOnSendingFrame(WebSocketFrame frame)
+    {
+        for (WebSocketListener listener : getSynchronizedListeners())
+        {
+            try
+            {
+                listener.onSendingFrame(mWebSocket, frame);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
+            }
+        }
+    }
+
+
     public void callOnFrameSent(WebSocketFrame frame)
     {
         for (WebSocketListener listener : getSynchronizedListeners())
