@@ -19,8 +19,8 @@ package com.neovisionaries.ws.client;
 import static com.neovisionaries.ws.client.WebSocketState.CLOSED;
 import static com.neovisionaries.ws.client.WebSocketState.CLOSING;
 import java.io.IOException;
+import java.util.Deque;
 import java.util.LinkedList;
-import java.util.Queue;
 import com.neovisionaries.ws.client.StateManager.CloseInitiator;
 
 
@@ -32,7 +32,7 @@ class WritingThread extends Thread
     private static final int SHOULD_FLUSH    = 3;
     private static final int FLUSH_THRESHOLD = 1000;
     private final WebSocket mWebSocket;
-    private final Queue<WebSocketFrame> mFrames;
+    private final Deque<WebSocketFrame> mFrames;
     private boolean mStopRequested;
     private WebSocketFrame mCloseFrame;
     private boolean mFlushNeeded;
@@ -195,9 +195,17 @@ class WritingThread extends Thread
                 }
             }
 
-            // Append the frame to the list of web socket frames
-            // which are to be sent to the server.
-            mFrames.add(frame);
+            // Add the frame to the queue.
+            if (frame.isPingFrame() || frame.isPongFrame())
+            {
+                // Add the frame at the first position so that it can be sent immediately.
+                mFrames.addFirst(frame);
+            }
+            else
+            {
+                // Add the frame at the last position.
+                mFrames.addLast(frame);
+            }
 
             // Wake up this thread.
             notifyAll();
@@ -324,6 +332,14 @@ class WritingThread extends Thread
 
             // Send the frame to the server.
             sendFrame(frame);
+
+            // If the frame is PING or PONG.
+            if (frame.isPingFrame() || frame.isPongFrame())
+            {
+                // Deliver the frame to the server immediately.
+                doFlush();
+                lastFlushAt = System.currentTimeMillis();
+            }
 
             // If flush is not needed.
             if (isFlushNeeded(last) == false)
