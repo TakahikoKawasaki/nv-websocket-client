@@ -399,6 +399,27 @@ public interface WebSocketListener
 
 
     /**
+     * Called when it failed to decompress a message.
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param cause
+     *         An exception that represents the error.
+     *
+     * @param compressed
+     *         The compressed message that failed to be decompressed.
+     *
+     * @throws Exception
+     *         An exception thrown by an implementation of this method.
+     *         The exception is passed to {@link #handleCallbackError(WebSocket, Throwable)}.
+     *
+     * @since 1.16
+     */
+    void onMessageDecompressionError(WebSocket websocket, WebSocketException cause, byte[] compressed) throws Exception;
+
+
+    /**
      * Called when it failed to convert payload data into a string.
      * The reason of the failure is probably out-of-memory.
      *

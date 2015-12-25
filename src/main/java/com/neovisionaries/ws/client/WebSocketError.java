@@ -366,5 +366,13 @@ public enum WebSocketError
      * @since 1.15
      */
     PERMESSAGE_DEFLATE_INVALID_MAX_WINDOW_BITS,
+
+
+    /**
+     * Decompression failed.
+     *
+     * @since 1.16
+     */
+    DECOMPRESSION_ERROR,
     ;
 }

@@ -275,6 +275,16 @@ class ReadingThread extends Thread
 
 
     /**
+     * Call {@link WebSocketListener#onMessageDecompressionError(WebSocket, WebSocketException, byte[])
+     * onMessageDecompressionError} method of the listeners.
+     */
+    private void callOnMessageDecompressionError(WebSocketException cause, byte[] compressed)
+    {
+        mWebSocket.getListenerManager().callOnMessageDecompressionError(cause, compressed);
+    }
+
+
+    /**
      * Call {@link WebSocketListener#onTextMessageError(WebSocket, WebSocketException, byte[])
      * onTextMessageError} method of the listeners.
      */
@@ -764,7 +774,7 @@ class ReadingThread extends Thread
         if (mPMCE != null && frames.get(0).getRsv1())
         {
             // Decompress the data.
-            data = mPMCE.decompress(data);
+            data = decompress(data);
         }
 
         return data;
@@ -839,10 +849,41 @@ class ReadingThread extends Thread
         if (mPMCE != null && frame.getRsv1())
         {
             // Decompress the payload.
-            payload = mPMCE.decompress(payload);
+            payload = decompress(payload);
         }
 
         return payload;
+    }
+
+
+    private byte[] decompress(byte[] input)
+    {
+        WebSocketException wse;
+
+        try
+        {
+            // Decompress the message.
+            return mPMCE.decompress(input);
+        }
+        catch (WebSocketException e)
+        {
+            wse = e;
+        }
+
+        // Notify the listeners that decompression failed.
+        callOnError(wse);
+        callOnMessageDecompressionError(wse, input);
+
+        // Create a close frame with a close code of 1003 which
+        // indicates that the message cannot be accepted.
+        WebSocketFrame frame = WebSocketFrame
+            .createCloseFrame(WebSocketCloseCode.UNACCEPTABLE, wse.getMessage());
+
+        // Send the close frame.
+        mWebSocket.sendFrame(frame);
+
+        // Failed to construct a message.
+        return null;
     }
 
 

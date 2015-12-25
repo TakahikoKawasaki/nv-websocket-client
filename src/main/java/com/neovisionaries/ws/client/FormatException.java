@@ -16,27 +16,13 @@
 package com.neovisionaries.ws.client;
 
 
-/**
- * Per-Message Compression Extension (<a href="https://tools.ietf.org/html/rfc7692">RFC 7692</a>).
- *
- * @see <a href="https://tools.ietf.org/html/rfc7692">RFC 7692</a>
- */
-abstract class PerMessageCompressionExtension extends WebSocketExtension
+class FormatException extends Exception
 {
-    public PerMessageCompressionExtension(String name)
+    private static final long serialVersionUID = 1L;
+
+
+    public FormatException(String message)
     {
-        super(name);
+        super(message);
     }
-
-
-    public PerMessageCompressionExtension(WebSocketExtension source)
-    {
-        super(source);
-    }
-
-
-    /**
-     * Decompress the compressed message.
-     */
-    protected abstract byte[] decompress(byte[] compressed) throws WebSocketException;
 }

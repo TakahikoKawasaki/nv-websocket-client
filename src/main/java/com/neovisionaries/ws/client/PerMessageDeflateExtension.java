@@ -24,7 +24,8 @@ import java.util.Map;
  * >7&#46; The "permessage-deflate" Extension</a> in
  * <a href="https://tools.ietf.org/html/rfc7692">RFC 7692</a>).
  *
- * @see <a href="https://tools.ietf.org/html/rfc7692#section-7">7&#46; The "permessage-deflate" Extension in RFC 7692</a>
+ * @see <a href="https://tools.ietf.org/html/rfc7692#section-7"
+ *      >7&#46; The "permessage-deflate" Extension in RFC 7692</a>
  */
 class PerMessageDeflateExtension extends PerMessageCompressionExtension
 {
@@ -34,17 +35,21 @@ class PerMessageDeflateExtension extends PerMessageCompressionExtension
     private static final String CLIENT_NO_CONTEXT_TAKEOVER = "client_no_context_takeover";
     private static final String SERVER_MAX_WINDOW_BITS     = "server_max_window_bits";
     private static final String CLIENT_MAX_WINDOW_BITS     = "client_max_window_bits";
+    private static final byte[] COMPRESSION_TERMINATOR     = { (byte)0x00, (byte)0x00, (byte)0xFF, (byte)0xFF };
 
     private static final int MIN_BITS = 8;
     private static final int MAX_BITS = 15;
     private static final int MIN_WINDOW_SIZE = 256;
     private static final int DEFAULT_WINDOW_SIZE = 32768;
+    private static final int INCOMING_SLIDING_WINDOW_MARGIN = 1024;
 
 
     private boolean mServerNoContextTakeover;
     private boolean mClientNoContextTakeover;
     private int mServerWindowSize = DEFAULT_WINDOW_SIZE;
     private int mClientWindowSize = DEFAULT_WINDOW_SIZE;
+    private int mIncomingSlidingWindowBufferSize;
+    private ByteArray mIncomingSlidingWindow;
 
 
     public PerMessageDeflateExtension(String name)
@@ -61,6 +66,32 @@ class PerMessageDeflateExtension extends PerMessageCompressionExtension
         {
             validateParameter(entry.getKey(), entry.getValue());
         }
+
+        mIncomingSlidingWindowBufferSize = mServerWindowSize + INCOMING_SLIDING_WINDOW_MARGIN;
+    }
+
+
+    public boolean isServerNoContextTakeover()
+    {
+        return mServerNoContextTakeover;
+    }
+
+
+    public boolean isClientNoContextTakeover()
+    {
+        return mClientNoContextTakeover;
+    }
+
+
+    public int getServerWindowSize()
+    {
+        return mServerWindowSize;
+    }
+
+
+    public int getClientWindowSize()
+    {
+        return mClientWindowSize;
     }
 
 
@@ -151,34 +182,61 @@ class PerMessageDeflateExtension extends PerMessageCompressionExtension
     }
 
 
-    public boolean isServerNoContextTakeover()
-    {
-        return mServerNoContextTakeover;
-    }
-
-
-    public boolean isClientNoContextTakeover()
-    {
-        return mClientNoContextTakeover;
-    }
-
-
-    public int getServerWindowSize()
-    {
-        return mServerWindowSize;
-    }
-
-
-    public int getClientWindowSize()
-    {
-        return mClientWindowSize;
-    }
-
-
     @Override
-    protected byte[] decompress(byte[] compressed)
+    protected byte[] decompress(byte[] compressed) throws WebSocketException
     {
-        // TODO
-        return compressed;
+        // Wrap the compressed byte array with ByteArray.
+        //
+        //   From RFC 1979, 2.1. Packet Format, Data, The 3rd paragraph:
+        //
+        //     The basic format of the compressed data is precisely described by
+        //     the 'Deflate' Compressed Data Format Specification[3].  Each
+        //     transmitted packet must begin at a 'deflate' block boundary, to
+        //     ensure synchronization when incompressible data resets the
+        //     transmitter's state; to ensure this, each transmitted packet must
+        //     be terminated with a zero-length 'deflate' non-compressed block
+        //     (BTYPE of 00).  This means that the last four bytes of the
+        //     compressed format must be 0x00 0x00 0xFF 0xFF.  These bytes MUST
+        //     be removed before transmission; the receiver can reinsert them if
+        //     required by the implementation.
+        //
+        int inputLen = compressed.length + COMPRESSION_TERMINATOR.length;
+        ByteArray input = new ByteArray(inputLen);
+        input.put(compressed);
+        input.put(COMPRESSION_TERMINATOR);
+
+        if (mIncomingSlidingWindow == null)
+        {
+            mIncomingSlidingWindow = new ByteArray(mIncomingSlidingWindowBufferSize);
+        }
+
+        // The size of the sliding window before decompression.
+        int outPos = mIncomingSlidingWindow.length();
+
+        try
+        {
+            // Decompress.
+            DeflateDecompressor.decompress(input, 0, mIncomingSlidingWindow);
+        }
+        catch (Exception e)
+        {
+            // Failed to decompress the message.
+            throw new WebSocketException(
+                    WebSocketError.DECOMPRESSION_ERROR,
+                    String.format("Failed to decompress the message: %s", e.getMessage()), e);
+        }
+
+        byte[] output = mIncomingSlidingWindow.toBytes(outPos);
+
+        // Shrink the size of the incoming sliding window.
+        mIncomingSlidingWindow.shrink(mIncomingSlidingWindowBufferSize);
+
+        if (mServerNoContextTakeover)
+        {
+            // No need to remember the message for the next decompression.
+            mIncomingSlidingWindow.clear();
+        }
+
+        return output;
     }
 }

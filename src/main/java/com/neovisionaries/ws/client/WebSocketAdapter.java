@@ -144,6 +144,12 @@ public class WebSocketAdapter implements WebSocketListener
 
 
     @Override
+    public void onMessageDecompressionError(WebSocket websocket, WebSocketException cause, byte[] compressed) throws Exception
+    {
+    }
+
+
+    @Override
     public void onTextMessageError(WebSocket websocket, WebSocketException cause, byte[] data) throws Exception
     {
     }

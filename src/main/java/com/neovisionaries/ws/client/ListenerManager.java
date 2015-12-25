@@ -471,6 +471,22 @@ class ListenerManager
     }
 
 
+    public void callOnMessageDecompressionError(WebSocketException cause, byte[] compressed)
+    {
+        for (WebSocketListener listener : getSynchronizedListeners())
+        {
+            try
+            {
+                listener.onMessageDecompressionError(mWebSocket, cause, compressed);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
+            }
+        }
+    }
+
+
     public void callOnTextMessageError(WebSocketException cause, byte[] data)
     {
         for (WebSocketListener listener : getSynchronizedListeners())
