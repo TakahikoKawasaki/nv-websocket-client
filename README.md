@@ -32,7 +32,7 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>1.15</version>
+    <version>1.16</version>
 </dependency>
 ```
 
@@ -41,7 +41,7 @@ Gradle
 
 ```Gradle
 dependencies {
-    compile 'com.neovisionaries:nv-websocket-client:1.15'
+    compile 'com.neovisionaries:nv-websocket-client:1.16'
 }
 ```
 
@@ -50,7 +50,7 @@ OSGi
 ----
 
     Bundle-SymbolicName: com.neovisionaries.ws.client
-    Export-Package: com.neovisionaries.ws.client;version="1.15.0"
+    Export-Package: com.neovisionaries.ws.client;version="1.16.0"
 
 
 Source Download

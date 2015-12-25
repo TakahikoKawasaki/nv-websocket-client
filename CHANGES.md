@@ -1,8 +1,8 @@
 CHANGES
 =======
 
-1.16-SNAPSHOT
--------------
+1.16 (2015-12-26)
+-----------------
 
 - Added `onMessageDecompressionError(WebSocket, WebSocketException, byte[])`
   to `WebSocketListener`.
