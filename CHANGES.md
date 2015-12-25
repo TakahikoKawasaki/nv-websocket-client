@@ -7,6 +7,8 @@ CHANGES
 - Added `onMessageDecompressionError(WebSocket, WebSocketException, byte[])`
   to `WebSocketListener`.
 - Added `DECOMPRESSION_ERROR` to `WebSocketError`.
+- Fixed a deadlock issue reported in #21.
+- Changed the frame queue in `WritingThread` from `List` to `Queue` for #21.
 
 
 1.15 (2015-12-25)

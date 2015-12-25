@@ -19,9 +19,8 @@ package com.neovisionaries.ws.client;
 import static com.neovisionaries.ws.client.WebSocketState.CLOSED;
 import static com.neovisionaries.ws.client.WebSocketState.CLOSING;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
+import java.util.Queue;
 import com.neovisionaries.ws.client.StateManager.CloseInitiator;
 
 
@@ -33,7 +32,7 @@ class WritingThread extends Thread
     private static final int SHOULD_FLUSH    = 3;
     private static final int FLUSH_THRESHOLD = 1000;
     private final WebSocket mWebSocket;
-    private final List<WebSocketFrame> mFrames;
+    private final Queue<WebSocketFrame> mFrames;
     private boolean mStopRequested;
     private WebSocketFrame mCloseFrame;
     private boolean mFlushNeeded;
@@ -300,66 +299,74 @@ class WritingThread extends Thread
 
     private void sendFrames(boolean last) throws WebSocketException
     {
-        List<WebSocketFrame> frames;
+        // The timestamp at which the last flush was executed.
+        long lastFlushAt = System.currentTimeMillis();
 
-        synchronized (this)
+        while (true)
         {
-            // Move the frames from mFrames to frames.
-            frames = new ArrayList<WebSocketFrame>(mFrames.size());
-            frames.addAll(mFrames);
-            mFrames.clear();
+            WebSocketFrame frame;
 
-            // Mainly for queueFrame().
-            notifyAll();
-        }
+            synchronized (this)
+            {
+                // Pick up one frame from the queue.
+                frame = mFrames.poll();
 
-        boolean closeFrameFound = false;
+                // Mainly for queueFrame().
+                notifyAll();
 
-        long timestamp = System.currentTimeMillis();
+                // If the queue is empty.
+                if (frame == null)
+                {
+                    // No frame to process.
+                    break;
+                }
+            }
 
-        for (WebSocketFrame frame : frames)
-        {
             // Send the frame to the server.
             sendFrame(frame);
 
-            // If the frame is a close frame.
-            if (frame.isCloseFrame())
+            // If flush is not needed.
+            if (isFlushNeeded(last) == false)
             {
-                closeFrameFound = true;
-            }
-
-            // True if flush is needed.
-            boolean flush = (last || mWebSocket.isAutoFlush() || closeFrameFound || mFlushNeeded);
-
-            // If there is no need to care about flush.
-            if (flush == false)
-            {
-                // Call sendFrame() without flushing.
+                // Try to consume the next frame without flush.
                 continue;
             }
 
-            long current = System.currentTimeMillis();
-
-            // If sending frames has taken too much time.
-            if (FLUSH_THRESHOLD < (current - timestamp))
-            {
-                // Flush without waiting for remaining frames to be sent.
-                doFlush();
-                timestamp = current;
-            }
+            // Flush if long time has passed since the last flush.
+            lastFlushAt = flushIfLongInterval(lastFlushAt);
         }
 
-        boolean flush = (last || mWebSocket.isAutoFlush() || closeFrameFound);
-
-        synchronized (this)
-        {
-            flush |= mFlushNeeded;
-            mFlushNeeded = false;
-        }
-
-        if (flush)
+        if (isFlushNeeded(last))
         {
             doFlush();
+        }
+    }
+
+
+    private boolean isFlushNeeded(boolean last)
+    {
+        return (last || mWebSocket.isAutoFlush() || mFlushNeeded || mCloseFrame != null);
+    }
+
+
+    private long flushIfLongInterval(long lastFlushAt) throws WebSocketException
+    {
+        // The current timestamp.
+        long current = System.currentTimeMillis();
+
+        // If sending frames has taken too much time since the last flush.
+        if (FLUSH_THRESHOLD < (current - lastFlushAt))
+        {
+            // Flush without waiting for remaining frames to be processed.
+            doFlush();
+
+            // Update the timestamp at which the last flush was executed.
+            return current;
+        }
+        else
+        {
+            // Flush is not needed now.
+            return lastFlushAt;
         }
     }
 
@@ -370,6 +377,11 @@ class WritingThread extends Thread
         {
             // Flush
             flush();
+
+            synchronized (this)
+            {
+                mFlushNeeded = false;
+            }
         }
         catch (IOException e)
         {
@@ -395,19 +407,16 @@ class WritingThread extends Thread
 
         boolean unsent = false;
 
-        synchronized (this)
+        // If a close frame has already been sent.
+        if (mCloseFrame != null)
         {
-            // If a close frame has already been sent.
-            if (mCloseFrame != null)
-            {
-                // Frames should not be sent to the server.
-                unsent = true;
-            }
-            // If the frame is a close frame.
-            else if (frame.isCloseFrame())
-            {
-                mCloseFrame = frame;
-            }
+            // Frames should not be sent to the server.
+            unsent = true;
+        }
+        // If the frame is a close frame.
+        else if (frame.isCloseFrame())
+        {
+            mCloseFrame = frame;
         }
 
         if (unsent)

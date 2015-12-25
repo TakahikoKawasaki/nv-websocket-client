@@ -1909,10 +1909,13 @@ public class WebSocket
             {
                 return this;
             }
-
-            // Queue the frame.
-            mWritingThread.queueFrame(frame);
         }
+
+        // The current state is either OPEN or CLOSING. Or, CLOSED.
+
+        // Queue the frame. Even if the current state is CLOSED,
+        // queuing a frame won't be a big issue.
+        mWritingThread.queueFrame(frame);
 
         return this;
     }
