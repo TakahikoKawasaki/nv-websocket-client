@@ -214,7 +214,7 @@ class Huffman
 
     public int readSym(ByteArray data, int[] bitIndex) throws FormatException
     {
-        for (int codeLen = mMinCodeLen; codeLen < mMaxCodeLen; ++codeLen)
+        for (int codeLen = mMinCodeLen; codeLen <= mMaxCodeLen; ++codeLen)
         {
             // Get the maximum one from among the code values
             // whose code length is 'codeLen'.

@@ -153,13 +153,6 @@ class DeflateDecompressor
         // Skip LEN and NLEN.
         index += 4;
 
-        // Copy the data to the output.
-        output.put(input, index, len);
-
-        // Make the bitIndex point to the bit next to
-        // the end of the copied data.
-        bitIndex[0] = (index + len) * 8;
-
         // A zero-length 'deflate' non-compressed block is a termination mark.
         //
         //   From RFC 7692, 1. Introduction, The 4th paragraph:
@@ -181,7 +174,19 @@ class DeflateDecompressor
         //     be removed before transmission; the receiver can reinsert them if
         //     required by the implementation.
         //
-        return (len == 0);
+        boolean last = (len == 0);
+
+        if (last == false)
+        {
+            // Copy the data to the output.
+            output.put(input, index, len);
+
+            // Make the bitIndex point to the bit next to
+            // the end of the copied data.
+            bitIndex[0] = (index + len) * 8;
+        }
+
+        return last;
     }
 
 
