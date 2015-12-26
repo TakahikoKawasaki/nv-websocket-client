@@ -339,6 +339,7 @@ class WritingThread extends Thread
                 // Deliver the frame to the server immediately.
                 doFlush();
                 lastFlushAt = System.currentTimeMillis();
+                continue;
             }
 
             // If flush is not needed.
