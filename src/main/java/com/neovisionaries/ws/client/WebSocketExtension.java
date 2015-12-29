@@ -26,6 +26,17 @@ import java.util.Map;
  */
 public class WebSocketExtension
 {
+    /**
+     * The name of <code>permessage-deflate</code> extension that is
+     * defined in <a href="https://tools.ietf.org/html/rfc7692#section-7"
+     * >7&#46; The "permessage-deflate" Extension</a> in <a href=
+     * "https://tools.ietf.org/html/rfc7692">RFC 7692</a>.
+     *
+     * @since 1.17
+     */
+    public static final String PERMESSAGE_DEFLATE = "permessage-deflate";
+
+
     private final String mName;
     private final Map<String, String> mParameters;
 
@@ -214,7 +225,7 @@ public class WebSocketExtension
 
 
     /**
-     * Parse a string as a {@link WebSocketExtesion}. The input string
+     * Parse a string as a {@link WebSocketExtension}. The input string
      * should comply with the format described in <a href=
      * "https://tools.ietf.org/html/rfc6455#section-9.1">9.1. Negotiating
      * Extensions</a> in <a href="https://tools.ietf.org/html/rfc6455"
@@ -313,7 +324,7 @@ public class WebSocketExtension
 
     private static WebSocketExtension createInstance(String name)
     {
-        if (PerMessageDeflateExtension.EXTENSION_NAME.equals(name))
+        if (PERMESSAGE_DEFLATE.equals(name))
         {
             return new PerMessageDeflateExtension(name);
         }

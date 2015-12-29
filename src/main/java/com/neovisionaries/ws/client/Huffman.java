@@ -31,8 +31,8 @@ class Huffman
     public Huffman(int[] codeLensFromSym)
     {
         // Remember the minimum and maximum code lengths.
-        mMinCodeLen = Math.max(min(codeLensFromSym), 1);
-        mMaxCodeLen = max(codeLensFromSym);
+        mMinCodeLen = Math.max(Misc.min(codeLensFromSym), 1);
+        mMaxCodeLen = Misc.max(codeLensFromSym);
 
         // Count the number of entries for each code length.
         int[] countsFromCodeLen = createCountsFromCodeLen(codeLensFromSym, mMaxCodeLen);
@@ -45,44 +45,6 @@ class Huffman
         int[] codeValsFromCodeLen = (int[])out[0];
         int maxCodeVal = ((Integer)out[1]).intValue();
         mSymsFromCodeVal = createSymsFromCodeVal(codeLensFromSym, codeValsFromCodeLen, maxCodeVal);
-    }
-
-
-    /**
-     * Find the minimum value from the given array.
-     */
-    private static int min(int[] values)
-    {
-        int min = Integer.MAX_VALUE;
-
-        for (int i = 0; i < values.length; ++i)
-        {
-            if (values[i] < min)
-            {
-                min = values[i];
-            }
-        }
-
-        return min;
-    }
-
-
-    /**
-     * Find the maximum value from the given array.
-     */
-    private static int max(int[] values)
-    {
-        int max = Integer.MIN_VALUE;
-
-        for (int i = 0; i < values.length; ++i)
-        {
-            if (max < values[i])
-            {
-                max = values[i];
-            }
-        }
-
-        return max;
     }
 
 
@@ -174,44 +136,6 @@ class Huffman
     }
 
 
-    private static boolean getBit(ByteArray data, int bitIndex)
-    {
-        int index = bitIndex / 8;
-        int shift = bitIndex % 8;
-        int value = data.get(index);
-
-        // Return true if the bit pointed to by bitIndex is set.
-        return ((value & (1 << shift)) != 0);
-    }
-
-
-    private static int getHuffmanBits(ByteArray data, int bitIndex, int nBits)
-    {
-        int number = 0;
-        int weight = 1;
-
-        // Convert consecutive bits into a number.
-        //
-        // Note that 'i' is initialized by 'nBits - 1', not by 1.
-        // This is because "3.1.1. Packing into bytes" in RFC 1951
-        // says as follows:
-        //
-        //     Huffman codes are packed starting with the most
-        //     significant bit of the code.
-        //
-        for (int i = nBits - 1; 0 <= i; --i, weight *= 2)
-        {
-            // getBit() returns true if the bit is set.
-            if (getBit(data, bitIndex + i))
-            {
-                number += weight;
-            }
-        }
-
-        return number;
-    }
-
-
     public int readSym(ByteArray data, int[] bitIndex) throws FormatException
     {
         for (int codeLen = mMinCodeLen; codeLen <= mMaxCodeLen; ++codeLen)
@@ -227,7 +151,7 @@ class Huffman
             }
 
             // Read a code value from the input assuming its code length is 'codeLen'.
-            int codeVal = getHuffmanBits(data, bitIndex[0], codeLen);
+            int codeVal = data.getHuffmanBits(bitIndex[0], codeLen);
 
             if (maxCodeVal < codeVal)
             {

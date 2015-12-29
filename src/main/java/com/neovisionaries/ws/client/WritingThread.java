@@ -33,6 +33,7 @@ class WritingThread extends Thread
     private static final int FLUSH_THRESHOLD = 1000;
     private final WebSocket mWebSocket;
     private final Deque<WebSocketFrame> mFrames;
+    private final PerMessageCompressionExtension mPMCE;
     private boolean mStopRequested;
     private WebSocketFrame mCloseFrame;
     private boolean mFlushNeeded;
@@ -45,6 +46,7 @@ class WritingThread extends Thread
 
         mWebSocket = websocket;
         mFrames    = new LinkedList<WebSocketFrame>();
+        mPMCE      = websocket.getPerMessageCompressionExtension();
     }
 
 
@@ -419,6 +421,9 @@ class WritingThread extends Thread
 
     private void sendFrame(WebSocketFrame frame) throws WebSocketException
     {
+        // Compress the frame if appropriate.
+        frame = compressFrame(frame);
+
         // Notify the listeners that the frame is about to be sent.
         mWebSocket.getListenerManager().callOnSendingFrame(frame);
 
@@ -508,5 +513,89 @@ class WritingThread extends Thread
     private void notifyFinished()
     {
         mWebSocket.onWritingThreadFinished(mCloseFrame);
+    }
+
+
+    private WebSocketFrame compressFrame(WebSocketFrame frame)
+    {
+        // If Per-Message Compression is not enabled.
+        if (mPMCE == null)
+        {
+            // No compression.
+            return frame;
+        }
+
+        // If the frame is neither a TEXT frame nor a BINARY frame.
+        if (frame.isTextFrame()   == false &&
+            frame.isBinaryFrame() == false)
+        {
+            // No compression.
+            return frame;
+        }
+
+        // If the frame is not the final frame.
+        if (frame.getFin() == false)
+        {
+            // The compression must be applied to this frame and
+            // all the subsequent continuation frames, but the
+            // current implementation does not support the behavior.
+            return frame;
+        }
+
+        // If the RSV1 bit is set.
+        if (frame.getRsv1())
+        {
+            // In the current implementation, RSV1=true is allowed
+            // only as Per-Message Compressed Bit (See RFC 7692,
+            // 6. Framing). Therefore, RSV1=true here is regarded
+            // as "already compressed".
+            return frame;
+        }
+
+        // The plain payload before compression.
+        byte[] payload = frame.getPayload();
+
+        // If the payload is empty.
+        if (payload == null || payload.length == 0)
+        {
+            // No compression.
+            return frame;
+        }
+
+        // Compress the payload.
+        byte[] compressed = compress(payload);
+
+        // If the length of the compressed data is not less than
+        // that of the original plain payload.
+        if (payload.length <= compressed.length)
+        {
+            // It's better not to compress the payload.
+            return frame;
+        }
+
+        // Replace the plain payload with the compressed data.
+        frame.setPayload(compressed);
+
+        // Set Per-Message Compressed Bit (See RFC 7692, 6. Framing).
+        frame.setRsv1(true);
+
+        return frame;
+    }
+
+
+    private byte[] compress(byte[] data)
+    {
+        try
+        {
+            // Compress the data.
+            return mPMCE.compress(data);
+        }
+        catch (WebSocketException e)
+        {
+            // Failed to compress the data. Ignore this error and use
+            // the plain original data. The current implementation
+            // does not call any listener callback method for this error.
+            return data;
+        }
     }
 }

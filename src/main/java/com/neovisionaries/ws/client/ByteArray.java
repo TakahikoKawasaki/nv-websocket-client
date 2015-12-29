@@ -19,6 +19,9 @@ package com.neovisionaries.ws.client;
 import java.nio.ByteBuffer;
 
 
+/**
+ * Expandable byte array with byte-basis and bit-basis operations.
+ */
 class ByteArray
 {
     private static final int ADDITIONAL_BUFFER_SIZE = 1024;
@@ -30,6 +33,12 @@ class ByteArray
     private int mLength;
 
 
+    /**
+     * Constructor with initial capacity.
+     *
+     * @param capacity
+     *         Initial capacity for the internal buffer.
+     */
     public ByteArray(int capacity)
     {
         mBuffer = ByteBuffer.allocate(capacity);
@@ -37,6 +46,13 @@ class ByteArray
     }
 
 
+    /**
+     * Constructor with initial data. The length of the data is used
+     * as the initial capacity of the internal buffer.
+     *
+     * @param data
+     *         Initial data.
+     */
     public ByteArray(byte[] data)
     {
         mBuffer = ByteBuffer.wrap(data);
@@ -44,12 +60,18 @@ class ByteArray
     }
 
 
+    /**
+     * The length of the data.
+     */
     public int length()
     {
         return mLength;
     }
 
 
+    /**
+     * Get a byte at the index.
+     */
     public byte get(int index) throws IndexOutOfBoundsException
     {
         if (index < 0 || mLength <= index)
@@ -63,6 +85,9 @@ class ByteArray
     }
 
 
+    /**
+     * Expand the size of the internal buffer.
+     */
     private void expandBuffer(int newBufferSize)
     {
         // Allocate a new buffer.
@@ -77,6 +102,9 @@ class ByteArray
     }
 
 
+    /**
+     * Add a byte at the current position.
+     */
     public void put(int data)
     {
         // If the buffer is small.
@@ -90,20 +118,38 @@ class ByteArray
     }
 
 
-    public void put(byte[] data)
+    /**
+     * Add data at the current position.
+     *
+     * @param source
+     *         Source data.
+     */
+    public void put(byte[] source)
     {
         // If the buffer is small.
-        if (mBuffer.capacity() < (mLength + data.length))
+        if (mBuffer.capacity() < (mLength + source.length))
         {
-            expandBuffer(mLength + data.length + ADDITIONAL_BUFFER_SIZE);
+            expandBuffer(mLength + source.length + ADDITIONAL_BUFFER_SIZE);
         }
 
-        mBuffer.put(data);
-        mLength += data.length;
+        mBuffer.put(source);
+        mLength += source.length;
     }
 
 
-    public void put(ByteArray data, int index, int length)
+    /**
+     * Add data at the current position.
+     *
+     * @param source
+     *         Source data.
+     *
+     * @param index
+     *         The index in the source data. Data from the index is copied.
+     *
+     * @param length
+     *         The length of data to copy.
+     */
+    public void put(byte[] source, int index, int length)
     {
         // If the buffer is small.
         if (mBuffer.capacity() < (mLength + length))
@@ -111,10 +157,35 @@ class ByteArray
             expandBuffer(mLength + length + ADDITIONAL_BUFFER_SIZE);
         }
 
-        byte[] bytes = data.mBuffer.array();
-
-        mBuffer.put(bytes, index, length);
+        mBuffer.put(source, index, length);
         mLength += length;
+    }
+
+
+    /**
+     * Add data at the current position.
+     *
+     * @param source
+     *         Source data.
+     *
+     * @param index
+     *         The index in the source data. Data from the index is copied.
+     *
+     * @param length
+     *         The length of data to copy.
+     */
+    public void put(ByteArray source, int index, int length)
+    {
+        put(source.mBuffer.array(), index, length);
+    }
+
+
+    /**
+     * Convert to a byte array (<code>byte[]</code>).
+     */
+    public byte[] toBytes()
+    {
+        return toBytes(0);
     }
 
 
@@ -167,5 +238,107 @@ class ByteArray
 
         mBuffer = ByteBuffer.wrap(bytes);
         mLength = bytes.length;
+    }
+
+
+    public boolean getBit(int bitIndex)
+    {
+        int index = bitIndex / 8;
+        int shift = bitIndex % 8;
+        int value = get(index);
+
+        // Return true if the bit pointed to by bitIndex is set.
+        return ((value & (1 << shift)) != 0);
+    }
+
+
+    public int getBits(int bitIndex, int nBits)
+    {
+        int number = 0;
+        int weight = 1;
+
+        // Convert consecutive bits into a number.
+        for (int i = 0; i < nBits; ++i, weight *= 2)
+        {
+            // getBit() returns true if the bit is set.
+            if (getBit(bitIndex + i))
+            {
+                number += weight;
+            }
+        }
+
+        return number;
+    }
+
+
+    public int getHuffmanBits(int bitIndex, int nBits)
+    {
+        int number = 0;
+        int weight = 1;
+
+        // Convert consecutive bits into a number.
+        //
+        // Note that 'i' is initialized by 'nBits - 1', not by 1.
+        // This is because "3.1.1. Packing into bytes" in RFC 1951
+        // says as follows:
+        //
+        //     Huffman codes are packed starting with the most
+        //     significant bit of the code.
+        //
+        for (int i = nBits - 1; 0 <= i; --i, weight *= 2)
+        {
+            // getBit() returns true if the bit is set.
+            if (getBit(bitIndex + i))
+            {
+                number += weight;
+            }
+        }
+
+        return number;
+    }
+
+
+    public boolean readBit(int[] bitIndex)
+    {
+        boolean result = getBit(bitIndex[0]);
+
+        ++bitIndex[0];
+
+        return result;
+    }
+
+
+    public int readBits(int[] bitIndex, int nBits)
+    {
+        int number = getBits(bitIndex[0], nBits);
+
+        bitIndex[0] += nBits;
+
+        return number;
+    }
+
+
+    public void setBit(int bitIndex, boolean bit)
+    {
+        int index = bitIndex / 8;
+        int shift = bitIndex % 8;
+        int value = get(index);
+
+        if (bit)
+        {
+            value |= (1 << shift);
+        }
+        else
+        {
+            value &= ~(1 << shift);
+        }
+
+        mBuffer.put(index, (byte)value);
+    }
+
+
+    public void clearBit(int bitIndex)
+    {
+        setBit(bitIndex, false);
     }
 }

@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+1.17-SNAPSHOT
+-------------
+
+- Added `PERMESSAGE_DEFLATE` to `WebSocketExtension`.
+- Added `COMPRESSION_ERROR` to `WebSocketError`.
+
+
 1.16 (2015-12-26)
 -----------------
 

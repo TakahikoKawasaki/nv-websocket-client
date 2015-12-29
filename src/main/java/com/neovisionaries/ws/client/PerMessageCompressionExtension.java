@@ -39,4 +39,10 @@ abstract class PerMessageCompressionExtension extends WebSocketExtension
      * Decompress the compressed message.
      */
     protected abstract byte[] decompress(byte[] compressed) throws WebSocketException;
+
+
+    /**
+     * Compress the plain message.
+     */
+    protected abstract byte[] compress(byte[] plain) throws WebSocketException;
 }

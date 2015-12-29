@@ -39,6 +39,9 @@ class Misc
     }
 
 
+    /**
+     * Get a UTF-8 byte array representation of the given string.
+     */
     public static byte[] getBytesUTF8(String string)
     {
         if (string == null)
@@ -58,6 +61,9 @@ class Misc
     }
 
 
+    /**
+     * Convert a UTF-8 byte array into a string.
+     */
     public static String toStringUTF8(byte[] bytes)
     {
         if (bytes == null)
@@ -69,6 +75,9 @@ class Misc
     }
 
 
+    /**
+     * Convert a UTF-8 byte array into a string.
+     */
     public static String toStringUTF8(byte[] bytes, int offset, int length)
     {
         if (bytes == null)
@@ -92,6 +101,9 @@ class Misc
     }
 
 
+    /**
+     * Fill the given buffer with random bytes.
+     */
     public static byte[] nextBytes(byte[] buffer)
     {
         sRandom.nextBytes(buffer);
@@ -100,6 +112,9 @@ class Misc
     }
 
 
+    /**
+     * Create a buffer of the given size filled with random bytes.
+     */
     public static byte[] nextBytes(int nBytes)
     {
         byte[] buffer = new byte[nBytes];
@@ -108,6 +123,9 @@ class Misc
     }
 
 
+    /**
+     * Convert a WebSocket opcode into a string representation.
+     */
     public static String toOpcodeName(int opcode)
     {
         switch (opcode)
@@ -148,6 +166,9 @@ class Misc
     }
 
 
+    /**
+     * Read a line from the given stream.
+     */
     public static String readLine(InputStream in, String charset) throws IOException
     {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -214,5 +235,43 @@ class Misc
 
         // Convert the byte array to a string.
         return baos.toString(charset);
+    }
+
+
+    /**
+     * Find the minimum value from the given array.
+     */
+    public static int min(int[] values)
+    {
+        int min = Integer.MAX_VALUE;
+
+        for (int i = 0; i < values.length; ++i)
+        {
+            if (values[i] < min)
+            {
+                min = values[i];
+            }
+        }
+
+        return min;
+    }
+
+
+    /**
+     * Find the maximum value from the given array.
+     */
+    public static int max(int[] values)
+    {
+        int max = Integer.MIN_VALUE;
+
+        for (int i = 0; i < values.length; ++i)
+        {
+            if (max < values[i])
+            {
+                max = values[i];
+            }
+        }
+
+        return max;
     }
 }

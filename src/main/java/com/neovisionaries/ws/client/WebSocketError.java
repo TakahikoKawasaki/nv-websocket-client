@@ -369,6 +369,14 @@ public enum WebSocketError
 
 
     /**
+     * Compression failed.
+     *
+     * @since 1.17
+     */
+    COMPRESSION_ERROR,
+
+
+    /**
      * Decompression failed.
      *
      * @since 1.16
