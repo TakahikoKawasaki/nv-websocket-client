@@ -660,5 +660,5 @@ See Also
 Author
 ------
 
-[Authlete, Inc.](https://www.authlete.com/) & Neo Visionaries Inc.
-Takahiko Kawasaki <taka@authlete.com>
+[Authlete, Inc.](https://www.authlete.com/) & Neo Visionaries Inc.<br/>
+Takahiko Kawasaki &lt;taka@authlete.com&gt;
