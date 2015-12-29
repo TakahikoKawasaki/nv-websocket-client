@@ -1,9 +1,10 @@
 CHANGES
 =======
 
-1.17-SNAPSHOT
--------------
+1.17 (2015-12-29)
+-----------------
 
+- Supported RFC 7692 (Compression Extensions for WebSocket).
 - Added `PERMESSAGE_DEFLATE` to `WebSocketExtension`.
 - Added `COMPRESSION_ERROR` to `WebSocketError`.
 

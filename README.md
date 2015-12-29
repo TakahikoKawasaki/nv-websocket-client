@@ -16,7 +16,9 @@ High-quality WebSocket client implementation in Java which
 - provides a rich listener interface to hook web socket events,
 - has fine-grained error codes for fine-grained controllability on errors,
 - allows to disable validity checks on RSV1/RSV2/RSV3 bits and opcode of frames,
-- and supports HTTP proxy, especially "Secure WebSocket" (`wss`) through "Secure Proxy" (`https`).
+- supports HTTP proxy, especially "Secure WebSocket" (`wss`) through "Secure Proxy" (`https`),
+- and supports [RFC 7692](http://tools.ietf.org/html/rfc7692) (Compression Extensions for WebSocket),
+  also known as _permessage-deflate_ (not enabled by default).
 
 
 License
@@ -32,7 +34,7 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>1.16</version>
+    <version>1.17</version>
 </dependency>
 ```
 
@@ -41,7 +43,7 @@ Gradle
 
 ```Gradle
 dependencies {
-    compile 'com.neovisionaries:nv-websocket-client:1.16'
+    compile 'com.neovisionaries:nv-websocket-client:1.17'
 }
 ```
 
@@ -50,7 +52,7 @@ OSGi
 ----
 
     Bundle-SymbolicName: com.neovisionaries.ws.client
-    Export-Package: com.neovisionaries.ws.client;version="1.16.0"
+    Export-Package: com.neovisionaries.ws.client;version="1.17.0"
 
 
 Source Download
@@ -216,6 +218,17 @@ configure the web socket instance by using the following methods.
 | `getSocket`         | Gets the underlying `Socket` instance to configure it.  |
 | `setExtended`       | Disables validity checks on RSV1/RSV2/RSV3 and opcode.  |
 | `setFrameQueueSize` | Set the size of the frame queue for congestion control. |
+
+Note that `permessage-deflate` extension ([RFC 7692](http://tools.ietf.org/html/rfc7692))
+has been supported since version 1.17. To enable the extension, call `addExtension`
+method with `permessage-deflate`.
+
+```java
+// Enable "permessage-deflate" extension (RFC 7692).
+ws.addExtension(WebSocketExtension.PERMESSAGE_DEFLATE);
+```
+
+The `permessage-deflate` support is new and needs testing. Feedback is welcome.
 
 
 #### Perform Opening Handshake
@@ -599,6 +612,7 @@ public class EchoClient
                     System.out.println(message);
                 }
             })
+            .addExtension(WebSocketExtension.PERMESSAGE_DEFLATE)
             .connect();
     }
 
@@ -625,14 +639,26 @@ Limitations
   endpoint are not supported. Note that this means redirection (3xx) is not
   supported.
 
+* Currently, by default, `permessage-deflate` extension is not enabled.
+
+* As for [RFC 7692](http://tools.ietf.org/html/rfc7692). The current implementation
+  does not support context takeover on the client side. Also, if the agreed size of
+  the sliding window on the client side is less than the maximum size allowed by the
+  specification (32,768) (this happens when a WebSocket server returns
+  `client_max_window_bits` parameter with a value that is less than 15), outgoing
+  frames are not compressed when the payload size before compression is bigger than
+  the agreed sliding window size.
+
 
 See Also
 --------
 
-- [RFC 6455](http://tools.ietf.org/html/rfc6455)
+- [RFC 6455](http://tools.ietf.org/html/rfc6455) The WebSocket Protocol
+- [RFC 7692](http://tools.ietf.org/html/rfc7692) Compression Extensions for WebSocket
 
 
 Author
 ------
 
-Takahiko Kawasaki, Neo Visionaries Inc.
+[Authlete, Inc.](https://www.authlete.com/) & Neo Visionaries Inc.
+Takahiko Kawasaki <taka@authlete.com>

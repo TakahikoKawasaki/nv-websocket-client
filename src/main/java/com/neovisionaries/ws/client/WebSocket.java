@@ -284,6 +284,23 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * </table>
  * </blockquote>
  *
+ * <p>
+ * Note that <strong>permessage-deflate</strong> extension (<a href=
+ * "http://tools.ietf.org/html/rfc7692">RFC 7692</a>) has been supported
+ * since version 1.17. To enable the extension, call {@link #addExtension(String)
+ * addExtension} method with {@code "permessage-deflate"}.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"><span style="color: green;"> // Enable "permessage-deflate" extension (RFC 7692).</span>
+ * ws.{@link #addExtension(String) addExtension}({@link WebSocketExtension#PERMESSAGE_DEFLATE});</pre>
+ * </blockquote>
+ *
+ * <p>
+ * The permessage-deflate support is new and needs testing.
+ * Feedback is welcome.
+ * </p>
+ *
  * <h3>Perform Opening Handshake</h3>
  *
  * <p>
