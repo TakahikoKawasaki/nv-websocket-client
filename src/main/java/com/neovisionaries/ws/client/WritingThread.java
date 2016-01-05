@@ -19,7 +19,6 @@ package com.neovisionaries.ws.client;
 import static com.neovisionaries.ws.client.WebSocketState.CLOSED;
 import static com.neovisionaries.ws.client.WebSocketState.CLOSING;
 import java.io.IOException;
-import java.util.Deque;
 import java.util.LinkedList;
 import com.neovisionaries.ws.client.StateManager.CloseInitiator;
 
@@ -32,7 +31,7 @@ class WritingThread extends Thread
     private static final int SHOULD_FLUSH    = 3;
     private static final int FLUSH_THRESHOLD = 1000;
     private final WebSocket mWebSocket;
-    private final Deque<WebSocketFrame> mFrames;
+    private final LinkedList<WebSocketFrame> mFrames;
     private final PerMessageCompressionExtension mPMCE;
     private boolean mStopRequested;
     private WebSocketFrame mCloseFrame;
@@ -198,10 +197,10 @@ class WritingThread extends Thread
             }
 
             // Add the frame to the queue.
-            if (frame.isPingFrame() || frame.isPongFrame())
+            if (isHighPriorityFrame(frame))
             {
                 // Add the frame at the first position so that it can be sent immediately.
-                mFrames.addFirst(frame);
+                addHighPriorityFrame(frame);
             }
             else
             {
@@ -215,6 +214,33 @@ class WritingThread extends Thread
 
         // Queued.
         return true;
+    }
+
+
+    private static boolean isHighPriorityFrame(WebSocketFrame frame)
+    {
+        return (frame.isPingFrame() || frame.isPongFrame());
+    }
+
+
+    private void addHighPriorityFrame(WebSocketFrame frame)
+    {
+        int index = 0;
+
+        // Determine the index at which the frame is added.
+        // Among high priority frames, the order is kept in insertion order.
+        for (WebSocketFrame f : mFrames)
+        {
+            // If a non high-priority frame was found.
+            if (isHighPriorityFrame(f) == false)
+            {
+                break;
+            }
+
+            ++index;
+        }
+
+        mFrames.add(index, frame);
     }
 
 
