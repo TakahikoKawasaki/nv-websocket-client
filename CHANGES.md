@@ -1,6 +1,14 @@
 CHANGES
 =======
 
+1.18 (2016-01-05)
+-----------------
+
+- Modified `WritingThread.queueFrame()` to keep insertion order among
+  high-priority frames (PING & PONG frames).
+- Fixed a NPE bug reported by Issue #23.
+
+
 1.17 (2015-12-29)
 -----------------
 
