@@ -1237,9 +1237,16 @@ public class WebSocket
             {
                 return this;
             }
+        }
 
+        // Get the reference to the instance of WritingThread.
+        WritingThread wt = mWritingThread;
+
+        // If and only if an instance of WritingThread is available.
+        if (wt != null)
+        {
             // Request flush.
-            mWritingThread.queueFlush();
+            wt.queueFlush();
         }
 
         return this;
@@ -1611,17 +1618,17 @@ public class WebSocket
             throw e;
         }
 
-        // Change the state to OPEN.
-        mStateManager.setState(OPEN);
-
-        // Notify the listener of the state change.
-        mListenerManager.callOnStateChanged(OPEN);
-
         // HTTP headers in the response from the server.
         mServerHeaders = headers;
 
         // Extensions.
         mPerMessageCompressionExtension = findAgreedPerMessageCompressionExtension();
+
+        // Change the state to OPEN.
+        mStateManager.setState(OPEN);
+
+        // Notify the listener of the state change.
+        mListenerManager.callOnStateChanged(OPEN);
 
         // Start threads that communicate with the server.
         startThreads();
@@ -1930,9 +1937,23 @@ public class WebSocket
 
         // The current state is either OPEN or CLOSING. Or, CLOSED.
 
-        // Queue the frame. Even if the current state is CLOSED,
-        // queuing a frame won't be a big issue.
-        mWritingThread.queueFrame(frame);
+        // Get the reference to the writing thread.
+        WritingThread wt = mWritingThread;
+
+        // If and only if an instance of WritingThread is available.
+        //
+        // Some applications call sendFrame() without waiting for the
+        // notification of WebSocketListener.onConnected() (Issue #23),
+        // and/or even after the connection is closed. That is, there
+        // are chances that sendFrame() is called when mWritingThread
+        // is null. So, it should be checked whether an instance of
+        // WritingThread is available or not before calling queueFrame().
+        if (wt != null)
+        {
+            // Queue the frame. Even if the current state is CLOSED,
+            // queuing a frame won't be a big issue.
+            wt.queueFrame(frame);
+        }
 
         return this;
     }
