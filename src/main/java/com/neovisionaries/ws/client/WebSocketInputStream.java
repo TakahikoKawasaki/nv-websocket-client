@@ -138,7 +138,7 @@ class WebSocketInputStream extends FilterInputStream
     }
 
 
-    private void readBytes(byte[] buffer, int length) throws IOException, WebSocketException
+    void readBytes(byte[] buffer, int length) throws IOException, WebSocketException
     {
         // Read
         int total = 0;
