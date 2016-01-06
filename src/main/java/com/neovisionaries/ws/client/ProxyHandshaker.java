@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Neo Visionaries Inc.
+ * Copyright (C) 2015-2016 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -170,14 +170,16 @@ class ProxyHandshaker
 
         if (elements.length < 2)
         {
-            throw new IOException("The status line in the response from the proxy server is badly formatted.");
+            throw new IOException(
+                "The status line in the response from the proxy server is badly formatted. " +
+                "The status line is: " + statusLine);
         }
 
         // If the status code is not "200".
         if ("200".equals(elements[1]) == false)
         {
             throw new IOException(
-                "The status code in the response from the proxy server is not '200 Connection established'." +
+                "The status code in the response from the proxy server is not '200 Connection established'. " +
                 "The status line is: " + statusLine);
         }
 
