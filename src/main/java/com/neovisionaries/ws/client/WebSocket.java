@@ -316,9 +316,62 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *     <span style="color: green;">// This method blocks until the opening handshake is finished.</span>
  *     ws.{@link #connect()};
  * }
+ * catch ({@link OpeningHandshakeException} e)
+ * {
+ *     <span style="color: green;">// A violation against the WebSocket protocol was detected</span>
+ *     <span style="color: green;">// during the opening handshake.</span>
+ * }
  * catch ({@link WebSocketException} e)
  * {
  *     <span style="color: green;">// Failed.</span>
+ * }</pre>
+ * </blockquote>
+ *
+ * <p>
+ * In some cases, {@code connect()} method throws {@link OpeningHandshakeException}
+ * which is a subclass of {@code WebSocketException} (since version 1.19).
+ * {@code OpeningHandshakeException} provides additional methods such as
+ * {@link OpeningHandshakeException#getStatusLine() getStatusLine()},
+ * {@link OpeningHandshakeException#getHeaders() getHeaders()} and
+ * {@link OpeningHandshakeException#getBody() getBody()} to access the
+ * response from a server. The following snippet is an example to print
+ * information that the exception holds.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> catch ({@link OpeningHandshakeException} e)
+ * {
+ *     <span style="color: green;">// Status line.</span>
+ *     {@link StatusLine} sl = e.{@link OpeningHandshakeException#getStatusLine() getStatusLine()};
+ *     System.out.println(<span style="color:darkred;">"=== Status Line ==="</span>);
+ *     System.out.format(<span style="color:darkred;">"HTTP Version  = %s\n"</span>, sl.{@link StatusLine#getHttpVersion() getHttpVersion()});
+ *     System.out.format(<span style="color:darkred;">"Status Code   = %d\n"</span>, sl.{@link StatusLine#getStatusCode() getStatusCode()});
+ *     System.out.format(<span style="color:darkred;">"Reason Phrase = %s\n"</span>, sl.{@link StatusLine#getReasonPhrase() getReasonPhrase()});
+ *
+ *     <span style="color: green;">// HTTP headers.</span>
+ *     Map&lt;String, List&lt;String&gt;&gt; headers = e.{@link OpeningHandshakeException#getHeaders() getHeaders()};
+ *     System.out.println(<span style="color:darkred;">"=== HTTP Headers ==="</span>);
+ *     for (Map.Entry&lt;String, List&lt;String&gt;&gt; entry : headers.entrySet())
+ *     {
+ *         <span style="color: green;">// Header name.</span>
+ *         String name = entry.getKey();
+ *
+ *         <span style="color: green;">// Values of the header.</span>
+ *         List&lt;String&gt; values = entry.getValue();
+ *
+ *         if (values == null || values.size() == 0)
+ *         {
+ *             <span style="color: green;">// Print the name only.</span>
+ *             System.out.println(name);
+ *             continue;
+ *         }
+ *
+ *         for (String value : values)
+ *         {
+ *             <span style="color: green;">// Print the name and the value.</span>
+ *             System.out.format(<span style="color:darkred;">"%s: %s\n"</span>, name, value);
+ *         }
+ *     }
  * }</pre>
  * </blockquote>
  *
@@ -639,7 +692,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *
  * <p>
  * So, you can handle all error cases in {@code onError()} method. However, note
- * that {@code onError()} may be called multiple times due to one error, so don't
+ * that {@code onError()} may be called multiple times for one error cause, so don't
  * try to trigger reconnection in {@code onError()}. Instead, {@link
  * WebSocketListener#onDisconnected(WebSocket, WebSocketFrame, WebSocketFrame, boolean)
  * onDiconnected()} is the right place to trigger reconnection.
@@ -670,6 +723,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * </blockquote>
  *
  * @see <a href="https://tools.ietf.org/html/rfc6455">RFC 6455 (The WebSocket Protocol)</a>
+ * @see <a href="https://tools.ietf.org/html/rfc7692">RFC 7692 (Compression Extensions for WebSocket)</a>
  * @see <a href="https://github.com/TakahikoKawasaki/nv-websocket-client">[GitHub] nv-websocket-client</a>
  *
  * @author Takahiko Kawasaki

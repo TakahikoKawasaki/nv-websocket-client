@@ -1,6 +1,15 @@
 CHANGES
 =======
 
+1.19 (2016-01-06)
+-----------------
+
+- Added `OpeningHandshakeException` class which is a subclass of
+  `WebSocketException`. `connect()` throws this exception when it
+  detects a violation against the WebSocket protocol.
+- Added `StatusLine` class.
+
+
 1.18 (2016-01-05)
 -----------------
 

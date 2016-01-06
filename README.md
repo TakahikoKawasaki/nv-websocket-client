@@ -34,7 +34,7 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>1.18</version>
+    <version>1.19</version>
 </dependency>
 ```
 
@@ -43,7 +43,7 @@ Gradle
 
 ```Gradle
 dependencies {
-    compile 'com.neovisionaries:nv-websocket-client:1.18'
+    compile 'com.neovisionaries:nv-websocket-client:1.19'
 }
 ```
 
@@ -52,7 +52,7 @@ OSGi
 ----
 
     Bundle-SymbolicName: com.neovisionaries.ws.client
-    Export-Package: com.neovisionaries.ws.client;version="1.18.0"
+    Export-Package: com.neovisionaries.ws.client;version="1.19.0"
 
 
 Source Download
@@ -246,9 +246,58 @@ try
     // This method blocks until the opening handshake is finished.
     ws.connect();
 }
+catch (OpeningHandshakeException e)
+{
+    // A violation against the WebSocket protocol was detected
+    // during the opening handshake.
+}
 catch (WebSocketException e)
 {
     // Failed.
+}
+```
+
+In some cases, `connect()` method throws `OpeningHandshakeException` which
+is a subclass of `WebSocketException` (since version 1.19).
+`OpeningHandshakeException` provides additional methods such as
+`getStatusLine()`, `getHeaders()` and `getBody()` to access the response
+from a server. The following snippet is an example to print information
+that the exception holds.
+
+```java
+catch (OpeningHandshakeException e)
+{
+    // Status line.
+    StatusLine sl = e.getStatusLine();
+    System.out.println("=== Status Line ===");
+    System.out.format("HTTP Version  = %s\n", sl.getHttpVersion());
+    System.out.format("Status Code   = %d\n", sl.getStatusCode());
+    System.out.format("Reason Phrase = %s\n", sl.getReasonPhrase());
+
+    // HTTP headers.
+    Map<String, List<String>> headers = e.getHeaders();
+    System.out.println("=== HTTP Headers ===");
+    for (Map.Entry<String, List<String>> entry : headers.entrySet())
+    {
+        // Header name.
+        String name = entry.getKey();
+
+        // Values of the header.
+        List<String> values = entry.getValue();
+
+        if (values == null || values.size() == 0)
+        {
+            // Print the name only.
+            System.out.println(name);
+            continue;
+        }
+
+        for (String value : values)
+        {
+            // Print the name and the value.
+            System.out.format("%s: %s\n", name, value);
+        }
+    }
 }
 ```
 
@@ -516,7 +565,7 @@ public void run()
 ```
 
 So, you can handle all error cases in `onError()` method. However, note that
-`onError()` may be called multiple times due to one error, so don't try to
+`onError()` may be called multiple times for one error cause, so don't try to
 trigger reconnection in `onError()`. Instead, `onDisconnected()` is the right
 place to trigger reconnection.
 
