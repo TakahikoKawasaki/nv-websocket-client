@@ -154,8 +154,7 @@ simplest example to create a `WebSocket` instance.
 // Create a web socket. The scheme part can be one of the following:
 // 'ws', 'wss', 'http' and 'https' (case-insensitive). The user info
 // part, if any, is interpreted as expected. If a raw socket failed
-// to be created, or if HTTP proxy handshake or SSL handshake failed,
-// an IOException is thrown.
+// to be created, an IOException is thrown.
 WebSocket ws = new WebSocketFactory().createSocket("ws://localhost/endpoint");
 ```
 
@@ -231,18 +230,18 @@ ws.addExtension(WebSocketExtension.PERMESSAGE_DEFLATE);
 The `permessage-deflate` support is new and needs testing. Feedback is welcome.
 
 
-#### Perform Opening Handshake
+#### Connect To Server
 
-By calling `connect()` method, a WebSocket opening handshake is performed
-synchronously. If an error occurred during the handshake, a
-`WebSocketException` would be thrown. Instead, if the handshake succeeds,
-the `connect()` implementation creates threads and starts them to read and
-write web socket frames asynchronously.
+By calling `connect()` method, connection to the server is established and a
+WebSocket opening handshake is performed synchronously. If an error occurred
+during the handshake, a `WebSocketException` would be thrown. Instead, if
+the handshake succeeds, the `connect()` implementation creates threads and
+starts them to read and write web socket frames asynchronously.
 
 ```java
 try
 {
-    // Perform an opening handshake.
+    // Connect to the server and perform an opening handshake.
     // This method blocks until the opening handshake is finished.
     ws.connect();
 }
@@ -253,7 +252,7 @@ catch (OpeningHandshakeException e)
 }
 catch (WebSocketException e)
 {
-    // Failed.
+    // Failed to establish a WebSocket connection.
 }
 ```
 
@@ -302,7 +301,7 @@ catch (OpeningHandshakeException e)
 ```
 
 
-#### Asynchronous Opening Handshake
+#### Connect To Server Asynchronously
 
 The simplest way to call `connect()` method asynchronously is to use
 `connectAsynchronously()` method. The implementation of the method creates
@@ -314,7 +313,7 @@ Neither direct synchronous `connect()` nor `connect(ExecutorService)`
 (described below) will trigger the callback method.
 
 ```java
-// Perform an opening handshake asynchronously.
+// Connect to the server asynchronously.
 ws.connectAsynchronously();
 ```
 
@@ -326,7 +325,7 @@ handshake asynchronously using the given `ExecutorService`.
 // Prepare an ExecutorService.
 ExecutorService es = Executors.newSingleThreadExecutor();
 
-// Perform an opening handshake asynchronously.
+// Connect to the server asynchronously.
 Future<WebSocket> future = ws.connect(es);
 
 try

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Neo Visionaries Inc.
+ * Copyright (C) 2015-2016 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ package com.neovisionaries.ws.client;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 
@@ -400,8 +400,7 @@ public class WebSocketFactory
      *         The given URI is {@code null} or violates RFC 2396.
      *
      * @throws IOException
-     *         Failed to create a socket. Or, HTTP proxy handshake or SSL
-     *         handshake failed.
+     *         Failed to create a socket.
      */
     public WebSocket createSocket(URI uri) throws IOException
     {
@@ -462,8 +461,7 @@ public class WebSocketFactory
      *         the given timeout value is negative.
      *
      * @throws IOException
-     *         Failed to create a socket. Or, HTTP proxy handshake or SSL
-     *         handshake failed.
+     *         Failed to create a socket.
      *
      * @since 1.10
      */
@@ -492,7 +490,8 @@ public class WebSocketFactory
 
 
     private WebSocket createSocket(
-        String scheme, String userInfo, String host, int port, String path, String query, int timeout) throws IOException
+        String scheme, String userInfo, String host, int port,
+        String path, String query, int timeout) throws IOException
     {
         // True if 'scheme' is 'wss' or 'https'.
         boolean secure = isSecureConnectionRequired(scheme);
@@ -506,11 +505,11 @@ public class WebSocketFactory
         // Determine the path.
         path = determinePath(path);
 
-        // Create a Socket instance.
-        Socket socket = createRawSocket(host, port, secure, timeout);
+        // Create a Socket instance and a connector to connect to the server.
+        SocketConnector connector = createRawSocket(host, port, secure, timeout);
 
         // Create a WebSocket instance.
-        return createWebSocket(secure, userInfo, host, port, path, query, socket, timeout);
+        return createWebSocket(secure, userInfo, host, port, path, query, connector);
     }
 
 
@@ -554,7 +553,8 @@ public class WebSocketFactory
     }
 
 
-    private Socket createRawSocket(String host, int port, boolean secure, int timeout) throws IOException
+    private SocketConnector createRawSocket(
+            String host, int port, boolean secure, int timeout) throws IOException
     {
         // Determine the port number. Especially, if 'port' is -1,
         // it is converted to 80 or 443.
@@ -568,19 +568,19 @@ public class WebSocketFactory
 
         if (proxied)
         {
-            // Connect to the proxy server and perform the proxy handshake.
-            // As necessary, perform the SSL handshake in the tunnel.
+            // Create a connector to connect to the proxy server.
             return createProxiedRawSocket(host, port, secure, timeout);
         }
         else
         {
-            // Connect to the WebSocket endpoint directly.
+            // Create a connector to connect to the WebSocket endpoint directly.
             return createDirectRawSocket(host, port, secure, timeout);
         }
     }
 
 
-    private Socket createProxiedRawSocket(String host, int port, boolean secure, int timeout) throws IOException
+    private SocketConnector createProxiedRawSocket(
+            String host, int port, boolean secure, int timeout) throws IOException
     {
         // Determine the port number of the proxy server.
         // Especially, if getPort() returns -1, the value
@@ -588,60 +588,28 @@ public class WebSocketFactory
         int proxyPort = determinePort(mProxySettings.getPort(), mProxySettings.isSecure());
 
         // Select a socket factory.
-        SocketFactory factory = mProxySettings.selectSocketFactory();
+        SocketFactory socketFactory = mProxySettings.selectSocketFactory();
 
         // Let the socket factory create a socket.
-        Socket socket = factory.createSocket();
+        Socket socket = socketFactory.createSocket();
 
-        // Connect to the host.
-        socket.connect(new InetSocketAddress(mProxySettings.getHost(), proxyPort), timeout);
+        // The address to connect to.
+        SocketAddress address = new InetSocketAddress(mProxySettings.getHost(), proxyPort);
 
-        try
-        {
-            // Perform proxy handshake (and SSL handshake as necessary).
-            return doProxyHandshake(socket, host, port, secure);
-        }
-        catch (IOException e)
-        {
-            try
-            {
-                socket.close();
-            }
-            catch (IOException ioe)
-            {
-            }
+        // The delegatee for the handshake with the proxy.
+        ProxyHandshaker handshaker = new ProxyHandshaker(socket, host, port, mProxySettings);
 
-            throw e;
-        }
+        // SSLSocketFactory for SSL handshake with the WebSocket endpoint.
+        SSLSocketFactory sslSocketFactory = secure ?
+                (SSLSocketFactory)mSocketFactorySettings.selectSocketFactory(secure) : null;
+
+        // Create an instance that will execute the task to connect to the server later.
+        return new SocketConnector(
+                socket, address, timeout, handshaker, sslSocketFactory, host, port);
     }
 
 
-    private Socket doProxyHandshake(Socket socket, String host, int port, boolean secure) throws IOException
-    {
-        // Delegate the task to ProxyHandshaker.
-        new ProxyHandshaker(socket, host, port, mProxySettings).perform();
-
-        // If TLS handshake is needed in the tunnel.
-        if (secure)
-        {
-            // Get an SSL socket factory to create an SSL socket which
-            // performs the SSL handshake with the WebSocket endpoint.
-            SSLSocketFactory sslSocketFactory =
-                (SSLSocketFactory)mSocketFactorySettings.selectSocketFactory(secure);
-
-            // Overlay the existing socket.
-            socket = sslSocketFactory.createSocket(socket, host, port, true);
-
-            // Start the SSL handshake manually. As for the reason, see
-            // http://docs.oracle.com/javase/7/docs/technotes/guides/security/jsse/samples/sockets/client/SSLSocketClient.java
-            ((SSLSocket)socket).startHandshake();
-        }
-
-        return socket;
-    }
-
-
-    private Socket createDirectRawSocket(String host, int port, boolean secure, int timeout) throws IOException
+    private SocketConnector createDirectRawSocket(String host, int port, boolean secure, int timeout) throws IOException
     {
         // Select a socket factory.
         SocketFactory factory = mSocketFactorySettings.selectSocketFactory(secure);
@@ -649,10 +617,11 @@ public class WebSocketFactory
         // Let the socket factory create a socket.
         Socket socket = factory.createSocket();
 
-        // Connect to the host.
-        socket.connect(new InetSocketAddress(host, port), timeout);
+        // The address to connect to.
+        SocketAddress address = new InetSocketAddress(host, port);
 
-        return socket;
+        // Create an instance that will execute the task to connect to the server later.
+        return new SocketConnector(socket, address, timeout);
     }
 
 
@@ -675,8 +644,8 @@ public class WebSocketFactory
 
 
     private WebSocket createWebSocket(
-        boolean secure, String userInfo, String host, int port, String path, String query,
-        Socket socket, int timeout)
+        boolean secure, String userInfo, String host, int port,
+        String path, String query, SocketConnector connector)
     {
         // The value for "Host" HTTP header.
         if (0 <= port)
@@ -690,6 +659,6 @@ public class WebSocketFactory
             path = path + "?" + query;
         }
 
-        return new WebSocket(this, secure, userInfo, host, path, socket, timeout);
+        return new WebSocket(this, secure, userInfo, host, path, connector);
     }
 }

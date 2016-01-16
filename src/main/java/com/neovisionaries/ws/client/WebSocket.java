@@ -164,8 +164,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Create a web socket. The scheme part can be one of the following:
  * // 'ws', 'wss', 'http' and 'https' (case-insensitive). The user info
  * // part, if any, is interpreted as expected. If a raw socket failed
- * // to be created, or if HTTP proxy handshake or SSL handshake failed,
- * // an IOException is thrown.</span>
+ * // to be created, an IOException is thrown.</span>
  * WebSocket ws = new {@link WebSocketFactory#WebSocketFactory()
  * WebSocketFactory()}
  *     .{@link WebSocketFactory#createSocket(String)
@@ -298,11 +297,12 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * Feedback is welcome.
  * </p>
  *
- * <h3>Perform Opening Handshake</h3>
+ * <h3>Connect To Server</h3>
  *
  * <p>
- * By calling {@link #connect()} method, a WebSocket opening handshake
- * is performed synchronously. If an error occurred during the handshake,
+ * By calling {@link #connect()} method, connection to the server is
+ * established and a WebSocket opening handshake is performed
+ * synchronously. If an error occurred during the handshake,
  * a {@link WebSocketException} would be thrown. Instead, when the
  * handshake succeeds, the {@code connect()} implementation creates
  * threads and starts them to read and write web socket frames
@@ -312,7 +312,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * <blockquote>
  * <pre style="border-left: solid 5px lightgray;"> try
  * {
- *     <span style="color: green;">// Perform an opening handshake.</span>
+ *     <span style="color: green;">// Connect to the server and perform an opening handshake.</span>
  *     <span style="color: green;">// This method blocks until the opening handshake is finished.</span>
  *     ws.{@link #connect()};
  * }
@@ -323,7 +323,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * }
  * catch ({@link WebSocketException} e)
  * {
- *     <span style="color: green;">// Failed.</span>
+ *     <span style="color: green;">// Failed to establish a WebSocket connection.</span>
  * }</pre>
  * </blockquote>
  *
@@ -375,7 +375,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * }</pre>
  * </blockquote>
  *
- * <h3>Asynchronous Opening Handshake</h3>
+ * <h3>Connect To Server Asynchronously</h3>
  *
  * <p>
  * The simplest way to call {@code connect()} method asynchronously is to
@@ -392,7 +392,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * </p>
  *
  * <blockquote>
- * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Perform an opening handshake asynchronously.</span>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Connect to the server asynchronously.</span>
  * ws.{@link #connectAsynchronously()};
  * </pre>
  * </blockquote>
@@ -408,7 +408,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * {@link ExecutorService} es = {@link java.util.concurrent.Executors Executors}.{@link
  * java.util.concurrent.Executors#newSingleThreadExecutor() newSingleThreadExecutor()};
  *
- * <span style="color: green;">// Perform an opening handshake asynchronously.</span>
+ * <span style="color: green;">// Connect to the server asynchronously.</span>
  * {@link Future}{@code <WebSocket>} future = ws.{@link #connect(ExecutorService) connect}(es);
  *
  * try
@@ -731,8 +731,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
 public class WebSocket
 {
     private final WebSocketFactory mWebSocketFactory;
-    private final Socket mSocket;
-    private final int mConnectionTimeout;
+    private final SocketConnector mSocketConnector;
     private final StateManager mStateManager;
     private HandshakeBuilder mHandshakeBuilder;
     private final ListenerManager mListenerManager;
@@ -760,11 +759,10 @@ public class WebSocket
 
 
     WebSocket(WebSocketFactory factory, boolean secure, String userInfo,
-            String host, String path, Socket socket, int timeout)
+            String host, String path, SocketConnector connector)
     {
         mWebSocketFactory  = factory;
-        mSocket            = socket;
-        mConnectionTimeout = timeout;
+        mSocketConnector   = connector;
         mStateManager      = new StateManager();
         mHandshakeBuilder  = new HandshakeBuilder(secure, userInfo, host, path);
         mListenerManager   = new ListenerManager(this);
@@ -800,7 +798,7 @@ public class WebSocket
      */
     public WebSocket recreate() throws IOException
     {
-        return recreate(mConnectionTimeout);
+        return recreate(mSocketConnector.getConnectionTimeout());
     }
 
 
@@ -1568,7 +1566,7 @@ public class WebSocket
      */
     public Socket getSocket()
     {
-        return mSocket;
+        return mSocketConnector.getSocket();
     }
 
 
@@ -1588,8 +1586,9 @@ public class WebSocket
 
 
     /**
-     * Send an opening handshake to the server, receive the response and then
-     * start threads to communicate with the server.
+     * Connect to the server, send an opening handshake to the server,
+     * receive the response and then start threads to communicate with
+     * the server.
      *
      * <p>
      * As necessary, {@link #addProtocol(String)}, {@link #addExtension(WebSocketExtension)}
@@ -1653,6 +1652,9 @@ public class WebSocket
 
         try
         {
+            // Connect to the server.
+            mSocketConnector.connect();
+
             // Perform WebSocket handshake.
             headers = shakeHands();
         }
@@ -2510,7 +2512,7 @@ public class WebSocket
     private Map<String, List<String>> shakeHands() throws WebSocketException
     {
         // The raw socket created by WebSocketFactory.
-        Socket socket = mSocket;
+        Socket socket = mSocketConnector.getSocket();
 
         // Get the input stream of the socket.
         WebSocketInputStream input = openInputStream(socket);
@@ -2923,10 +2925,11 @@ public class WebSocket
         try
         {
             // Close the raw socket.
-            mSocket.close();
+            mSocketConnector.getSocket().close();
         }
         catch (Throwable t)
         {
+            // Ignore any error raised by close().
         }
 
         synchronized (mStateManager)

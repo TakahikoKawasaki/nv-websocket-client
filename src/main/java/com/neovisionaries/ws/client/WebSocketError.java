@@ -382,5 +382,38 @@ public enum WebSocketError
      * @since 1.16
      */
     DECOMPRESSION_ERROR,
+
+
+    /**
+     * {@link java.net.Socket#connect(java.net.SocketAddress, int)
+     * Socket.connect()} failed.
+     *
+     * @since 1.20
+     */
+    SOCKET_CONNECT_ERROR,
+
+
+    /**
+     * Handshake with a proxy server failed.
+     *
+     * @since 1.20
+     */
+    PROXY_HANDSHAKE_ERROR,
+
+
+    /**
+     * Failed to overlay an existing socket.
+     *
+     * @since 1.20
+     */
+    SOCKET_OVERLAY_ERROR,
+
+
+    /**
+     * SSL handshake with a WebSocket endpoint failed.
+     *
+     * @since 1.20
+     */
+    SSL_HANDSHAKE_ERROR,
     ;
 }
