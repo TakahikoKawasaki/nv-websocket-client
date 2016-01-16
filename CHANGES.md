@@ -1,6 +1,25 @@
 CHANGES
 =======
 
+1.20-SNAPSHOT
+-------------
+
+- Moved `Socket.connect()` from `WebSocketFactory.createSocket()`
+  to `WebSocket.connect()` in order to avoid network communication
+  in `createSocket()`. (Issue #26)
+- Introduced a mechanism to customize payload of ping/pong frames
+  that are sent automatically. (Issue #30)
+- Added `WebSocketError.SOCKET_CONNECT_ERROR`.
+- Added `WebSocketError.PROXY_HANDSHAKE_ERROR`.
+- Added `WebSocketError.SOCKET_OVERLAY_ERROR`.
+- Added `WebSocketError.SSL_HANDSHAKE_ERROR`.
+- Added `PayloadGenerator` interface.
+- Added `WebSocket.getPingPayloadGenerator()` method.
+- Added `WebSocket.setPingPayloadGenerator(PayloadGenerator)` method.
+- Added `WebSocket.getPongPayloadGenerator()` method.
+- Added `WebSocket.setPongPayloadGenerator(PayloadGenerator)` method.
+
+
 1.19 (2016-01-06)
 -----------------
 
