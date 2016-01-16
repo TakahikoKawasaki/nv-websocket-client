@@ -436,6 +436,26 @@ Likewise, you can send pong frames periodically by calling `setPongInterval`
 method. "_A Pong frame MAY be sent **unsolicited**._" ([RFC 6455, 5.5.3. Pong]
 (https://tools.ietf.org/html/rfc6455#section-5.5.3))
 
+You can customize payload of ping/pong frames that are sent automatically
+by using `setPingPayloadGenerator()` and `setPongPayloadGenerator()` methods.
+Both methods take an instance of `PayloadGenerator` interface. The following
+is an example to use the string representation of the current date as payload
+of ping frames.
+
+```java
+ws.setPingPayloadGenerator(new PayloadGenerator() {
+    @Override
+    public byte[] generate() {
+        // The string representation of the current date.
+        return new Date().toString().getBytes();
+    }
+});
+```
+
+Note that the maximum payload length of control frames (e.g. ping frames)
+is 125. Therefore, the length of a byte array returned from `generate()`
+method must not exceed 125.
+
 
 ### Auto Flush
 

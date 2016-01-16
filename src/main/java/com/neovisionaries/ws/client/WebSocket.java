@@ -541,6 +541,31 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * >RFC 6455, 5.5.3. Pong</a>)
  * </p>
  *
+ * <p>
+ * You can customize payload of ping/pong frames that are sent automatically by using
+ * {@link #setPingPayloadGenerator(PayloadGenerator)} and
+ * {@link #setPongPayloadGenerator(PayloadGenerator)} methods. Both methods take an
+ * instance of {@link PayloadGenerator} interface. The following is an example to
+ * use the string representation of the current date as payload of ping frames.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> ws.{@link #setPingPayloadGenerator(PayloadGenerator)
+ * setPingPayloadGenerator}(new {@link PayloadGenerator} () {
+ *     <span style="color: gray;">{@code @}Override</span>
+ *     public byte[] generate() {
+ *         <span style="color: green;">// The string representation of the current date.</span>
+ *         return new Date().toString().getBytes();
+ *     }
+ * });</pre>
+ * </blockquote>
+ *
+ * <p>
+ * Note that the maximum payload length of control frames (e.g. ping frames) is 125.
+ * Therefore, the length of a byte array returned from {@link PayloadGenerator#generate()
+ * generate()} method must not exceed 125.
+ * </p>
+ *
  * <h3>Auto Flush</h3>
  *
  * <p>
@@ -766,8 +791,8 @@ public class WebSocket
         mStateManager      = new StateManager();
         mHandshakeBuilder  = new HandshakeBuilder(secure, userInfo, host, path);
         mListenerManager   = new ListenerManager(this);
-        mPingSender        = new PingSender(this);
-        mPongSender        = new PongSender(this);
+        mPingSender        = new PingSender(this, new CounterPayloadGenerator());
+        mPongSender        = new PongSender(this, new CounterPayloadGenerator());
     }
 
 
@@ -840,6 +865,8 @@ public class WebSocket
         instance.mHandshakeBuilder = new HandshakeBuilder(mHandshakeBuilder);
         instance.setPingInterval(getPingInterval());
         instance.setPongInterval(getPongInterval());
+        instance.setPingPayloadGenerator(getPingPayloadGenerator());
+        instance.setPongPayloadGenerator(getPongPayloadGenerator());
         instance.mExtended = mExtended;
         instance.mAutoFlush = mAutoFlush;
         instance.mFrameQueueSize = mFrameQueueSize;
@@ -1461,6 +1488,66 @@ public class WebSocket
     public WebSocket setPongInterval(long interval)
     {
         mPongSender.setInterval(interval);
+
+        return this;
+    }
+
+
+    /**
+     * Get the generator of payload of ping frames that are sent automatically.
+     *
+     * @return
+     *         The generator of payload ping frames that are sent automatically.
+     *
+     * @since 1.20
+     */
+    public PayloadGenerator getPingPayloadGenerator()
+    {
+        return mPingSender.getPayloadGenerator();
+    }
+
+
+    /**
+     * Set the generator of payload of ping frames that are sent automatically.
+     *
+     * @param generator
+     *         The generator of payload ping frames that are sent automatically.
+     *
+     * @since 1.20
+     */
+    public WebSocket setPingPayloadGenerator(PayloadGenerator generator)
+    {
+        mPingSender.setPayloadGenerator(generator);
+
+        return this;
+    }
+
+
+    /**
+     * Get the generator of payload of pong frames that are sent automatically.
+     *
+     * @return
+     *         The generator of payload pong frames that are sent automatically.
+     *
+     * @since 1.20
+     */
+    public PayloadGenerator getPongPayloadGenerator()
+    {
+        return mPongSender.getPayloadGenerator();
+    }
+
+
+    /**
+     * Set the generator of payload of pong frames that are sent automatically.
+     *
+     * @param generator
+     *         The generator of payload ppng frames that are sent automatically.
+     *
+     * @since 1.20
+     */
+    public WebSocket setPongPayloadGenerator(PayloadGenerator generator)
+    {
+        mPongSender.setPayloadGenerator(generator);
 
         return this;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2016 Neo Visionaries Inc.
+ * Copyright (C) 2016 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,27 @@
 package com.neovisionaries.ws.client;
 
 
-class PongSender extends PeriodicalFrameSender
+/**
+ * Payload generator.
+ *
+ * @since 1.20
+ *
+ * @author Takahiko Kawasaki
+ */
+public interface PayloadGenerator
 {
-    private static final String TIMER_NAME = "PongSender";
-
-
-    public PongSender(WebSocket webSocket, PayloadGenerator generator)
-    {
-        super(webSocket, TIMER_NAME, generator);
-    }
-
-
-    @Override
-    protected WebSocketFrame createFrame(byte[] payload)
-    {
-        return WebSocketFrame.createPongFrame(payload);
-    }
+    /**
+     * Generate a payload of a frame.
+     *
+     * <p>
+     * Note that the maximum payload length of control frames
+     * (e.g. ping frames) is 125 in bytes. Therefore, the length
+     * of a byte array returned from this method must not exceed
+     * 125 bytes.
+     * </p>
+     *
+     * @return
+     *         A payload of a frame.
+     */
+    byte[] generate();
 }

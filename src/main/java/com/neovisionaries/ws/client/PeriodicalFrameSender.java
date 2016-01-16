@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Neo Visionaries Inc.
+ * Copyright (C) 2015-2016 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,15 @@ abstract class PeriodicalFrameSender
     private Timer mTimer;
     private boolean mScheduled;
     private long mInterval;
-    private long mCount;
+    private PayloadGenerator mGenerator;
 
 
-    public PeriodicalFrameSender(WebSocket webSocket, String timerName)
+    public PeriodicalFrameSender(
+            WebSocket webSocket, String timerName, PayloadGenerator generator)
     {
         mWebSocket = webSocket;
         mTimerName = timerName;
+        mGenerator = generator;
     }
 
 
@@ -105,6 +107,24 @@ abstract class PeriodicalFrameSender
     }
 
 
+    public PayloadGenerator getPayloadGenerator()
+    {
+        synchronized (this)
+        {
+            return mGenerator;
+        }
+    }
+
+
+    public void setPayloadGenerator(PayloadGenerator generator)
+    {
+        synchronized (this)
+        {
+            mGenerator = generator;
+        }
+    }
+
+
     private final class Task extends TimerTask
     {
         @Override
@@ -127,11 +147,8 @@ abstract class PeriodicalFrameSender
                 return;
             }
 
-            // Increment the counter.
-            mCount = Math.max(mCount + 1, 1);
-
-            // Let the subclass create a frame and send it to the server.
-            mWebSocket.sendFrame(createFrame(mCount));
+            // Create a frame and send it to the server.
+            mWebSocket.sendFrame(createFrame());
 
             // Schedule a new task.
             mTimer.schedule(new Task(), mInterval);
@@ -139,5 +156,35 @@ abstract class PeriodicalFrameSender
     }
 
 
-    protected abstract WebSocketFrame createFrame(long count);
+    private WebSocketFrame createFrame()
+    {
+        // Prepare payload of a frame.
+        byte[] payload = generatePayload();
+
+        // Let the subclass create a frame.
+        return createFrame(payload);
+    }
+
+
+    private byte[] generatePayload()
+    {
+        if (mGenerator == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            // Let the generator generate payload.
+            return mGenerator.generate();
+        }
+        catch (Throwable t)
+        {
+            // Empty payload.
+            return null;
+        }
+    }
+
+
+    protected abstract WebSocketFrame createFrame(byte[] payload);
 }

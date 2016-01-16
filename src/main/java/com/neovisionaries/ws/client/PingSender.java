@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Neo Visionaries Inc.
+ * Copyright (C) 2015-2016 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,15 @@ class PingSender extends PeriodicalFrameSender
     private static final String TIMER_NAME = "PingSender";
 
 
-    public PingSender(WebSocket webSocket)
+    public PingSender(WebSocket webSocket, PayloadGenerator generator)
     {
-        super(webSocket, TIMER_NAME);
+        super(webSocket, TIMER_NAME, generator);
     }
 
 
     @Override
-    protected WebSocketFrame createFrame(long count)
+    protected WebSocketFrame createFrame(byte[] payload)
     {
-        return WebSocketFrame.createPingFrame(String.valueOf(count));
+        return WebSocketFrame.createPingFrame(payload);
     }
 }
