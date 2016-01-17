@@ -1,8 +1,8 @@
 CHANGES
 =======
 
-1.20-SNAPSHOT
--------------
+1.20 (2016-01-17)
+-----------------
 
 - Moved `Socket.connect()` from `WebSocketFactory.createSocket()`
   to `WebSocket.connect()` in order to avoid network communication
