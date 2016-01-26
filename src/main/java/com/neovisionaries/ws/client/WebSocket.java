@@ -2707,7 +2707,12 @@ public class WebSocket
     {
         // Generate an opening handshake sent to the server from this client.
         mHandshakeBuilder.setKey(key);
-        String handshake = mHandshakeBuilder.build();
+        String requestLine     = mHandshakeBuilder.buildRequestLine();
+        List<String[]> headers = mHandshakeBuilder.buildHeaders();
+        String handshake       = HandshakeBuilder.build(requestLine, headers);
+
+        // Call onSendingHandshake() method of listeners.
+        mListenerManager.callOnSendingHandshake(requestLine, headers);
 
         try
         {

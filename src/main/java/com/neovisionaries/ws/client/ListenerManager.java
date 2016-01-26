@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Neo Visionaries Inc.
+ * Copyright (C) 2015-2016 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -543,6 +543,22 @@ class ListenerManager
         }
         catch (Throwable t)
         {
+        }
+    }
+
+
+    public void callOnSendingHandshake(String requestLine, List<String[]> headers)
+    {
+        for (WebSocketListener listener : getSynchronizedListeners())
+        {
+            try
+            {
+                listener.onSendingHandshake(mWebSocket, requestLine, headers);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
+            }
         }
     }
 }

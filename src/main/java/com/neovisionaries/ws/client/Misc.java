@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Neo Visionaries Inc.
+ * Copyright (C) 2015-2016 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.SecureRandom;
+import java.util.Collection;
 
 
 class Misc
@@ -273,5 +274,35 @@ class Misc
         }
 
         return max;
+    }
+
+
+    public static String join(Collection<?> values, String delimiter)
+    {
+        StringBuilder builder = new StringBuilder();
+
+        join(builder, values, delimiter);
+
+        return builder.toString();
+    }
+
+
+    private static void join(StringBuilder builder, Collection<?> values, String delimiter)
+    {
+        boolean first = true;
+
+        for (Object value : values)
+        {
+            if (first)
+            {
+                first = false;
+            }
+            else
+            {
+                builder.append(delimiter);
+            }
+
+            builder.append(value.toString());
+        }
     }
 }

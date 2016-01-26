@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Neo Visionaries Inc.
+ * Copyright (C) 2015-2016 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -495,4 +495,25 @@ public interface WebSocketListener
      * @since 1.9
      */
     void handleCallbackError(WebSocket websocket, Throwable cause) throws Exception;
+
+
+    /**
+     * Called before an opening handshake is sent to the server.
+     *
+     * @param websocket
+     *         The web socket.
+     *
+     * @param requestLine
+     *         The request line. For example, {@code "GET /chat HTTP/1.1"}.
+     *
+     * @param headers
+     *         The HTTP headers.
+     *
+     * @throws Exception
+     *         An exception thrown by an implementation of this method.
+     *         The exception is passed to {@link #handleCallbackError(WebSocket, Throwable)}.
+     *
+     * @since 1.21
+     */
+    void onSendingHandshake(WebSocket websocket, String requestLine, List<String[]> headers) throws Exception;
 }

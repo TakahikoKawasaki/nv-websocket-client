@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Neo Visionaries Inc.
+ * Copyright (C) 2015-2016 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.neovisionaries.ws.client;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,7 +25,12 @@ import java.util.Set;
 
 class HandshakeBuilder
 {
+    private static final String[] CONNECTION_HEADER = { "Connection", "Upgrade" };
+    private static final String[] UPGRADE_HEADER    = { "Upgrade", "websocket" };
+    private static final String[] VERSION_HEADER    = { "Sec-WebSocket-Version", "13" };
     private static final String RN = "\r\n";
+
+
     private boolean mSecure;
     private String mUserInfo;
     private final String mHost;
@@ -70,7 +74,9 @@ class HandshakeBuilder
     {
         if (isValidProtocol(protocol) == false)
         {
-            throw new IllegalArgumentException("'protocol' must be a non-empty string with characters in the range U+0021 to U+007E not including separator characters.");
+            throw new IllegalArgumentException(
+                "'protocol' must be a non-empty string with characters in the range " +
+                "U+0021 to U+007E not including separator characters.");
         }
 
         synchronized (this)
@@ -417,78 +423,77 @@ class HandshakeBuilder
     }
 
 
-    public String build()
+    public String buildRequestLine()
     {
-        StringBuilder builder = new StringBuilder()
-            .append("GET ").append(mPath).append(" HTTP/1.1").append(RN)
-            .append("Host: ").append(mHost).append(RN)
-            .append("Connection: Upgrade").append(RN)
-            .append("Upgrade: websocket").append(RN)
-            .append("Sec-WebSocket-Version: 13").append(RN)
-            .append("Sec-WebSocket-Key: ").append(mKey).append(RN);
+        return String.format("GET %s HTTP/1.1", mPath);
+    }
 
-        append(builder, "Sec-WebSocket-Protocol", mProtocols);
-        append(builder, "Sec-WebSocket-Extensions", mExtensions);
-        append(builder, mHeaders);
 
+    public List<String[]> buildHeaders()
+    {
+        List<String[]> headers = new ArrayList<String[]>();
+
+        // Host
+        headers.add(new String[] { "Host", mHost } );
+
+        // Connection
+        headers.add(CONNECTION_HEADER);
+
+        // Upgrade
+        headers.add(UPGRADE_HEADER);
+
+        // Sec-WebSocket-Version
+        headers.add(VERSION_HEADER);
+
+        // Sec-WebSocket-Key
+        headers.add(new String[] { "Sec-WebSocket-Key", mKey } );
+
+        // Sec-WebSocket-Protocol
+        if (mProtocols != null && mProtocols.size() != 0)
+        {
+            headers.add(new String[] { "Sec-WebSocket-Protocol", Misc.join(mProtocols, ", ") } );
+        }
+
+        // Sec-WebSocket-Extensions
+        if (mExtensions != null && mExtensions.size() != 0)
+        {
+            headers.add(new String[] { "Sec-WebSocket-Extensions", Misc.join(mExtensions, ", ") } );
+        }
+
+        // Authorization: Basic
         if (mUserInfo != null && mUserInfo.length() != 0)
         {
-            builder
-                .append("Authorization: Basic ")
-                .append(Base64.encode(mUserInfo))
-                .append(RN);
+            headers.add(new String[] { "Authorization", "Basic " + Base64.encode(mUserInfo) } );
         }
 
-        return builder.append(RN).toString();
+        // Custom headers
+        if (mHeaders != null && mHeaders.size() != 0)
+        {
+            headers.addAll(mHeaders);
+        }
+
+        return headers;
     }
 
 
-    private static void append(StringBuilder builder, String name, Collection<?> values)
+    public static String build(String requestLine, List<String[]> headers)
     {
-        if (values == null || values.size() == 0)
+        StringBuilder builder = new StringBuilder();
+
+        // Append the request line, "GET {path} HTTP/1.1".
+        builder.append(requestLine).append(RN);
+
+        // For each header.
+        for (String[] header : headers)
         {
-            return;
+            // Append the header, "{name}: {value}".
+            builder.append(header[0]).append(": ").append(header[1]).append(RN);
         }
 
-        builder.append(name).append(": ");
-
-        join(builder, values, ", ");
-
+        // Append an empty line.
         builder.append(RN);
-    }
 
-
-    private static void join(StringBuilder builder, Collection<?> values, String delimiter)
-    {
-        boolean first = true;
-
-        for (Object value : values)
-        {
-            if (first)
-            {
-                first = false;
-            }
-            else
-            {
-                builder.append(delimiter);
-            }
-
-            builder.append(value.toString());
-        }
-    }
-
-
-    private static void append(StringBuilder builder, List<String[]> pairs)
-    {
-        if (pairs == null || pairs.size() == 0)
-        {
-            return;
-        }
-
-        for (String[] pair : pairs)
-        {
-            builder.append(pair[0]).append(": ").append(pair[1]).append(RN);
-        }
+        return builder.toString();
     }
 
 
