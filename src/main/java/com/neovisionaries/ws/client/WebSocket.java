@@ -230,6 +230,125 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * });</pre>
  * </blockquote>
  *
+ * <p>
+ * The table below is the list of callback methods defined in {@code WebSocketListener}
+ * interface.
+ * </p>
+ *
+ * <blockquote>
+ * <table border="1" cellpadding="5" style="border-collapse: collapse;">
+ *   <caption>{@code WebSocketListener} methods</caption>
+ *   <thead>
+ *     <tr>
+ *       <th>Method</th>
+ *       <th>Description</th>
+ *     </tr>
+ *   </thead>
+ *   <tbody>
+ *     <tr>
+ *       <td>{@link WebSocketListener#handleCallbackError(WebSocket, Throwable) handleCallbackError}</td>
+ *       <td>Called when an <code>on<i>Xxx</i>()</code> method threw a {@code Throwable}.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onBinaryFrame(WebSocket, WebSocketFrame) onBinaryFrame}</td>
+ *       <td>Called when a binary frame was received.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onBinaryMessage(WebSocket, byte[]) onBinaryMessage}</td>
+ *       <td>Called when a binary message was received.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onCloseFrame(WebSocket, WebSocketFrame) onCloseFrame}</td>
+ *       <td>Called when a close frame was received.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onConnected(WebSocket, Map) onConnected}</td>
+ *       <td>Called after the opening handshake succeeded.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onConnectError(WebSocket, WebSocketException) onConnectError}</td>
+ *       <td>Called when {@link #connectAsynchronously()} failed.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onContinuationFrame(WebSocket, WebSocketFrame) onContinuationFrame}</td>
+ *       <td>Called when a continuation frame was received.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onDisconnected(WebSocket, WebSocketFrame, WebSocketFrame, boolean) onDisconnected}</td>
+ *       <td>Called after a WebSocket connection was closed.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onError(WebSocket, WebSocketException) onError}</td>
+ *       <td>Called when an error occurred.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onFrame(WebSocket, WebSocketFrame) onFrame}</td>
+ *       <td>Called when a frame was received.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onFrameError(WebSocket, WebSocketException, WebSocketFrame) onFrameError}</td>
+ *       <td>Called when a frame failed to be read.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onFrameSent(WebSocket, WebSocketFrame) onFrameSent}</td>
+ *       <td>Called when a frame was sent.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onFrameUnsent(WebSocket, WebSocketFrame) onFrameUnsent}</td>
+ *       <td>Called when a frame was not sent.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onMessageDecompressionError(WebSocket, WebSocketException, byte[]) onMessageDecompressionError}</td>
+ *       <td>Called when a message failed to be decompressed.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onMessageError(WebSocket, WebSocketException, List) onMessageError}</td>
+ *       <td>Called when a message failed to be constructed.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onPingFrame(WebSocket, WebSocketFrame) onPingFrame}</td>
+ *       <td>Called when a ping frame was received.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onPongFrame(WebSocket, WebSocketFrame) onPongFrame}</td>
+ *       <td>Called when a pong frame was received.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onSendError(WebSocket, WebSocketException, WebSocketFrame) onSendError}</td>
+ *       <td>Called when an error occurred on sending a frame.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onSendingFrame(WebSocket, WebSocketFrame) onSendingFrame}</td>
+ *       <td>Called before a frame is sent.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onSendingHandshake(WebSocket, String, List) onSendingHandshake}</td>
+ *       <td>Called before an opening handshake is sent.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onStateChanged(WebSocket, WebSocketState) onStateChanged}</td>
+ *       <td>Called when the state of WebSocket changed.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onTextFrame(WebSocket, WebSocketFrame) onTextFrame}</td>
+ *       <td>Called when a text frame was received.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onTextMessage(WebSocket, String) onTextMessage}</td>
+ *       <td>Called when a text message was received.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onTextMessageError(WebSocket, WebSocketException, byte[]) onTextMessageError}</td>
+ *       <td>Called when a text message failed to be constructed.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onUnexpectedError(WebSocket, WebSocketException) onUnexpectedError}</td>
+ *       <td>Called when an uncaught throwable was detected.</td>
+ *     </tr>
+ *   </tbody>
+ * </table>
+ * </blockquote>
+ *
  * <h3>Configure WebSocket</h3>
  *
  * <p>

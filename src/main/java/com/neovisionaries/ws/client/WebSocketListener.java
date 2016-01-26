@@ -399,7 +399,7 @@ public interface WebSocketListener
 
 
     /**
-     * Called when it failed to decompress a message.
+     * Called when a message failed to be decompressed.
      *
      * @param websocket
      *         The web socket.

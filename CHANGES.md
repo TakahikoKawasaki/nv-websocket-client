@@ -1,6 +1,12 @@
 CHANGES
 =======
 
+1.21 (2016-01-26)
+-----------------
+
+- Added `onSendingHandshake` method to `WebSocketListener`.
+
+
 1.20 (2016-01-17)
 -----------------
 

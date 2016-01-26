@@ -34,7 +34,7 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>1.20</version>
+    <version>1.21</version>
 </dependency>
 ```
 
@@ -43,7 +43,7 @@ Gradle
 
 ```Gradle
 dependencies {
-    compile 'com.neovisionaries:nv-websocket-client:1.20'
+    compile 'com.neovisionaries:nv-websocket-client:1.21'
 }
 ```
 
@@ -52,19 +52,19 @@ OSGi
 ----
 
     Bundle-SymbolicName: com.neovisionaries.ws.client
-    Export-Package: com.neovisionaries.ws.client;version="1.20.0"
+    Export-Package: com.neovisionaries.ws.client;version="1.21.0"
 
 
-Source Download
----------------
+Source Code
+-----------
 
-    git clone https://github.com/TakahikoKawasaki/nv-websocket-client.git
+  <code>https://github.com/TakahikoKawasaki/nv-websocket-client.git</code>
 
 
 JavaDoc
 -------
 
-[JavaDoc of nv-websocket-client](http://TakahikoKawasaki.github.io/nv-websocket-client/)
+  <code>http://TakahikoKawasaki.github.io/nv-websocket-client/</code>
 
 
 Description
@@ -200,6 +200,37 @@ ws.addListener(new WebSocketAdapter() {
     }
 });
 ```
+
+The table below is the list of callback methods defined in `WebSocketListener`
+interface.
+
+| Method                        | Description                                          |
+|:------------------------------|:-----------------------------------------------------|
+| `handleCallbackError`         | Called when an `onXxx()` method threw a `Throwable`. |
+| `onBinaryFrame`               | Called when a binary frame was received.             |
+| `onBinaryMessage`             | Called when a binary message was received.           |
+| `onCloseFrame`                | Called when a close frame was received.              |
+| `onConnected`                 | Called after the opening handshake succeeded.        |
+| `onConnectError`              | Called when `connectAsynchronously()` failed.        |
+| `onContinuationFrame`         | Called when a continuation frame was received.       |
+| `onDisconnected`              | Called after a WebSocket connection was closed.      |
+| `onError`                     | Called when an error occurred.                       |
+| `onFrame`                     | Called when a frame was received.                    |
+| `onFrameError`                | Called when a frame failed to be read.               |
+| `onFrameSent`                 | Called when a frame was sent.                        |
+| `onFrameUnsent`               | Called when a frame was not sent.                    |
+| `onMessageDecompressionError` | Called when a message failed to be decompressed.     |
+| `onMessageError`              | Called when a message failed to be constructed.      |
+| `onPingFrame`                 | Called when a ping frame was received.               |
+| `onPongFrame`                 | Called when a pong frame was received.               |
+| `onSendError`                 | Called when an error occurred on sending a frame.    |
+| `onSendingFrame`              | Called before a frame is sent.                       |
+| `onSendingHandshake`          | Called before an opening handshake is sent.          |
+| `onStateChanged`              | Called when the state of WebSocket changed.          |
+| `onTextFrame`                 | Called when a text frame was received.               |
+| `onTextMessage`               | Called when a text message was received.             |
+| `onTextMessageError`          | Called when a text message failed to be constructed. |
+| `onUnexpectedError`           | Called when an uncaught throwable was detected.      |
 
 
 #### Configure WebSocket
