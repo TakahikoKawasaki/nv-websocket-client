@@ -17,9 +17,7 @@ package com.neovisionaries.ws.client;
 
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -594,7 +592,7 @@ public class WebSocketFactory
         Socket socket = socketFactory.createSocket();
 
         // The address to connect to.
-        SocketAddress address = new InetSocketAddress(mProxySettings.getHost(), proxyPort);
+        Address address = new Address(mProxySettings.getHost(), proxyPort);
 
         // The delegatee for the handshake with the proxy.
         ProxyHandshaker handshaker = new ProxyHandshaker(socket, host, port, mProxySettings);
@@ -618,7 +616,7 @@ public class WebSocketFactory
         Socket socket = factory.createSocket();
 
         // The address to connect to.
-        SocketAddress address = new InetSocketAddress(host, port);
+        Address address = new Address(host, port);
 
         // Create an instance that will execute the task to connect to the server later.
         return new SocketConnector(socket, address, timeout);

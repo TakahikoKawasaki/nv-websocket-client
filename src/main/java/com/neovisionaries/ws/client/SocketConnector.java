@@ -18,7 +18,6 @@ package com.neovisionaries.ws.client;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.net.SocketAddress;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -33,7 +32,7 @@ import javax.net.ssl.SSLSocketFactory;
 class SocketConnector
 {
     private Socket mSocket;
-    private final SocketAddress mSocketAddress;
+    private final Address mAddress;
     private final int mConnectionTimeout;
     private final ProxyHandshaker mProxyHandshaker;
     private final SSLSocketFactory mSSLSocketFactory;
@@ -41,19 +40,19 @@ class SocketConnector
     private final int mPort;
 
 
-    SocketConnector(Socket socket, SocketAddress address, int timeout)
+    SocketConnector(Socket socket, Address address, int timeout)
     {
         this(socket, address, timeout, null, null, null, 0);
     }
 
 
     SocketConnector(
-            Socket socket, SocketAddress address, int timeout,
+            Socket socket, Address address, int timeout,
             ProxyHandshaker handshaker, SSLSocketFactory sslSocketFactory,
             String host, int port)
     {
         mSocket            = socket;
-        mSocketAddress     = address;
+        mAddress           = address;
         mConnectionTimeout = timeout;
         mProxyHandshaker   = handshaker;
         mSSLSocketFactory  = sslSocketFactory;
@@ -108,13 +107,13 @@ class SocketConnector
         try
         {
             // Connect to the server (either a proxy or a WebSocket endpoint).
-            mSocket.connect(mSocketAddress, mConnectionTimeout);
+            mSocket.connect(mAddress.toInetSocketAddress(), mConnectionTimeout);
         }
         catch (IOException e)
         {
             // Failed to connect the server.
             String message = String.format("Failed to connect to %s'%s': %s",
-                (proxied ? "the proxy " : ""), mSocketAddress.toString(), e.getMessage());
+                (proxied ? "the proxy " : ""), mAddress, e.getMessage());
 
             // Raise an exception with SOCKET_CONNECT_ERROR.
             throw new WebSocketException(WebSocketError.SOCKET_CONNECT_ERROR, message, e);
@@ -144,8 +143,7 @@ class SocketConnector
         {
             // Handshake with the proxy server failed.
             String message = String.format(
-                "Handshake with the proxy server (%s) failed: %s",
-                mSocketAddress, e.getMessage());
+                "Handshake with the proxy server (%s) failed: %s", mAddress, e.getMessage());
 
             // Raise an exception with PROXY_HANDSHAKE_ERROR.
             throw new WebSocketException(WebSocketError.PROXY_HANDSHAKE_ERROR, message, e);
@@ -181,8 +179,7 @@ class SocketConnector
         {
             // SSL handshake with the WebSocket endpoint failed.
             String message = String.format(
-                "SSL handshake with the WebSocket endpoint (%s) failed: %s",
-                mSocketAddress, e.getMessage());
+                "SSL handshake with the WebSocket endpoint (%s) failed: %s", mAddress, e.getMessage());
 
             // Raise an exception with SSL_HANDSHAKE_ERROR.
             throw new WebSocketException(WebSocketError.SSL_HANDSHAKE_ERROR, message, e);
