@@ -1,6 +1,14 @@
 CHANGES
 =======
 
+1.22 (2016-02-12)
+-----------------
+
+- Moved creation of `InetSocketAddress` instance from `WebSocketFactory`
+  to `SocketConnector` to avoid hostname lookup in `WebSocketFactory`
+  (Issue #35).
+
+
 1.21 (2016-01-26)
 -----------------
 
