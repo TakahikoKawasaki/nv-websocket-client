@@ -16,14 +16,17 @@
 package com.neovisionaries.ws.client;
 
 
+import com.neovisionaries.ws.client.pinning.KeyStoreProvider;
+import com.neovisionaries.ws.client.pinning.PinningParams;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import javax.net.SocketFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
 
 
 /**
@@ -195,6 +198,29 @@ public class WebSocketFactory
         }
 
         mConnectionTimeout = timeout;
+
+        return this;
+    }
+
+    /**
+     * Enables ssl-pinning against KeyStore obtained from {@param provider}
+	 * Calling this overwrites {@link SSLContext} if one was passed before.
+     *
+     * @param provider {@link KeyStoreProvider} instance
+     * @param params {@link PinningParams} instance configuring pins and timeouts
+     * @return {@code this} object.
+	 * @throws com.neovisionaries.ws.client.pinning.PinningException in case of any problems
+	 *
+	 * @since ?
+     */
+    public WebSocketFactory pinCertificates(KeyStoreProvider provider, PinningParams params)
+    {
+        if (provider == null)
+        {
+            throw new IllegalArgumentException("KeyStoreProvider if passed should not be null");
+        }
+
+        mSocketFactorySettings.setKeyStoreProvider(provider, params);
 
         return this;
     }
