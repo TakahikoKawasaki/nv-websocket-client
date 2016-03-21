@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+1.23 (2016-03-21)
+-----------------
+
+- Modified `WebSocket.java` to move `callOnConnectedIfNotYet()`
+  out of the synchronized scope of `mThreadsLock` for the issue #43.
+
+
 1.22 (2016-02-12)
 -----------------
 
