@@ -893,6 +893,7 @@ public class WebSocket
     private boolean mAutoFlush = true;
     private int mFrameQueueSize;
     private boolean mOnConnectedCalled;
+    private Object mOnConnectedCalledLock = new Object();
     private boolean mReadingThreadStarted;
     private boolean mWritingThreadStarted;
     private boolean mReadingThreadFinished;
@@ -2990,22 +2991,27 @@ public class WebSocket
      */
     void onReadingThreadStarted()
     {
+        boolean bothStarted = false;
+
         synchronized (mThreadsLock)
         {
             mReadingThreadStarted = true;
 
-            // Call onConnected() method of listeners if net called yet.
-            callOnConnectedIfNotYet();
-
-            if (mWritingThreadStarted == false)
+            if (mWritingThreadStarted)
             {
-                // Wait for the writing thread to start.
-                return;
+                // Both the reading thread and the writing thread have started.
+                bothStarted = true;
             }
         }
 
-        // Both the reading thread and the writing thread have started.
-        onThreadsStarted();
+        // Call onConnected() method of listeners if not called yet.
+        callOnConnectedIfNotYet();
+
+        // If both the reading thread and the writing thread have started.
+        if (bothStarted)
+        {
+            onThreadsStarted();
+        }
     }
 
 
@@ -3014,22 +3020,27 @@ public class WebSocket
      */
     void onWritingThreadStarted()
     {
+        boolean bothStarted = false;
+
         synchronized (mThreadsLock)
         {
             mWritingThreadStarted = true;
 
-            // Call onConnected() method of listeners if not called yet.
-            callOnConnectedIfNotYet();
-
-            if (mReadingThreadStarted == false)
+            if (mReadingThreadStarted)
             {
-                // Wait for the reading thread to start.
-                return;
+                // Both the reading thread and the writing thread have started.
+                bothStarted = true;
             }
         }
 
-        // Both the reading thread and the writing thread have started.
-        onThreadsStarted();
+        // Call onConnected() method of listeners if not called yet.
+        callOnConnectedIfNotYet();
+
+        // If both the reading thread and the writing thread have started.
+        if (bothStarted)
+        {
+            onThreadsStarted();
+        }
     }
 
 
@@ -3040,19 +3051,20 @@ public class WebSocket
      */
     private void callOnConnectedIfNotYet()
     {
-        // This method is called in synchronized (mThreadsLock) block.
-
-        // If onConnected() has already been called.
-        if (mOnConnectedCalled)
+        synchronized (mOnConnectedCalledLock)
         {
-            // Do not call onConnected() twice.
-            return;
+            // If onConnected() has already been called.
+            if (mOnConnectedCalled)
+            {
+                // Do not call onConnected() twice.
+                return;
+            }
+
+            mOnConnectedCalled = true;
         }
 
         // Notify the listeners that the handshake succeeded.
         mListenerManager.callOnConnected(mServerHeaders);
-
-        mOnConnectedCalled = true;
     }
 
 
