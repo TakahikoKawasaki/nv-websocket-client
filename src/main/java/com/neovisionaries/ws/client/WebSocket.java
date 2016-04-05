@@ -1867,6 +1867,9 @@ public class WebSocket
         }
         catch (WebSocketException e)
         {
+            // Close the socket.
+            mSocketConnector.closeSilently();
+
             // Change the state to CLOSED.
             mStateManager.setState(CLOSED);
 

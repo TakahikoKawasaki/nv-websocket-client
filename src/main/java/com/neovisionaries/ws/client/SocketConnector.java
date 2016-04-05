@@ -185,4 +185,17 @@ class SocketConnector
             throw new WebSocketException(WebSocketError.SSL_HANDSHAKE_ERROR, message, e);
         }
     }
+
+
+    void closeSilently()
+    {
+        try
+        {
+            mSocket.close();
+        }
+        catch (IOException e)
+        {
+            // Ignored.
+        }
+    }
 }
