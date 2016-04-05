@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+1.24 (2016-04-05)
+-----------------
+
+- Modified `WebSocket.java` to close the socket explicitly on failure
+  of connection establishment or opening handshake. For the issue #45.
+
+
 1.23 (2016-03-21)
 -----------------
 
