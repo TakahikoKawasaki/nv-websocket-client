@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+1.25 (2016-04-06)
+-----------------
+
+- Changed the position of the call of `notifyFinished()` in
+  `ReadingThread` and `WritingThread` (#46)
+
+
 1.24 (2016-04-05)
 -----------------
 
