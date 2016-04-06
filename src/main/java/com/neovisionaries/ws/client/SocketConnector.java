@@ -193,7 +193,7 @@ class SocketConnector
         {
             mSocket.close();
         }
-        catch (IOException e)
+        catch (Throwable t)
         {
             // Ignored.
         }

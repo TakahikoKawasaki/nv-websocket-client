@@ -75,6 +75,9 @@ class WritingThread extends Thread
             mStopped = true;
             notifyAll();
         }
+
+        // Notify this writing thread finished.
+        notifyFinished();
     }
 
 
@@ -122,9 +125,6 @@ class WritingThread extends Thread
         {
             // An I/O error occurred.
         }
-
-        // Notify this writing thread finished.
-        notifyFinished();
     }
 
 

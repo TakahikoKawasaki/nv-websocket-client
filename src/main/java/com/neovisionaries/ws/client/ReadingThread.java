@@ -72,6 +72,9 @@ class ReadingThread extends Thread
             manager.callOnError(cause);
             manager.callOnUnexpectedError(cause);
         }
+
+        // Notify this reading thread finished.
+        notifyFinished();
     }
 
 
@@ -109,9 +112,6 @@ class ReadingThread extends Thread
 
         // Wait for a close frame if one has not been received yet.
         waitForCloseFrame();
-
-        // Notify this reading thread finished.
-        notifyFinished();
     }
 
 
