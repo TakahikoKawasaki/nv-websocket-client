@@ -1,6 +1,14 @@
 CHANGES
 =======
 
+1.26 (2016-04-21)
+-----------------
+
+- Added a safeguard for the case where a server fails to send back a
+  close frame. This is a bugfix for the issues #29 and #48.
+- Added `WebSocket.disconnect(int, String, long)`.
+
+
 1.25 (2016-04-06)
 -----------------
 
