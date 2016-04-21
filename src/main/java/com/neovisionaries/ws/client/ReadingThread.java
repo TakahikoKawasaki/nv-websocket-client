@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Neo Visionaries Inc.
+ * Copyright (C) 2015-2016 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import static com.neovisionaries.ws.client.WebSocketState.CLOSING;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -36,12 +37,15 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
 
 class ReadingThread extends Thread
 {
-    private static final long INTERRUPTION_TIMER_DELAY = 60 * 1000;
     private final WebSocket mWebSocket;
     private boolean mStopRequested;
     private WebSocketFrame mCloseFrame;
     private List<WebSocketFrame> mContinuation = new ArrayList<WebSocketFrame>();
     private final PerMessageCompressionExtension mPMCE;
+    private Object mCloseLock = new Object();
+    private Timer mCloseTimer;
+    private CloseTask mCloseTask;
+    private long mCloseDelay;
 
 
     public ReadingThread(WebSocket websocket)
@@ -112,16 +116,40 @@ class ReadingThread extends Thread
 
         // Wait for a close frame if one has not been received yet.
         waitForCloseFrame();
+
+        // Cancel a task which calls Socket.close() if running.
+        cancelClose();
     }
 
 
-    void requestStop()
+    void requestStop(long closeDelay)
     {
         synchronized (this)
         {
+            if (mStopRequested)
+            {
+                return;
+            }
+
             mStopRequested = true;
-            interrupt();
         }
+
+        // interrupt() may not interrupt a blocking socket read(), so calling
+        // interrupt() here may not work. interrupt() in Java is different
+        // from signal-based interruption in C which unblocks a read() system
+        // call. Anyway, let's mark this thread as interrupted.
+        interrupt();
+
+        // To surely unblock a read() call, Socket.close() needs to be called.
+        // Or, shutdownInterrupt() may work, but it is not explicitly stated
+        // in the JavaDoc. In either case, interruption should not be executed
+        // now because a close frame from the server should be waited for.
+        //
+        // So, let's schedule a task with some delay which calls Socket.close().
+        // However, in normal cases, a close frame will arrive from the server
+        // before the task calls Socket.close().
+        mCloseDelay = closeDelay;
+        scheduleClose();
     }
 
 
@@ -315,7 +343,7 @@ class ReadingThread extends Thread
         {
             if (mStopRequested)
             {
-                // Intentionally interrupted.
+                // Thread.interrupt() interrupted a blocking socket read operation.
                 intentionallyInterrupted = true;
             }
             else
@@ -328,10 +356,18 @@ class ReadingThread extends Thread
         }
         catch (IOException e)
         {
-            // An I/O error occurred while a frame was being read from the web socket.
-            wse = new WebSocketException(
-                WebSocketError.IO_ERROR_IN_READING,
-                "An I/O error occurred while a frame was being read from the web socket: " + e.getMessage(), e);
+            if (mStopRequested && isInterrupted())
+            {
+                // Socket.close() interrupted a blocking socket read operation.
+                intentionallyInterrupted = true;
+            }
+            else
+            {
+                // An I/O error occurred while a frame was being read from the web socket.
+                wse = new WebSocketException(
+                    WebSocketError.IO_ERROR_IN_READING,
+                    "An I/O error occurred while a frame was being read from the web socket: " + e.getMessage(), e);
+            }
         }
         catch (WebSocketException e)
         {
@@ -1036,8 +1072,9 @@ class ReadingThread extends Thread
 
         WebSocketFrame frame = null;
 
-        // Schedule a timer to prevent from waiting forever.
-        Timer timer = scheduleInterruptionTimer();
+        // Schedule a task which calls Socket.close() to prevent
+        // the code below from looping forever.
+        scheduleClose();
 
         while (true)
         {
@@ -1046,7 +1083,7 @@ class ReadingThread extends Thread
                 // Read a frame from the server.
                 frame = mWebSocket.getInput().readFrame();
             }
-            catch (Exception e)
+            catch (Throwable t)
             {
                 // Give up receiving a close frame.
                 break;
@@ -1059,35 +1096,78 @@ class ReadingThread extends Thread
                 mCloseFrame = frame;
                 break;
             }
-        }
 
-        // Cancel the timer for the case where a close frame was received.
-        timer.cancel();
-    }
-
-
-    private Timer scheduleInterruptionTimer()
-    {
-        Timer timer = new Timer("ReadingThreadInterruptionTimer");
-
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run()
+            if (isInterrupted())
             {
-                if (ReadingThread.this.isAlive())
-                {
-                    // Interrupt WebSocketInputStream.readFrame().
-                    ReadingThread.this.interrupt();
-                }
+                break;
             }
-        }, INTERRUPTION_TIMER_DELAY);
-
-        return timer;
+        }
     }
 
 
     private void notifyFinished()
     {
         mWebSocket.onReadingThreadFinished(mCloseFrame);
+    }
+
+
+    private void scheduleClose()
+    {
+        synchronized (mCloseLock)
+        {
+            cancelCloseTask();
+            scheduleCloseTask();
+        }
+    }
+
+
+    private void scheduleCloseTask()
+    {
+        mCloseTask  = new CloseTask();
+        mCloseTimer = new Timer("ReadingThreadCloseTimer");
+        mCloseTimer.schedule(mCloseTask, mCloseDelay);
+    }
+
+
+    private void cancelClose()
+    {
+        synchronized (mCloseLock)
+        {
+            cancelCloseTask();
+        }
+    }
+
+
+    private void cancelCloseTask()
+    {
+        if (mCloseTimer != null)
+        {
+            mCloseTimer.cancel();
+            mCloseTimer = null;
+        }
+
+        if (mCloseTask != null)
+        {
+            mCloseTask.cancel();
+            mCloseTask = null;
+        }
+    }
+
+
+    private class CloseTask extends TimerTask
+    {
+        @Override
+        public void run()
+        {
+            try
+            {
+                Socket socket = mWebSocket.getSocket();
+                socket.close();
+            }
+            catch (Throwable t)
+            {
+                // Ignore.
+            }
+        }
     }
 }

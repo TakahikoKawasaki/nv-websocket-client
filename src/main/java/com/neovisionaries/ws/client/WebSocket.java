@@ -874,6 +874,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  */
 public class WebSocket
 {
+    private static final long DEFAULT_CLOSE_DELAY = 10 * 1000L;
     private final WebSocketFactory mWebSocketFactory;
     private final SocketConnector mSocketConnector;
     private final StateManager mStateManager;
@@ -2041,6 +2042,11 @@ public class WebSocket
     /**
      * Disconnect the web socket.
      *
+     * <p>
+     * This method is an alias of {@link #disconnect(int, String, long)
+     * disconnect}{@code (closeCode, reason, 10000L)}.
+     * </p>
+     *
      * @param closeCode
      *         The close code embedded in a <a href=
      *         "https://tools.ietf.org/html/rfc6455#section-5.5.1">close frame</a>
@@ -2065,6 +2071,54 @@ public class WebSocket
      * @since 1.5
      */
     public WebSocket disconnect(int closeCode, String reason)
+    {
+        return disconnect(closeCode, reason, DEFAULT_CLOSE_DELAY);
+    }
+
+
+    /**
+     * Disconnect the web socket.
+     *
+     * @param closeCode
+     *         The close code embedded in a <a href=
+     *         "https://tools.ietf.org/html/rfc6455#section-5.5.1">close frame</a>
+     *         which this WebSocket client will send to the server.
+     *
+     * @param reason
+     *         The reason embedded in a <a href=
+     *         "https://tools.ietf.org/html/rfc6455#section-5.5.1">close frame</a>
+     *         which this WebSocket client will send to the server. Note that
+     *         the length of the bytes which represents the given reason must
+     *         not exceed 125. In other words, {@code (reason.}{@link
+     *         String#getBytes(String) getBytes}{@code ("UTF-8").length <= 125)}
+     *         must be true.
+     *
+     * @param closeDelay
+     *         Delay in milliseconds before calling {@link Socket#close()} forcibly.
+     *         This safeguard is needed for the case where the server fails to send
+     *         back a close frame. The default value is 10000 (= 10 seconds). When
+     *         a negative value is given, the default value is used.
+     *
+     *         If a very short time (e.g. 0) is given, it is likely to happen either
+     *         (1) that this client will fail to send a close frame to the server
+     *         (in this case, you will probably see an error message "Flushing frames
+     *         to the server failed: Socket closed") or (2) that the WebSocket
+     *         connection will be closed before this client receives a close frame
+     *         from the server (in this case, the second argument of {@link
+     *         WebSocketListener#onDisconnected(WebSocket, WebSocketFrame,
+     *         WebSocketFrame, boolean) WebSocketListener.onDisconnected} will be
+     *         {@code null}).
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @see WebSocketCloseCode
+     *
+     * @see <a href="https://tools.ietf.org/html/rfc6455#section-5.5.1">RFC 6455, 5.5.1. Close</a>
+     *
+     * @since 1.26
+     */
+    public WebSocket disconnect(int closeCode, String reason, long closeDelay)
     {
         synchronized (mStateManager)
         {
@@ -2103,8 +2157,15 @@ public class WebSocket
         // Notify the listeners of the state change.
         mListenerManager.callOnStateChanged(CLOSING);
 
+        // If a negative value is given.
+        if (closeDelay < 0)
+        {
+            // Use the default value.
+            closeDelay = DEFAULT_CLOSE_DELAY;
+        }
+
         // Request the threads to stop.
-        stopThreads();
+        stopThreads(closeDelay);
 
         return this;
     }
@@ -2900,7 +2961,7 @@ public class WebSocket
      * is called.
      * </p>
      */
-    private void stopThreads()
+    private void stopThreads(long closeDelay)
     {
         ReadingThread readingThread;
         WritingThread writingThread;
@@ -2916,7 +2977,7 @@ public class WebSocket
 
         if (readingThread != null)
         {
-            readingThread.requestStop();
+            readingThread.requestStop(closeDelay);
         }
 
         if (writingThread != null)
