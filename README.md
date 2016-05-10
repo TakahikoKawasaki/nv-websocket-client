@@ -34,7 +34,7 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>1.26</version>
+    <version>1.27</version>
 </dependency>
 ```
 
@@ -43,7 +43,7 @@ Gradle
 
 ```Gradle
 dependencies {
-    compile 'com.neovisionaries:nv-websocket-client:1.26'
+    compile 'com.neovisionaries:nv-websocket-client:1.27'
 }
 ```
 
@@ -52,7 +52,7 @@ OSGi
 ----
 
     Bundle-SymbolicName: com.neovisionaries.ws.client
-    Export-Package: com.neovisionaries.ws.client;version="1.26.0"
+    Export-Package: com.neovisionaries.ws.client;version="1.27.0"
 
 
 Source Code
@@ -248,6 +248,7 @@ configure the web socket instance by using the following methods.
 | `getSocket`         | Gets the underlying `Socket` instance to configure it.  |
 | `setExtended`       | Disables validity checks on RSV1/RSV2/RSV3 and opcode.  |
 | `setFrameQueueSize` | Set the size of the frame queue for congestion control. |
+| `setMaxPayloadSize` | Set the maximum payload size.                           |
 
 Note that `permessage-deflate` extension ([RFC 7692](http://tools.ietf.org/html/rfc7692))
 has been supported since version 1.17. To enable the extension, call `addExtension`
@@ -488,7 +489,7 @@ is 125. Therefore, the length of a byte array returned from `generate()`
 method must not exceed 125.
 
 
-### Auto Flush
+#### Auto Flush
 
 By default, a frame is automatically flushed to the server immediately
 after `sendFrame` method is executed. This automatic flush can be disabled
@@ -508,7 +509,7 @@ ws.flush();
 ```
 
 
-### Congestion Control
+#### Congestion Control
 
 `sendXxx` methods queue a `WebSocketFrame` instance to the internal queue.
 By default, no upper limit is imposed on the queue size, so `sendXxx`
@@ -534,6 +535,27 @@ frames (`WritingThread`) is going to stop or has already stopped. In
 addition, method calls to send a
 [control frame](https://tools.ietf.org/html/rfc6455#section-5.5) (e.g.
 `sendClose()` and `sendPing()`) do not block.
+
+
+#### Maximum Payload Size
+
+You can set an upper limit on the payload size of WebSocket frames by
+calling `setMaxPayloadSize(int)` method with a positive value. Text, binary
+and continuation frames whose payload size is bigger than the maximum payload
+size you have set will be split into multiple frames.
+
+```java
+// Set 1024 as the maximum payload size.
+ws.setMaxPayloadSize(1024);
+```
+
+Control frames (close, ping and pong frames) are never split as per the
+specification.
+
+If permessage-deflate extension is enabled and if the payload size of a
+WebSocket frame after compression does not exceed the maximum payload size,
+the WebSocket frame is not split even if the payload size before compression
+exceeds the maximum payload size.
 
 
 #### Disconnect WebSocket

@@ -1,6 +1,12 @@
 CHANGES
 =======
 
+1.27 (2016-05-10)
+-----------------
+
+- Implemented a mechanism to set the maximum payload size. (Issue #8)
+
+
 1.26 (2016-04-21)
 -----------------
 
