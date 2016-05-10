@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Neo Visionaries Inc.
+ * Copyright (C) 2015-2016 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,12 @@ class PerMessageDeflateExtension extends PerMessageCompressionExtension
     private int mClientWindowSize = MAX_WINDOW_SIZE;
     private int mIncomingSlidingWindowBufferSize;
     private ByteArray mIncomingSlidingWindow;
+
+
+    public PerMessageDeflateExtension()
+    {
+        super(WebSocketExtension.PERMESSAGE_DEFLATE);
+    }
 
 
     public PerMessageDeflateExtension(String name)

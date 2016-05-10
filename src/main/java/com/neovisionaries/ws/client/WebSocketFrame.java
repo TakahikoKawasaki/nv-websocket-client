@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Neo Visionaries Inc.
+ * Copyright (C) 2015-2016 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@ import static com.neovisionaries.ws.client.WebSocketOpcode.CONTINUATION;
 import static com.neovisionaries.ws.client.WebSocketOpcode.PING;
 import static com.neovisionaries.ws.client.WebSocketOpcode.PONG;
 import static com.neovisionaries.ws.client.WebSocketOpcode.TEXT;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -1053,5 +1056,170 @@ public class WebSocketFrame
         }
 
         return payload;
+    }
+
+
+    static WebSocketFrame compressFrame(WebSocketFrame frame, PerMessageCompressionExtension pmce)
+    {
+        // If Per-Message Compression is not enabled.
+        if (pmce == null)
+        {
+            // No compression.
+            return frame;
+        }
+
+        // If the frame is neither a TEXT frame nor a BINARY frame.
+        if (frame.isTextFrame()   == false &&
+            frame.isBinaryFrame() == false)
+        {
+            // No compression.
+            return frame;
+        }
+
+        // If the frame is not the final frame.
+        if (frame.getFin() == false)
+        {
+            // The compression must be applied to this frame and
+            // all the subsequent continuation frames, but the
+            // current implementation does not support the behavior.
+            return frame;
+        }
+
+        // If the RSV1 bit is set.
+        if (frame.getRsv1())
+        {
+            // In the current implementation, RSV1=true is allowed
+            // only as Per-Message Compressed Bit (See RFC 7692,
+            // 6. Framing). Therefore, RSV1=true here is regarded
+            // as "already compressed".
+            return frame;
+        }
+
+        // The plain payload before compression.
+        byte[] payload = frame.getPayload();
+
+        // If the payload is empty.
+        if (payload == null || payload.length == 0)
+        {
+            // No compression.
+            return frame;
+        }
+
+        // Compress the payload.
+        byte[] compressed = compress(payload, pmce);
+
+        // If the length of the compressed data is not less than
+        // that of the original plain payload.
+        if (payload.length <= compressed.length)
+        {
+            // It's better not to compress the payload.
+            return frame;
+        }
+
+        // Replace the plain payload with the compressed data.
+        frame.setPayload(compressed);
+
+        // Set Per-Message Compressed Bit (See RFC 7692, 6. Framing).
+        frame.setRsv1(true);
+
+        return frame;
+    }
+
+
+    private static byte[] compress(byte[] data, PerMessageCompressionExtension pmce)
+    {
+        try
+        {
+            // Compress the data.
+            return pmce.compress(data);
+        }
+        catch (WebSocketException e)
+        {
+            // Failed to compress the data. Ignore this error and use
+            // the plain original data. The current implementation
+            // does not call any listener callback method for this error.
+            return data;
+        }
+    }
+
+
+    static List<WebSocketFrame> splitIfNecessary(
+            WebSocketFrame frame, int maxPayloadSize, PerMessageCompressionExtension pmce)
+    {
+        // If the maximum payload size is not specified.
+        if (maxPayloadSize == 0)
+        {
+            // Not split.
+            return null;
+        }
+
+        // If the total length of the payload is equal to or
+        // less than the maximum payload size.
+        if (frame.getPayloadLength() <= maxPayloadSize)
+        {
+            // Not split.
+            return null;
+        }
+
+        // If the frame is a binary frame or a text frame.
+        if (frame.isBinaryFrame() || frame.isTextFrame())
+        {
+            // Try to compress the frame. In the current implementation, binary
+            // frames and text frames with the FIN bit true can be compressed.
+            // The compressFrame() method may change the payload and the RSV1
+            // bit of the given frame.
+            frame = compressFrame(frame, pmce);
+
+            // If the payload length of the frame has become equal to or less
+            // than the maximum payload size as a result of the compression.
+            if (frame.getPayloadLength() <= maxPayloadSize)
+            {
+                // Not split. (Note that the frame has been compressed)
+                return null;
+            }
+        }
+        else if (frame.isContinuationFrame() == false)
+        {
+            // Control frames (Close/Ping/Pong) are not split.
+            return null;
+        }
+
+        // Split the frame.
+        return split(frame, maxPayloadSize);
+    }
+
+
+    private static List<WebSocketFrame> split(WebSocketFrame frame, int maxPayloadSize)
+    {
+        // The original payload and the original FIN bit.
+        byte[] originalPayload = frame.getPayload();
+        boolean originalFin    = frame.getFin();
+
+        List<WebSocketFrame> frames = new ArrayList<WebSocketFrame>();
+
+        // Generate the first frame using the existing WebSocketFrame instance.
+        // Note that the reserved bit 1 and the opcode are untouched.
+        byte[] payload = Arrays.copyOf(originalPayload, maxPayloadSize);
+        frame.setFin(false).setPayload(payload);
+        frames.add(frame);
+
+        for (int from = maxPayloadSize; from < originalPayload.length; from += maxPayloadSize)
+        {
+            // Prepare the payload of the next continuation frame.
+            int to  = Math.min(from + maxPayloadSize, originalPayload.length);
+            payload = Arrays.copyOfRange(originalPayload, from, to);
+
+            // Create a continuation frame.
+            WebSocketFrame cont = WebSocketFrame.createContinuationFrame(payload);
+            frames.add(cont);
+        }
+
+        if (originalFin)
+        {
+            // Set the FIN bit of the last frame.
+            frames.get(frames.size() - 1).setFin(true);
+        }
+
+        return frames;
     }
 }

@@ -395,6 +395,10 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *       <td>{@link #setFrameQueueSize(int) setFrameQueueSize}</td>
  *       <td>Set the size of the frame queue for <a href="#congestion_control">congestion control</a>.</td>
  *     </tr>
+ *     <tr>
+ *       <td>{@link #setMaxPayloadSize(int) setMaxPayloadSize}</td>
+ *       <td>Set the <a href="#maximum_payload_size">maximum payload size</a>.</td>
+ *     </tr>
  *   </tbody>
  * </table>
  * </blockquote>
@@ -741,6 +745,31 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * >control frame</a> (e.g. {@link #sendClose()} and {@link #sendPing()}) do not block.
  * </p>
  *
+ * <h3 id="maximum_payload_size">Maximum Payload Size</h3>
+ *
+ * <p>
+ * You can set an upper limit on the payload size of WebSocket frames by calling
+ * {@link #setMaxPayloadSize(int)} method with a positive value. Text, binary and
+ * continuation frames whose payload size is bigger than the maximum payload size
+ * you have set will be split into multiple frames.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Set 1024 as the maximum payload size.</span>
+ * ws.{@link #setMaxPayloadSize(int) setMaxPayloadSize}(1024);</pre>
+ * </blockquote>
+ *
+ * <p>
+ * Control frames (close, ping and pong frames) are never split as per the specification.
+ * </p>
+ *
+ * <p>
+ * If permessage-deflate extension is enabled and if the payload size of a WebSocket
+ * frame after compression does not exceed the maximum payload size, the WebSocket
+ * frame is not split even if the payload size before compression execeeds the
+ * maximum payload size.
+ * </p>
+ *
  * <h3>Disconnect WebSocket</h3>
  *
  * <p>
@@ -893,6 +922,7 @@ public class WebSocket
     private boolean mExtended;
     private boolean mAutoFlush = true;
     private int mFrameQueueSize;
+    private int mMaxPayloadSize;
     private boolean mOnConnectedCalled;
     private Object mOnConnectedCalledLock = new Object();
     private boolean mReadingThreadStarted;
@@ -1504,6 +1534,56 @@ public class WebSocket
         }
 
         mFrameQueueSize = size;
+
+        return this;
+    }
+
+
+    /**
+     * Get the maximum payload size. The default value is 0 which means that
+     * the maximum payload size is not set and as a result frames are not split.
+     *
+     * @return
+     *         The maximum payload size. 0 means that the maximum payload size
+     *         is not set.
+     *
+     * @since 1.27
+     */
+    public int getMaxPayloadSize()
+    {
+        return mMaxPayloadSize;
+    }
+
+
+    /**
+     * Set the maximum payload size.
+     *
+     * <p>
+     * Text, binary and continuation frames whose payload size is bigger than
+     * the maximum payload size will be split into multiple frames. Note that
+     * control frames (close, ping and pong frames) are not split as per the
+     * specification even if their payload size exceeds the maximum payload size.
+     * </p>
+     *
+     * @param size
+     *         The maximum payload size. 0 to unset the maximum payload size.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @throws IllegalArgumentException
+     *         {@code size} is negative.
+     *
+     * @since 1.27
+     */
+    public WebSocket setMaxPayloadSize(int size) throws IllegalArgumentException
+    {
+        if (size < 0)
+        {
+            throw new IllegalArgumentException("size must not be negative.");
+        }
+
+        mMaxPayloadSize = size;
 
         return this;
     }
@@ -2263,22 +2343,46 @@ public class WebSocket
         // Get the reference to the writing thread.
         WritingThread wt = mWritingThread;
 
-        // If and only if an instance of WritingThread is available.
-        //
         // Some applications call sendFrame() without waiting for the
         // notification of WebSocketListener.onConnected() (Issue #23),
         // and/or even after the connection is closed. That is, there
         // are chances that sendFrame() is called when mWritingThread
         // is null. So, it should be checked whether an instance of
         // WritingThread is available or not before calling queueFrame().
-        if (wt != null)
+        if (wt == null)
         {
-            // Queue the frame. Even if the current state is CLOSED,
-            // queuing a frame won't be a big issue.
+            // An instance of WritingThread is not available.
+            return this;
+        }
+
+        // Split the frame into multiple frames if necessary.
+        List<WebSocketFrame> frames = splitIfNecessary(frame);
+
+        // Queue the frame or the frames. Even if the current state is
+        // CLOSED, queueing won't be a big issue.
+
+        // If the frame was not split.
+        if (frames == null)
+        {
+            // Queue the frame.
             wt.queueFrame(frame);
+        }
+        else
+        {
+            for (WebSocketFrame f : frames)
+            {
+                // Queue the frame.
+                wt.queueFrame(f);
+            }
         }
 
         return this;
+    }
+
+
+    private List<WebSocketFrame> splitIfNecessary(WebSocketFrame frame)
+    {
+        return WebSocketFrame.splitIfNecessary(frame, mMaxPayloadSize, mPerMessageCompressionExtension);
     }
 
 
