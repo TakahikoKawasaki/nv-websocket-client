@@ -94,8 +94,10 @@ class ByteArray
         ByteBuffer newBuffer = ByteBuffer.allocate(newBufferSize);
 
         // Copy the content of the current buffer to the new buffer.
+        int oldPosition = mBuffer.position();
         mBuffer.position(0);
         newBuffer.put(mBuffer);
+        newBuffer.position(oldPosition);
 
         // Replace the buffers.
         mBuffer = newBuffer;
@@ -220,6 +222,7 @@ class ByteArray
     public void clear()
     {
         mBuffer.clear();
+        mBuffer.position(0);
         mLength = 0;
     }
 
@@ -237,6 +240,7 @@ class ByteArray
         byte[] bytes = toBytes(beginIndex, endIndex);
 
         mBuffer = ByteBuffer.wrap(bytes);
+        mBuffer.position(bytes.length);
         mLength = bytes.length;
     }
 
