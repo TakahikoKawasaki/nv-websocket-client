@@ -1,6 +1,14 @@
 CHANGES
 =======
 
+1.28 (2016-06-17)
+-----------------
+
+- Fixed a bug where compressed messages from a server sometimes failed
+  to be decompressed correctly. (Issue #60)
+  Thank you, jszczygiel.
+
+
 1.27 (2016-05-10)
 -----------------
 
