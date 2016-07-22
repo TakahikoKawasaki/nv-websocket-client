@@ -1,6 +1,21 @@
 CHANGES
 =======
 
+1.29 (2016-07-22)
+-----------------
+
+- Changed the behavior in the case where the end of the input stream of
+  a WebSocket connection is reached before a close frame is received
+  from the server. The old behavior is 'report an error'. The new one
+  is 'ignore the error'. The behavior can be controlled by using
+  `WebSocket.setMissingCloseFrameAllowed(boolean allowed)` method.
+- Added `WebSocket.isMissingCloseFrameAllowed()` method.
+- Added `WebSocket.setMissingCloseFrameAllowed(boolean)` method.
+- Added `WebSocketError.NO_MORE_FRAME` enum entry.
+- Added `InsufficientDataException` class.
+- Added `NoMoreFrameException` class.
+
+
 1.28 (2016-06-17)
 -----------------
 
