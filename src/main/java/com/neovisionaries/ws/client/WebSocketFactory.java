@@ -201,7 +201,7 @@ public class WebSocketFactory
 
 
     /**
-     * Create a web socket.
+     * Create a WebSocket.
      *
      * <p>
      * This method is an alias of {@link #createSocket(String, int)
@@ -209,10 +209,10 @@ public class WebSocketFactory
      * </p>
      *
      * @param uri
-     *         The URI of the web socket endpoint on the server side.
+     *         The URI of the WebSocket endpoint on the server side.
      *
      * @return
-     *         A web socket.
+     *         A WebSocket.
      *
      * @throws IllegalArgumentException
      *         The given URI is {@code null} or violates RFC 2396.
@@ -228,7 +228,7 @@ public class WebSocketFactory
 
 
     /**
-     * Create a web socket.
+     * Create a WebSocket.
      *
      * <p>
      * This method is an alias of {@link #createSocket(URI, int) createSocket}{@code
@@ -236,14 +236,14 @@ public class WebSocketFactory
      * </p>
      *
      * @param uri
-     *         The URI of the web socket endpoint on the server side.
+     *         The URI of the WebSocket endpoint on the server side.
      *
      * @param timeout
      *         The timeout value in milliseconds for socket connection.
      *         A timeout of zero is interpreted as an infinite timeout.
      *
      * @return
-     *         A web socket.
+     *         A WebSocket.
      *
      * @throws IllegalArgumentException
      *         The given URI is {@code null} or violates RFC 2396, or
@@ -272,7 +272,7 @@ public class WebSocketFactory
 
 
     /**
-     * Create a web socket.
+     * Create a WebSocket.
      *
      * <p>
      * This method is an alias of {@link #createSocket(URL, int) createSocket}{@code
@@ -280,10 +280,10 @@ public class WebSocketFactory
      * </p>
      *
      * @param url
-     *         The URL of the web socket endpoint on the server side.
+     *         The URL of the WebSocket endpoint on the server side.
      *
      * @return
-     *         A web socket.
+     *         A WebSocket.
      *
      * @throws IllegalArgumentException
      *         The given URL is {@code null} or failed to be converted into a URI.
@@ -299,7 +299,7 @@ public class WebSocketFactory
 
 
     /**
-     * Create a web socket.
+     * Create a WebSocket.
      *
      * <p>
      * This method is an alias of {@link #createSocket(URI, int) createSocket}{@code
@@ -307,13 +307,13 @@ public class WebSocketFactory
      * </p>
      *
      * @param url
-     *         The URL of the web socket endpoint on the server side.
+     *         The URL of the WebSocket endpoint on the server side.
      *
      * @param timeout
      *         The timeout value in milliseconds for socket connection.
      *
      * @return
-     *         A web socket.
+     *         A WebSocket.
      *
      * @throws IllegalArgumentException
      *         The given URL is {@code null} or failed to be converted into a URI,
@@ -349,7 +349,7 @@ public class WebSocketFactory
 
 
     /**
-     * Create a web socket. This method is an alias of {@link #createSocket(URI, int)
+     * Create a WebSocket. This method is an alias of {@link #createSocket(URI, int)
      * createSocket}{@code (uri, }{@link #getConnectionTimeout()}{@code )}.
      *
      * <p>
@@ -386,13 +386,13 @@ public class WebSocketFactory
      * </ol>
      *
      * @param uri
-     *         The URI of the web socket endpoint on the server side.
+     *         The URI of the WebSocket endpoint on the server side.
      *         The scheme part of the URI must be one of {@code ws},
      *         {@code wss}, {@code http} and {@code https}
      *         (case-insensitive).
      *
      * @return
-     *         A web socket.
+     *         A WebSocket.
      *
      * @throws IllegalArgumentException
      *         The given URI is {@code null} or violates RFC 2396.
@@ -407,7 +407,7 @@ public class WebSocketFactory
 
 
     /**
-     * Create a web socket.
+     * Create a WebSocket.
      *
      * <p>
      * A socket factory (= a {@link SocketFactory} instance) to create a raw
@@ -443,7 +443,7 @@ public class WebSocketFactory
      * </ol>
      *
      * @param uri
-     *         The URI of the web socket endpoint on the server side.
+     *         The URI of the WebSocket endpoint on the server side.
      *         The scheme part of the URI must be one of {@code ws},
      *         {@code wss}, {@code http} and {@code https}
      *         (case-insensitive).
@@ -452,7 +452,7 @@ public class WebSocketFactory
      *         The timeout value in milliseconds for socket connection.
      *
      * @return
-     *         A web socket.
+     *         A WebSocket.
      *
      * @throws IllegalArgumentException
      *         The given URI is {@code null} or violates RFC 2396, or

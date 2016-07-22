@@ -28,7 +28,7 @@ import java.util.List;
 
 
 /**
- * Web socket frame.
+ * WebSocket frame.
  *
  * @see <a href="https://tools.ietf.org/html/rfc6455#section-5"
  *      >RFC 6455, 5. Data Framing</a>
@@ -763,7 +763,7 @@ public class WebSocketFrame
      * returned frame is false.
      *
      * @return
-     *         A web socket frame whose FIN bit is false, opcode is
+     *         A WebSocket frame whose FIN bit is false, opcode is
      *         {@link WebSocketOpcode#CONTINUATION CONTINUATION} and
      *         payload is {@code null}.
      */
@@ -782,7 +782,7 @@ public class WebSocketFrame
      *         The payload for a newly create frame.
      *
      * @return
-     *         A web socket frame whose FIN bit is false, opcode is
+     *         A WebSocket frame whose FIN bit is false, opcode is
      *         {@link WebSocketOpcode#CONTINUATION CONTINUATION} and
      *         payload is the given one.
      */
@@ -800,7 +800,7 @@ public class WebSocketFrame
      *         The payload for a newly create frame.
      *
      * @return
-     *         A web socket frame whose FIN bit is false, opcode is
+     *         A WebSocket frame whose FIN bit is false, opcode is
      *         {@link WebSocketOpcode#CONTINUATION CONTINUATION} and
      *         payload is the given one.
      */
@@ -817,7 +817,7 @@ public class WebSocketFrame
      *         The payload for a newly created frame.
      *
      * @return
-     *         A web socket frame whose FIN bit is true, opcode is
+     *         A WebSocket frame whose FIN bit is true, opcode is
      *         {@link WebSocketOpcode#TEXT TEXT} and payload is
      *         the given one.
      */
@@ -837,7 +837,7 @@ public class WebSocketFrame
      *         The payload for a newly created frame.
      *
      * @return
-     *         A web socket frame whose FIN bit is true, opcode is
+     *         A WebSocket frame whose FIN bit is true, opcode is
      *         {@link WebSocketOpcode#BINARY BINARY} and payload is
      *         the given one.
      */
@@ -854,7 +854,7 @@ public class WebSocketFrame
      * Create a close frame.
      *
      * @return
-     *         A web socket frame whose FIN bit is true, opcode is
+     *         A WebSocket frame whose FIN bit is true, opcode is
      *         {@link WebSocketOpcode#CLOSE CLOSE} and payload is
      *         {@code null}.
      */
@@ -873,7 +873,7 @@ public class WebSocketFrame
      *         The close code.
      *
      * @return
-     *         A web socket frame whose FIN bit is true, opcode is
+     *         A WebSocket frame whose FIN bit is true, opcode is
      *         {@link WebSocketOpcode#CLOSE CLOSE} and payload
      *         contains a close code.
      *
@@ -898,7 +898,7 @@ public class WebSocketFrame
      *         >5.5. Control Frames</a>).
      *
      * @return
-     *         A web socket frame whose FIN bit is true, opcode is
+     *         A WebSocket frame whose FIN bit is true, opcode is
      *         {@link WebSocketOpcode#CLOSE CLOSE} and payload
      *         contains a close code and a close reason.
      *
@@ -914,7 +914,7 @@ public class WebSocketFrame
      * Create a ping frame.
      *
      * @return
-     *         A web socket frame whose FIN bit is true, opcode is
+     *         A WebSocket frame whose FIN bit is true, opcode is
      *         {@link WebSocketOpcode#PING PING} and payload is
      *         {@code null}.
      */
@@ -936,7 +936,7 @@ public class WebSocketFrame
      *         >5.5. Control Frames</a>).
      *
      * @return
-     *         A web socket frame whose FIN bit is true, opcode is
+     *         A WebSocket frame whose FIN bit is true, opcode is
      *         {@link WebSocketOpcode#PING PING} and payload is
      *         the given one.
      */
@@ -956,7 +956,7 @@ public class WebSocketFrame
      *         >5.5. Control Frames</a>).
      *
      * @return
-     *         A web socket frame whose FIN bit is true, opcode is
+     *         A WebSocket frame whose FIN bit is true, opcode is
      *         {@link WebSocketOpcode#PING PING} and payload is
      *         the given one.
      */
@@ -970,7 +970,7 @@ public class WebSocketFrame
      * Create a pong frame.
      *
      * @return
-     *         A web socket frame whose FIN bit is true, opcode is
+     *         A WebSocket frame whose FIN bit is true, opcode is
      *         {@link WebSocketOpcode#PONG PONG} and payload is
      *         {@code null}.
      */
@@ -992,7 +992,7 @@ public class WebSocketFrame
      *         >5.5. Control Frames</a>).
      *
      * @return
-     *         A web socket frame whose FIN bit is true, opcode is
+     *         A WebSocket frame whose FIN bit is true, opcode is
      *         {@link WebSocketOpcode#PONG PONG} and payload is
      *         the given one.
      */
@@ -1012,7 +1012,7 @@ public class WebSocketFrame
      *         >5.5. Control Frames</a>).
      *
      * @return
-     *         A web socket frame whose FIN bit is true, opcode is
+     *         A WebSocket frame whose FIN bit is true, opcode is
      *         {@link WebSocketOpcode#PONG PONG} and payload is
      *         the given one.
      */

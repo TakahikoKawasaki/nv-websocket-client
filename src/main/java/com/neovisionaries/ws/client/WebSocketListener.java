@@ -21,7 +21,7 @@ import java.util.Map;
 
 
 /**
- * Listener interface to receive web socket events.
+ * Listener interface to receive WebSocket events.
  *
  * <p>
  * An implementation of this interface should be added by {@link
@@ -39,13 +39,13 @@ import java.util.Map;
 public interface WebSocketListener
 {
     /**
-     * Called after the state of the web socket changed.
+     * Called after the state of the WebSocket changed.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param newState
-     *         The new state of the web socket.
+     *         The new state of the WebSocket.
      *
      * @throws Exception
      *         An exception thrown by an implementation of this method.
@@ -57,10 +57,10 @@ public interface WebSocketListener
 
 
     /**
-     * Called after the opening handshake of the web socket connection succeeded.
+     * Called after the opening handshake of the WebSocket connection succeeded.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSsocket.
      *
      * @param headers
      *         HTTP headers received from the server. Keys of the map are
@@ -87,7 +87,7 @@ public interface WebSocketListener
      * </p>
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param cause
      *         The exception thrown by {@link WebSocket#connect() connect()}
@@ -103,17 +103,19 @@ public interface WebSocketListener
 
 
     /**
-     * Called after the web socket connection was closed.
+     * Called after the WebSocket connection was closed.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param serverCloseFrame
-     *         The close frame which the server sent to this client.
+     *         The <a href="https://tools.ietf.org/html/rfc6455#section-5.5.1"
+     *         >close frame</a> which the server sent to this client.
      *         This may be {@code null}.
      *
      * @param clientCloseFrame
-     *         The close frame which this client sent to the server.
+     *         The <a href="https://tools.ietf.org/html/rfc6455#section-5.5.1"
+     *         >close frame</a> which this client sent to the server.
      *         This may be {@code null}.
      *
      * @param closedByServer
@@ -134,7 +136,7 @@ public interface WebSocketListener
      * an <code>on<i>Xxx</i>Frame</code> method is called.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param frame
      *         The frame.
@@ -150,10 +152,10 @@ public interface WebSocketListener
      * Called when a continuation frame (opcode = 0x0) was received.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param frame
-     *         The frame.
+     *         The continuation frame.
      *
      * @throws Exception
      *         An exception thrown by an implementation of this method.
@@ -166,10 +168,10 @@ public interface WebSocketListener
      * Called when a text frame (opcode = 0x1) was received.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param frame
-     *         The frame.
+     *         The text frame.
      *
      * @throws Exception
      *         An exception thrown by an implementation of this method.
@@ -182,10 +184,10 @@ public interface WebSocketListener
      * Called when a binary frame (opcode = 0x2) was received.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param frame
-     *         The frame.
+     *         The binary frame.
      *
      * @throws Exception
      *         An exception thrown by an implementation of this method.
@@ -195,13 +197,14 @@ public interface WebSocketListener
 
 
     /**
-     * Called when a close frame (opcode = 0x8) was received.
+     * Called when a <a href="https://tools.ietf.org/html/rfc6455#section-5.5.1"
+     * >close frame</a> (opcode = 0x8) was received.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param frame
-     *         The frame.
+     *         The <a href="https://tools.ietf.org/html/rfc6455#section-5.5.1">close frame</a>.
      *
      * @throws Exception
      *         An exception thrown by an implementation of this method.
@@ -211,13 +214,14 @@ public interface WebSocketListener
 
 
     /**
-     * Called when a ping frame (opcode = 0x9) was received.
+     * Called when a <a href="https://tools.ietf.org/html/rfc6455#section-5.5.2"
+     * >ping frame</a> (opcode = 0x9) was received.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param frame
-     *         The frame.
+     *         The <a href="https://tools.ietf.org/html/rfc6455#section-5.5.2">ping frame</a>.
      *
      * @throws Exception
      *         An exception thrown by an implementation of this method.
@@ -227,13 +231,14 @@ public interface WebSocketListener
 
 
     /**
-     * Called when a pong frame (opcode = 0xA) was received.
+     * Called when a <a href="https://tools.ietf.org/html/rfc6455#section-5.5.3"
+     * >pong frame</a> (opcode = 0xA) was received.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param frame
-     *         The frame.
+     *         The <a href="https://tools.ietf.org/html/rfc6455#section-5.5.3">pong frame</a>.
      *
      * @throws Exception
      *         An exception thrown by an implementation of this method.
@@ -246,7 +251,7 @@ public interface WebSocketListener
      * Called when a text message was received.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param text
      *         The text message.
@@ -262,7 +267,7 @@ public interface WebSocketListener
      * Called when a binary message was received.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param binary
      *         The binary message.
@@ -275,13 +280,13 @@ public interface WebSocketListener
 
 
     /**
-     * Called before a web socket frame is sent.
+     * Called before a WebSocket frame is sent.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param frame
-     *         The frame to be sent.
+     *         The WebSocket frame to be sent.
      *
      * @throws Exception
      *         An exception thrown by an implementation of this method.
@@ -293,11 +298,11 @@ public interface WebSocketListener
 
 
     /**
-     * Called when a web socket frame was sent to the server
+     * Called when a WebSocket frame was sent to the server
      * (but not flushed yet).
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param frame
      *         The sent frame.
@@ -310,8 +315,9 @@ public interface WebSocketListener
 
 
     /**
-     * Called when a web socket frame was not sent to the server
-     * because a close frame has already been sent.
+     * Called when a WebSocket frame was not sent to the server
+     * because a <a href="https://tools.ietf.org/html/rfc6455#section-5.5.1"
+     * >close frame</a> has already been sent.
      *
      * <p>
      * Note that {@code onFrameUnsent} is not called when {@link
@@ -320,7 +326,7 @@ public interface WebSocketListener
      * </p>
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param frame
      *         The unsent frame.
@@ -337,7 +343,7 @@ public interface WebSocketListener
      * an <code>on<i>Xxx</i>Error</code> method is called.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param cause
      *         An exception that represents the error.
@@ -350,10 +356,24 @@ public interface WebSocketListener
 
 
     /**
-     * Called when a frame failed to be read from the web socket.
+     * Called when a WebSocket frame failed to be read from the WebSocket.
+     *
+     * <p>
+     * Some WebSocket server implementations close a WebSocket connection without sending
+     * a <a href="https://tools.ietf.org/html/rfc6455#section-5.5.1">close frame</a> to a
+     * client in some cases. Strictly speaking, this behavior is a violation against the
+     * specification (<a href="https://tools.ietf.org/html/rfc6455">RFC 6455</a>). However,
+     * this library has allowed the behavior by default since the version 1.29. Even if
+     * the end of the input stream of a WebSocket connection were reached without a
+     * close frame being received, it would trigger neither {@link #onError(WebSocket,
+     * WebSocketException) onError()} method nor {@link #onFrameError(WebSocket,
+     * WebSocketException, WebSocketFrame) onFrameError()} method. If you want to make
+     * this library report an error in the case, pass {@code false} to {@link
+     * WebSocket#setMissingCloseFrameAllowed(boolean)} method.
+     * </p>
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param cause
      *         An exception that represents the error. When the error occurred
@@ -365,7 +385,7 @@ public interface WebSocketListener
      *         or both of the client-side and the server-side implementations.
      *
      * @param frame
-     *         The socket frame. If this is not {@code null}, it means that
+     *         The WebSocket frame. If this is not {@code null}, it means that
      *         verification of the frame failed.
      *
      * @throws Exception
@@ -381,7 +401,7 @@ public interface WebSocketListener
      * out-of-memory.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param cause
      *         An exception that represents the error.
@@ -402,7 +422,7 @@ public interface WebSocketListener
      * Called when a message failed to be decompressed.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param cause
      *         An exception that represents the error.
@@ -424,7 +444,7 @@ public interface WebSocketListener
      * The reason of the failure is probably out-of-memory.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param cause
      *         An exception that represents the error.
@@ -444,7 +464,7 @@ public interface WebSocketListener
      * to the server.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param cause
      *         An exception that represents the error.
@@ -467,7 +487,7 @@ public interface WebSocketListener
      * writing thread (which sends frames to the server).
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param cause
      *         The cause of the error.
@@ -483,7 +503,7 @@ public interface WebSocketListener
      * Called when an <code>on<i>Xxx</i>()</code> method threw a {@code Throwable}.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param cause
      *         The {@code Throwable} an <code>on<i>Xxx</i></code> method threw.
@@ -501,7 +521,7 @@ public interface WebSocketListener
      * Called before an opening handshake is sent to the server.
      *
      * @param websocket
-     *         The web socket.
+     *         The WebSocket.
      *
      * @param requestLine
      *         The request line. For example, {@code "GET /chat HTTP/1.1"}.

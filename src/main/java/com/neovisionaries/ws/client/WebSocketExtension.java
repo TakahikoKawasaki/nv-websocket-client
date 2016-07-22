@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Neo Visionaries Inc.
+ * Copyright (C) 2015-2016 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import java.util.Map;
 
 /**
  * A class to hold the name and the parameters of
- * a web socket extension.
+ * a WebSocket extension.
  */
 public class WebSocketExtension
 {

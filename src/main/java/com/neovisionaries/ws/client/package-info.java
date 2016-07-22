@@ -6,10 +6,10 @@
  * <li>works on Java SE 1.5+ and Android,
  * <li>supports all the frame types (continuation, binary, text, close, ping and pong),
  * <li>provides a method to send a fragmented frame in addition to methods for unfragmented frames,
- * <li>provides a method to get the underlying raw socket of a web socket to configure it,
+ * <li>provides a method to get the underlying raw socket of a WebSocket to configure it,
  * <li>provides a method for <a href="http://tools.ietf.org/html/rfc2617">Basic Authentication</a>,
  * <li>provides a factory class which utilizes {@link javax.net.SocketFactory} interface,
- * <li>provides a rich listener interface to hook web socket events,
+ * <li>provides a rich listener interface to hook WebSocket events,
  * <li>has fine-grained error codes for fine-grained controllability on errors,
  * <li>allows to disable validity checks on RSV1/RSV2/RSV3 bits and opcode of frames,
  * <li>supports HTTP proxy, especially "Secure WebSocket" (<code>wss</code>) through

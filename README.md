@@ -10,10 +10,10 @@ High-quality WebSocket client implementation in Java which
 - works on Java SE 1.5+ and Android,
 - supports all the frame types (continuation, binary, text, close, ping and pong),
 - provides a method to send a fragmented frame in addition to methods for unfragmented frames,
-- provides a method to get the underlying raw socket of a web socket to configure it,
+- provides a method to get the underlying raw socket of a WebSocket to configure it,
 - provides a method for [Basic Authentication](http://tools.ietf.org/html/rfc2617),
 - provides a factory class which utilizes javax.net.SocketFactory interface,
-- provides a rich listener interface to hook web socket events,
+- provides a rich listener interface to hook WebSocket events,
 - has fine-grained error codes for fine-grained controllability on errors,
 - allows to disable validity checks on RSV1/RSV2/RSV3 bits and opcode of frames,
 - supports HTTP proxy, especially "Secure WebSocket" (`wss`) through "Secure Proxy" (`https`),
@@ -146,12 +146,12 @@ settings.setCredentials(id, password);
 
 #### Create WebSocket
 
-`WebSocket` class represents a web socket. Its instances are created by calling
+`WebSocket` class represents a WebSocket. Its instances are created by calling
 one of `createSocket` methods of a `WebSocketFactory` instance. Below is the
 simplest example to create a `WebSocket` instance.
 
 ```java
-// Create a web socket. The scheme part can be one of the following:
+// Create a WebSocket. The scheme part can be one of the following:
 // 'ws', 'wss', 'http' and 'https' (case-insensitive). The user info
 // part, if any, is interpreted as expected. If a raw socket failed
 // to be created, an IOException is thrown.
@@ -162,21 +162,21 @@ There are two ways to set a timeout value for socket connection. The first way
 is to call `setConnectionTimeout(int timeout)` method of `WebSocketFactory`.
 
 ```java
-// Create a web socket factory and set 5000 milliseconds as a timeout
+// Create a WebSocket factory and set 5000 milliseconds as a timeout
 // value for socket connection.
 WebSocketFactory factory = new WebSocketFactory().setConnectionTimeout(5000);
 
-// Create a web socket. The timeout value set above is used.
+// Create a WebSocket. The timeout value set above is used.
 WebSocket ws = factory.createSocket("ws://localhost/endpoint");
 ```
 
 The other way is to give a timeout value to a `createSocket` method.
 
 ```java
-// Create a web socket factory. The timeout value remains 0.
+// Create a WebSocket factory. The timeout value remains 0.
 WebSocketFactory factory = new WebSocketFactory();
 
-// Create a web socket with a socket connection timeout value.
+// Create a WebSocket with a socket connection timeout value.
 WebSocket ws = factory.createSocket("ws://localhost/endpoint", 5000);
 ```
 
@@ -187,11 +187,11 @@ The timeout value is passed to `connect(SocketAddress, int)` method of
 #### Register Listener
 
 After creating a `WebSocket` instance, you should call `addListener` method
-to register a `WebSocketListener` that receives web socket events.
+to register a `WebSocketListener` that receives WebSocket events.
 `WebSocketAdapter` is an empty implementation of `WebSocketListener` interface.
 
 ```java
-// Register a listener to receive web socket events.
+// Register a listener to receive WebSocket events.
 ws.addListener(new WebSocketAdapter() {
     @Override
     public void onTextMessage(WebSocket websocket, String message) throws Exception {
@@ -237,7 +237,7 @@ interface.
 
 Before starting a WebSocket [opening handshake]
 (http://tools.ietf.org/html/rfc6455#section-4) with the server, you can
-configure the web socket instance by using the following methods.
+configure the WebSocket instance by using the following methods.
 
 | METHOD              | DESCRIPTION                                             |
 |---------------------|---------------------------------------------------------|
@@ -249,17 +249,7 @@ configure the web socket instance by using the following methods.
 | `setExtended`       | Disables validity checks on RSV1/RSV2/RSV3 and opcode.  |
 | `setFrameQueueSize` | Set the size of the frame queue for congestion control. |
 | `setMaxPayloadSize` | Set the maximum payload size.                           |
-
-Note that `permessage-deflate` extension ([RFC 7692](http://tools.ietf.org/html/rfc7692))
-has been supported since version 1.17. To enable the extension, call `addExtension`
-method with `permessage-deflate`.
-
-```java
-// Enable "permessage-deflate" extension (RFC 7692).
-ws.addExtension(WebSocketExtension.PERMESSAGE_DEFLATE);
-```
-
-The `permessage-deflate` support is new and needs testing. Feedback is welcome.
+| `setMissingCloseFrameAllowed` | Set to whether to allow the server to close the connection without sending a close frame. |
 
 
 #### Connect To Server
@@ -268,7 +258,7 @@ By calling `connect()` method, connection to the server is established and a
 WebSocket opening handshake is performed synchronously. If an error occurred
 during the handshake, a `WebSocketException` would be thrown. Instead, if
 the handshake succeeds, the `connect()` implementation creates threads and
-starts them to read and write web socket frames asynchronously.
+starts them to read and write WebSocket frames asynchronously.
 
 ```java
 try
@@ -383,7 +373,7 @@ passes the instance to `submit(Callable)` method of the given
 
 #### Send Frames
 
-Web socket frames can be sent by `sendFrame` method. Other `sendXxx`
+WebSocket frames can be sent by `sendFrame` method. Other `sendXxx`
 methods such as `sendText` are aliases of `sendFrame` method. All of
 the `sendXxx` methods work asynchronously. However, under some
 conditions, `sendXxx` methods may block. See Congestion Control for
@@ -558,16 +548,46 @@ the WebSocket frame is not split even if the payload size before compression
 exceeds the maximum payload size.
 
 
+#### Compression
+
+Note that `permessage-deflate` extension ([RFC 7692](http://tools.ietf.org/html/rfc7692))
+has been supported since the version 1.17. To enable the extension, call
+`addExtension` method with `permessage-deflate`.
+
+```java
+// Enable "permessage-deflate" extension (RFC 7692).
+ws.addExtension(WebSocketExtension.PERMESSAGE_DEFLATE);
+```
+
+
+#### Missing Close Frame
+
+Some server implementations close a WebSocket connection without sending a
+close frame to a client in some cases. Strictly speaking, this is a violation
+against the specification ([RFC 6455](http://tools.ietf.org/html/rfc6455)).
+However, this library has allowed the behavior by default since the version
+1.29. Even if the end of the input stream of a WebSocket connection were
+reached without a close frame being received, it would trigger neither
+`onError` method nor `onFrameError` method of `WebSocketListener`. If you
+want to make this library report an error in the case, pass `false` to
+`setMissingCloseFrameAllowed` method.
+
+```java
+// Make this library report an error when the end of the input stream
+// of the WebSocket connection is reached before a close frame is read.
+ws.setMissingCloseFrameAllowed(false);
+
+
 #### Disconnect WebSocket
 
-Before a web socket is closed, a closing handshake is performed. A closing
+Before a WebSocket is closed, a closing handshake is performed. A closing
 handshake is started (1) when the server sends a close frame to the client
 or (2) when the client sends a close frame to the server. You can start a
 closing handshake by calling `disconnect()` method (or by sending a close
 frame manually).
 
 ```java
-// Close the web socket connection.
+// Close the WebSocket connection.
 ws.disconnect();
 ```
 
@@ -714,7 +734,7 @@ public class EchoClient
             ws.sendText(text);
         }
 
-        // Close the web socket.
+        // Close the WebSocket.
         ws.disconnect();
     }
 
