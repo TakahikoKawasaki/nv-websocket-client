@@ -9,6 +9,7 @@ CHANGES
   from the server. The old behavior is 'report an error'. The new one
   is 'ignore the error'. The behavior can be controlled by using
   `WebSocket.setMissingCloseFrameAllowed(boolean allowed)` method.
+  (Issue #12, #63)
 - Added `WebSocket.isMissingCloseFrameAllowed()` method.
 - Added `WebSocket.setMissingCloseFrameAllowed(boolean)` method.
 - Added `WebSocketError.NO_MORE_FRAME` enum entry.
