@@ -36,7 +36,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
 
 
 /**
- * Web socket.
+ * WebSocket.
  *
  * <h3>Create WebSocketFactory</h3>
  *
@@ -154,14 +154,14 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * <h3>Create WebSocket</h3>
  *
  * <p>
- * {@link WebSocket} class represents a web socket. Its instances are
+ * {@link WebSocket} class represents a WebSocket. Its instances are
  * created by calling one of {@code createSocket} methods of a {@link
  * WebSocketFactory} instance. Below is the simplest example to create
  * a {@code WebSocket} instance.
  * </p>
  *
  * <blockquote>
- * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Create a web socket. The scheme part can be one of the following:
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Create a WebSocket. The scheme part can be one of the following:
  * // 'ws', 'wss', 'http' and 'https' (case-insensitive). The user info
  * // part, if any, is interpreted as expected. If a raw socket failed
  * // to be created, an IOException is thrown.</span>
@@ -178,12 +178,12 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * </p>
  *
  * <blockquote>
- * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Create a web socket factory and set 5000 milliseconds as a timeout
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Create a WebSocket factory and set 5000 milliseconds as a timeout
  * // value for socket connection.</span>
  * WebSocketFactory factory = new WebSocketFactory().{@link
  * WebSocketFactory#setConnectionTimeout(int) setConnectionTimeout}(5000);
  *
- * <span style="color: green;">// Create a web socket. The timeout value set above is used.</span>
+ * <span style="color: green;">// Create a WebSocket. The timeout value set above is used.</span>
  * WebSocket ws = factory.{@link WebSocketFactory#createSocket(String)
  * createWebSocket}(<span style="color: darkred;">"ws://localhost/endpoint"</span>);</pre>
  * </blockquote>
@@ -193,10 +193,10 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * </p>
  *
  * <blockquote>
- * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Create a web socket factory. The timeout value remains 0.</span>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Create a WebSocket factory. The timeout value remains 0.</span>
  * WebSocketFactory factory = new WebSocketFactory();
  *
- * <span style="color: green;">// Create a web socket with a socket connection timeout value.</span>
+ * <span style="color: green;">// Create a WebSocket with a socket connection timeout value.</span>
  * WebSocket ws = factory.{@link WebSocketFactory#createSocket(String, int)
  * createWebSocket}(<span style="color: darkred;">"ws://localhost/endpoint"</span>, 5000);</pre>
  * </blockquote>
@@ -212,13 +212,13 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * <p>
  * After creating a {@code WebSocket} instance, you should call {@link
  * #addListener(WebSocketListener)} method to register a {@link
- * WebSocketListener} that receives web socket events. {@link
+ * WebSocketListener} that receives WebSocket events. {@link
  * WebSocketAdapter} is an empty implementation of {@link
  * WebSocketListener} interface.
  * </p>
  *
  * <blockquote>
- * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Register a listener to receive web socket events.</span>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Register a listener to receive WebSocket events.</span>
  * ws.{@link #addListener(WebSocketListener) addListener}(new {@link
  * WebSocketAdapter#WebSocketAdapter() WebSocketAdapter()} {
  *     <span style="color: gray;">{@code @}Override</span>
@@ -353,8 +353,8 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *
  * <p>
  * Before starting a WebSocket <a href="https://tools.ietf.org/html/rfc6455#section-4"
- * >opening handshake</a> with the server, you can configure the web
- * socket instance by using the following methods.
+ * >opening handshake</a> with the server, you can configure the
+ * {@code WebSocket} instance by using the following methods.
  * </p>
  *
  * <blockquote>
@@ -399,26 +399,13 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *       <td>{@link #setMaxPayloadSize(int) setMaxPayloadSize}</td>
  *       <td>Set the <a href="#maximum_payload_size">maximum payload size</a>.</td>
  *     </tr>
+ *     <tr>
+ *       <td>{@link #setMissingCloseFrameAllowed(boolean) setMissingCloseFrameAllowed}</td>
+ *       <td>Set whether to allow the server to close the connection without sending a close frame.</td>
+ *     </tr>
  *   </tbody>
  * </table>
  * </blockquote>
- *
- * <p>
- * Note that <strong>permessage-deflate</strong> extension (<a href=
- * "http://tools.ietf.org/html/rfc7692">RFC 7692</a>) has been supported
- * since version 1.17. To enable the extension, call {@link #addExtension(String)
- * addExtension} method with {@code "permessage-deflate"}.
- * </p>
- *
- * <blockquote>
- * <pre style="border-left: solid 5px lightgray;"><span style="color: green;"> // Enable "permessage-deflate" extension (RFC 7692).</span>
- * ws.{@link #addExtension(String) addExtension}({@link WebSocketExtension#PERMESSAGE_DEFLATE});</pre>
- * </blockquote>
- *
- * <p>
- * The permessage-deflate support is new and needs testing.
- * Feedback is welcome.
- * </p>
  *
  * <h3>Connect To Server</h3>
  *
@@ -428,7 +415,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * synchronously. If an error occurred during the handshake,
  * a {@link WebSocketException} would be thrown. Instead, when the
  * handshake succeeds, the {@code connect()} implementation creates
- * threads and starts them to read and write web socket frames
+ * threads and starts them to read and write WebSocket frames
  * asynchronously.
  * </p>
  *
@@ -561,7 +548,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * <h3>Send Frames</h3>
  *
  * <p>
- * Web socket frames can be sent by {@link #sendFrame(WebSocketFrame)}
+ * WebSocket frames can be sent by {@link #sendFrame(WebSocketFrame)}
  * method. Other <code>send<i>Xxx</i></code> methods such as {@link
  * #sendText(String)} are aliases of {@code sendFrame} method. All of
  * the <code>send<i>Xxx</i></code> methods work asynchronously.
@@ -770,17 +757,56 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * maximum payload size.
  * </p>
  *
+ * <h3 id="compression">Compression</h3>
+ *
+ * <p>
+ * <strong>permessage-deflate</strong> extension (<a href=
+ * "http://tools.ietf.org/html/rfc7692">RFC 7692</a>) has been supported
+ * since the version 1.17. To enable the extension, call {@link #addExtension(String)
+ * addExtension} method with {@code "permessage-deflate"}.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"><span style="color: green;"> // Enable "permessage-deflate" extension (RFC 7692).</span>
+ * ws.{@link #addExtension(String) addExtension}({@link WebSocketExtension#PERMESSAGE_DEFLATE});</pre>
+ * </blockquote>
+ *
+ * <h3>Missing Close Frame</h3>
+ *
+ * <p>
+ * Some server implementations close a WebSocket connection without sending a
+ * <a href="https://tools.ietf.org/html/rfc6455#section-5.5.1">close frame</a> to
+ * a client in some cases. Strictly speaking, this is a violation against the
+ * specification (<a href=
+ * "https://tools.ietf.org/html/rfc6455#section-5.5.1">RFC 6455</a>). However, this
+ * library has allowed the behavior by default since the version 1.29. Even if the
+ * end of the input stream of a WebSocket connection were reached without a close
+ * frame being received, it would trigger neither {@link
+ * WebSocketListener#onError(WebSocket, WebSocketException) onError()} method nor
+ * {@link WebSocketListener#onFrameError(WebSocket, WebSocketException, WebSocketFrame)
+ * onFrameError()} method of {@link WebSocketListener}. If you want to make this
+ * library report an error in the case, pass {@code false} to {@link
+ * #setMissingCloseFrameAllowed(boolean)} method.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"><span style="color: green;"
+ * > // Make this library report an error when the end of the input stream
+ * // of the WebSocket connection is reached before a close frame is read.</span>
+ * ws.{@link #setMissingCloseFrameAllowed(boolean) setMissingCloseFrameAllowed}(false);</pre>
+ * </blockquote>
+ *
  * <h3>Disconnect WebSocket</h3>
  *
  * <p>
- * Before a web socket is closed, a closing handshake is performed. A closing handshake
+ * Before a WebSocket is closed, a closing handshake is performed. A closing handshake
  * is started (1) when the server sends a close frame to the client or (2) when the
  * client sends a close frame to the server. You can start a closing handshake by calling
  * {@link #disconnect()} method (or by sending a close frame manually).
  * </p>
  *
  * <blockquote>
- * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Close the web socket connection.</span>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Close the WebSocket connection.</span>
  * ws.{@link #disconnect()};</pre>
  * </blockquote>
  *
@@ -921,6 +947,7 @@ public class WebSocket
     private String mAgreedProtocol;
     private boolean mExtended;
     private boolean mAutoFlush = true;
+    private boolean mMissingCloseFrameAllowed = true;
     private int mFrameQueueSize;
     private int mMaxPayloadSize;
     private boolean mOnConnectedCalled;
@@ -1020,6 +1047,7 @@ public class WebSocket
         instance.setPongPayloadGenerator(getPongPayloadGenerator());
         instance.mExtended = mExtended;
         instance.mAutoFlush = mAutoFlush;
+        instance.mMissingCloseFrameAllowed = mMissingCloseFrameAllowed;
         instance.mFrameQueueSize = mFrameQueueSize;
 
         // Copy listeners.
@@ -1047,7 +1075,7 @@ public class WebSocket
 
 
     /**
-     * Get the current state of this web socket.
+     * Get the current state of this WebSocket.
      *
      * <p>
      * The initial state is {@link WebSocketState#CREATED CREATED}.
@@ -1079,7 +1107,7 @@ public class WebSocket
 
 
     /**
-     * Check if the current state of this web socket is {@link
+     * Check if the current state of this WebSocket is {@link
      * WebSocketState#OPEN OPEN}.
      *
      * @return
@@ -1316,7 +1344,7 @@ public class WebSocket
 
 
     /**
-     * Set the credentials to connect to the web socket endpoint.
+     * Set the credentials to connect to the WebSocket endpoint.
      *
      * @param userInfo
      *         The credentials for Basic Authentication. The format
@@ -1334,7 +1362,7 @@ public class WebSocket
 
 
     /**
-     * Set the credentials to connect to the web socket endpoint.
+     * Set the credentials to connect to the WebSocket endpoint.
      *
      * @param id
      *         The ID.
@@ -1354,7 +1382,7 @@ public class WebSocket
 
 
     /**
-     * Clear the credentials to connect to the web socket endpoint.
+     * Clear the credentials to connect to the WebSocket endpoint.
      *
      * @return
      *         {@code this} object.
@@ -1370,7 +1398,7 @@ public class WebSocket
 
 
     /**
-     * Check if extended use of web socket frames are allowed.
+     * Check if extended use of WebSocket frames are allowed.
      *
      * <p>
      * When extended use is allowed, values of RSV1/RSV2/RSV3 bits
@@ -1379,11 +1407,11 @@ public class WebSocket
      * bits and unknown opcodes cause an error. In such a case,
      * {@link WebSocketListener#onFrameError(WebSocket,
      * WebSocketException, WebSocketFrame) onFrameError} method of
-     * listeners are called and the web socket is eventually closed.
+     * listeners are called and the WebSocket is eventually closed.
      * </p>
      *
      * @return
-     *         {@code true} if extended use of web socket frames
+     *         {@code true} if extended use of WebSocket frames
      *         are allowed.
      */
     public boolean isExtended()
@@ -1393,10 +1421,10 @@ public class WebSocket
 
 
     /**
-     * Allow or disallow extended use of web socket frames.
+     * Allow or disallow extended use of WebSocket frames.
      *
      * @param extended
-     *         {@code true} to allow extended use of web socket frames.
+     *         {@code true} to allow extended use of WebSocket frames.
      *
      * @return
      *         {@code this} object.
@@ -1440,6 +1468,56 @@ public class WebSocket
     public WebSocket setAutoFlush(boolean auto)
     {
         mAutoFlush = auto;
+
+        return this;
+    }
+
+
+    /**
+     * Check if this instance allows the server to close the WebSocket
+     * connection without sending a <a href=
+     * "https://tools.ietf.org/html/rfc6455#section-5.5.1">close frame</a>
+     * to this client. The default value is {@code true}.
+     *
+     * @return
+     *         {@code true} if the configuration allows for the server to
+     *         close the WebSocket connection without sending a close frame
+     *         to this client. {@code false} if the configuration requires
+     *         that an error be reported via
+     *         {@link WebSocketListener#onError(WebSocket, WebSocketException)
+     *         onError()} method and {@link WebSocketListener#onFrameError(WebSocket,
+     *         WebSocketException, WebSocketFrame) onFrameError()} method of
+     *         {@link WebSocketListener}.
+     *
+     * @since 1.29
+     */
+    public boolean isMissingCloseFrameAllowed()
+    {
+        return mMissingCloseFrameAllowed;
+    }
+
+
+    /**
+     * Set whether to allow the server to close the WebSocket connection
+     * without sending a <a href=
+     * "https://tools.ietf.org/html/rfc6455#section-5.5.1">close frame</a>
+     * to this client.
+     *
+     * @param allowed
+     *         {@code true} to allow the server to close the WebSocket
+     *         connection without sending a close frame to this client.
+     *         {@code false} to make this instance report an error when the
+     *         end of the input stream of the WebSocket connection is reached
+     *         before a close frame is read.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 1.29
+     */
+    public WebSocket setMissingCloseFrameAllowed(boolean allowed)
+    {
+        mMissingCloseFrameAllowed = allowed;
 
         return this;
     }
@@ -1755,7 +1833,7 @@ public class WebSocket
 
 
     /**
-     * Add a listener to receive events on this web socket.
+     * Add a listener to receive events on this WebSocket.
      *
      * @param listener
      *         A listener to add.
@@ -1792,7 +1870,7 @@ public class WebSocket
 
 
     /**
-     * Remove a listener from this web socket.
+     * Remove a listener from this WebSocket.
      *
      * @param listener
      *         A listener to remove. {@code null} won't cause an error.
@@ -1831,7 +1909,7 @@ public class WebSocket
 
 
     /**
-     * Remove all the listeners from this web socket.
+     * Remove all the listeners from this WebSocket.
      *
      * @return
      *         {@code this} object.
@@ -1847,7 +1925,7 @@ public class WebSocket
 
 
     /**
-     * Get the raw socket which this web socket uses internally.
+     * Get the raw socket which this WebSocket uses internally.
      *
      * @return
      *         The underlying {@link Socket} instance.
@@ -1859,11 +1937,11 @@ public class WebSocket
 
 
     /**
-     * Get the URI of the web socket endpoint. The scheme part is either
+     * Get the URI of the WebSocket endpoint. The scheme part is either
      * {@code "ws"} or {@code "wss"}. The authority part is always empty.
      *
      * @return
-     *         The URI of the web socket endpoint.
+     *         The URI of the WebSocket endpoint.
      *
      * @since 1.1
      */
@@ -1898,7 +1976,7 @@ public class WebSocket
      * </pre>
      *
      * <p>
-     * If the web socket endpoint requires Basic Authentication, you can set
+     * If the WebSocket endpoint requires Basic Authentication, you can set
      * credentials by {@link #setUserInfo(String) setUserInfo(userInfo)} or
      * {@link #setUserInfo(String, String) setUserInfo(id, password)} before
      * you call this method.
@@ -1923,7 +2001,7 @@ public class WebSocket
      *
      * @throws WebSocketException
      *         <ul>
-     *           <li>The current state of the web socket is not {@link
+     *           <li>The current state of the WebSocket is not {@link
      *               WebSocketState#CREATED CREATED}
      *           <li>Connecting the server failed.
      *           <li>The opening handshake failed.
@@ -2051,7 +2129,7 @@ public class WebSocket
 
 
     /**
-     * Disconnect the web socket.
+     * Disconnect the WebSocket.
      *
      * <p>
      * This method is an alias of {@link #disconnect(int, String)
@@ -2068,7 +2146,7 @@ public class WebSocket
 
 
     /**
-     * Disconnect the web socket.
+     * Disconnect the WebSocket.
      *
      * <p>
      * This method is an alias of {@link #disconnect(int, String)
@@ -2092,7 +2170,7 @@ public class WebSocket
 
 
     /**
-     * Disconnect the web socket.
+     * Disconnect the WebSocket.
      *
      * <p>
      * This method is an alias of {@link #disconnect(int, String)
@@ -2120,7 +2198,7 @@ public class WebSocket
 
 
     /**
-     * Disconnect the web socket.
+     * Disconnect the WebSocket.
      *
      * <p>
      * This method is an alias of {@link #disconnect(int, String, long)
@@ -2157,7 +2235,7 @@ public class WebSocket
 
 
     /**
-     * Disconnect the web socket.
+     * Disconnect the WebSocket.
      *
      * @param closeCode
      *         The close code embedded in a <a href=
@@ -2286,7 +2364,7 @@ public class WebSocket
 
 
     /**
-     * Send a web socket frame to the server.
+     * Send a WebSocket frame to the server.
      *
      * <p>
      * This method just queues the given frame. Actual transmission
@@ -2294,7 +2372,7 @@ public class WebSocket
      * </p>
      *
      * <p>
-     * When the current state of this web socket is not {@link
+     * When the current state of this WebSocket is not {@link
      * WebSocketState#OPEN OPEN}, this method does not accept
      * the frame.
      * </p>
@@ -2315,7 +2393,7 @@ public class WebSocket
      * </p>
      *
      * @param frame
-     *         A web socket frame to be sent to the server.
+     *         A WebSocket frame to be sent to the server.
      *         If {@code null} is given, nothing is done.
      *
      * @return
@@ -2869,7 +2947,7 @@ public class WebSocket
             {
                 throw new WebSocketException(
                     WebSocketError.NOT_IN_CREATED_STATE,
-                    "The current state of the web socket is not CREATED.");
+                    "The current state of the WebSocket is not CREATED.");
             }
 
             // Change the state to CONNECTING.
@@ -2973,7 +3051,7 @@ public class WebSocket
      * </blockquote>
      *
      * @return
-     *         A randomly generated web socket key.
+     *         A randomly generated WebSocket key.
      */
     private static String generateWebSocketKey()
     {
@@ -3332,7 +3410,7 @@ public class WebSocket
         // Notify the listeners of the state change.
         mListenerManager.callOnStateChanged(CLOSED);
 
-        // Notify the listeners that the web socket was disconnected.
+        // Notify the listeners that the WebSocket was disconnected.
         mListenerManager.callOnDisconnected(
             mServerCloseFrame, mClientCloseFrame, mStateManager.getClosedByServer());
     }

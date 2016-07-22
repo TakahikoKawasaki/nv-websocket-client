@@ -46,6 +46,7 @@ class ReadingThread extends Thread
     private Timer mCloseTimer;
     private CloseTask mCloseTask;
     private long mCloseDelay;
+    private boolean mNotWaitForCloseFrame;
 
 
     public ReadingThread(WebSocket websocket)
@@ -326,7 +327,6 @@ class ReadingThread extends Thread
     {
         WebSocketFrame frame = null;
         WebSocketException wse = null;
-        boolean intentionallyInterrupted = false;
 
         try
         {
@@ -344,7 +344,8 @@ class ReadingThread extends Thread
             if (mStopRequested)
             {
                 // Thread.interrupt() interrupted a blocking socket read operation.
-                intentionallyInterrupted = true;
+                // This thread has been interrupted intentionally.
+                return null;
             }
             else
             {
@@ -359,7 +360,8 @@ class ReadingThread extends Thread
             if (mStopRequested && isInterrupted())
             {
                 // Socket.close() interrupted a blocking socket read operation.
-                intentionallyInterrupted = true;
+                // This thread has been interrupted intentionally.
+                return null;
             }
             else
             {
@@ -375,20 +377,36 @@ class ReadingThread extends Thread
             wse = e;
         }
 
-        if (intentionallyInterrupted == false)
+        boolean error = true;
+
+        // If the input stream of the WebSocket connection has reached the end
+        // without receiving a close frame from the server.
+        if (wse instanceof NoMoreFrameException)
+        {
+            // Not wait for a close frame in waitForCloseFrame() which will be called later.
+            mNotWaitForCloseFrame = true;
+
+            // If the configuration of the WebSocket instance allows the behavior.
+            if (mWebSocket.isMissingCloseFrameAllowed())
+            {
+                error = false;
+            }
+        }
+
+        if (error)
         {
             // Notify the listeners that an error occurred while a frame was being read.
             callOnError(wse);
             callOnFrameError(wse, frame);
-
-            // Create a close frame.
-            WebSocketFrame closeFrame = createCloseFrame(wse);
-
-            // Send the close frame.
-            mWebSocket.sendFrame(closeFrame);
         }
 
-        // A frame is not available.
+        // Create a close frame.
+        WebSocketFrame closeFrame = createCloseFrame(wse);
+
+        // Send the close frame.
+        mWebSocket.sendFrame(closeFrame);
+
+        // No WebSocket frame is available.
         return null;
     }
 
@@ -675,6 +693,7 @@ class ReadingThread extends Thread
 
             case INSUFFICENT_DATA:
             case INVALID_PAYLOAD_LENGTH:
+            case NO_MORE_FRAME:
                 closeCode = WebSocketCloseCode.UNCONFORMED;
                 break;
 
@@ -1064,6 +1083,11 @@ class ReadingThread extends Thread
 
     private void waitForCloseFrame()
     {
+        if (mNotWaitForCloseFrame)
+        {
+            return;
+        }
+
         // If a close frame has already been received.
         if (mCloseFrame != null)
         {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Neo Visionaries Inc.
+ * Copyright (C) 2015-2016 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,18 @@ package com.neovisionaries.ws.client;
 
 
 /**
- * Web socket error codes.
+ * WebSocket error codes.
  *
  * @see WebSocketException#getError()
  */
 public enum WebSocketError
 {
     /**
-     * The current state of the web socket is not CREATED.
+     * The current state of the WebSocket is not CREATED.
      *
      * <p>
      * This error occurs if {@link WebSocket#connect()} is called
-     * when the state of the web socket is not {@link
+     * when the state of the WebSocket is not {@link
      * WebSocketState#CREATED CREATED}.
      * </p>
      */
@@ -171,13 +171,13 @@ public enum WebSocketError
 
 
     /**
-     * Interruption occurred while a frame was being read from the web socket.
+     * Interruption occurred while a frame was being read from the WebSocket.
      */
     INTERRUPTED_IN_READING,
 
 
     /**
-     * An I/O error occurred while a frame was being read from the web socket.
+     * An I/O error occurred while a frame was being read from the WebSocket.
      */
     IO_ERROR_IN_READING,
 
@@ -415,5 +415,22 @@ public enum WebSocketError
      * @since 1.20
      */
     SSL_HANDSHAKE_ERROR,
+
+
+    /**
+     * No more frame can be read because the end of the input stream has been reached.
+     *
+     * <p>
+     * This happens when the WebSocket connection is closed without receiving a
+     * <a href="https://tools.ietf.org/html/rfc6455#section-5.5.1">close frame</a>
+     * from the WebSocket server. Strictly speaking, it is a violation against
+     * <a href="https://tools.ietf.org/html/rfc6455">RFC 6455</a>, but it seems some
+     * server implementations sometimes close a connection without sending a close
+     * frame.
+     * </p>
+     *
+     * @since 1.29
+     */
+    NO_MORE_FRAME,
     ;
 }
