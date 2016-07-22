@@ -550,7 +550,7 @@ exceeds the maximum payload size.
 
 #### Compression
 
-Note that `permessage-deflate` extension ([RFC 7692](http://tools.ietf.org/html/rfc7692))
+The **permessage-deflate** extension ([RFC 7692](http://tools.ietf.org/html/rfc7692))
 has been supported since the version 1.17. To enable the extension, call
 `addExtension` method with `permessage-deflate`.
 
@@ -569,13 +569,14 @@ However, this library has allowed the behavior by default since the version
 1.29. Even if the end of the input stream of a WebSocket connection were
 reached without a close frame being received, it would trigger neither
 `onError` method nor `onFrameError` method of `WebSocketListener`. If you
-want to make this library report an error in the case, pass `false` to
-`setMissingCloseFrameAllowed` method.
+want to make a `WebSocket` instance report an error in the case, pass `false`
+to `setMissingCloseFrameAllowed` method.
 
 ```java
 // Make this library report an error when the end of the input stream
 // of the WebSocket connection is reached before a close frame is read.
 ws.setMissingCloseFrameAllowed(false);
+```
 
 
 #### Disconnect WebSocket

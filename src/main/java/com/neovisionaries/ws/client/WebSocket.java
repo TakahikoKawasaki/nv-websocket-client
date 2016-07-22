@@ -760,7 +760,7 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * <h3 id="compression">Compression</h3>
  *
  * <p>
- * <strong>permessage-deflate</strong> extension (<a href=
+ * The <strong>permessage-deflate</strong> extension (<a href=
  * "http://tools.ietf.org/html/rfc7692">RFC 7692</a>) has been supported
  * since the version 1.17. To enable the extension, call {@link #addExtension(String)
  * addExtension} method with {@code "permessage-deflate"}.
@@ -784,9 +784,9 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * frame being received, it would trigger neither {@link
  * WebSocketListener#onError(WebSocket, WebSocketException) onError()} method nor
  * {@link WebSocketListener#onFrameError(WebSocket, WebSocketException, WebSocketFrame)
- * onFrameError()} method of {@link WebSocketListener}. If you want to make this
- * library report an error in the case, pass {@code false} to {@link
- * #setMissingCloseFrameAllowed(boolean)} method.
+ * onFrameError()} method of {@link WebSocketListener}. If you want to make a
+ * {@code WebSocket} instance report an error in the case, pass {@code false} to
+ * {@link #setMissingCloseFrameAllowed(boolean)} method.
  * </p>
  *
  * <blockquote>
