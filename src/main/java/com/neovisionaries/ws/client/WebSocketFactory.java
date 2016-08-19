@@ -478,7 +478,7 @@ public class WebSocketFactory
         // Split the URI.
         String scheme   = uri.getScheme();
         String userInfo = uri.getUserInfo();
-        String host     = uri.getHost();
+        String host     = Misc.extractHost(uri);
         int port        = uri.getPort();
         String path     = uri.getRawPath();
         String query    = uri.getRawQuery();
