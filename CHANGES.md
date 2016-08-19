@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+1.30 (2016-08-19)
+-----------------
+
+- Implemented a workaround for Issue #74 where URI.getHost() returns
+  null on some Samsung devices.
+
+
 1.29 (2016-07-22)
 -----------------
 
