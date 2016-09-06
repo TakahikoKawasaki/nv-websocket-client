@@ -799,6 +799,14 @@ See Also
 - [RFC 7692](http://tools.ietf.org/html/rfc7692) Compression Extensions for WebSocket
 
 
+TODO
+----
+
+- SOCKS support
+- Public Key Pinning support ([RFC 7469](http://tools.ietf.org/html/rfc7469))
+- And other [issues](https://github.com/TakahikoKawasaki/nv-websocket-client/issues)
+
+
 Author
 ------
 
