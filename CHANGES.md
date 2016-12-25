@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+1.31 (2016-12-25)
+-----------------
+
+- Modified `PeriodicalFrameSender` to catch `RuntimeException` which
+  `Timer.schedule()` may throw. (Issue #86)
+
+
 1.30 (2016-08-19)
 -----------------
 
