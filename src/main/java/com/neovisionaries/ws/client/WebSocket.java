@@ -850,6 +850,15 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * boolean) onDisconnected()} is the right place to trigger reconnection.
  * </p>
  *
+ * <p>
+ * Also note that the reason I use an expression of <i>"to trigger reconnection"</i>
+ * instead of <i>"to call <code>recreate().connect()</code>"</i> is that I myself
+ * won't do it <i>synchronously</i> in <code>WebSocketListener</code> callback
+ * methods but will just schedule reconnection or will just go to the top of a kind
+ * of <i>application loop</i> that repeats to establish a WebSocket connection until
+ * it succeeds.
+ * </p>
+ *
  * <h3>Error Handling</h3>
  *
  * <p>

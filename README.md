@@ -624,6 +624,12 @@ Note that you should not trigger reconnection in `onError()` method because
 `onError()` may be called multiple times due to one error. Instead,
 `onDisconnected()` is the right place to trigger reconnection.
 
+Also note that the reason I use an expression of "to trigger reconnection"
+instead of "to call `recreate().connect()`" is that I myself won't do it
+_synchronously_ in `WebSocketListener` callback methods but will just
+schedule reconnection or will just go to the top of a kind of _application
+loop_ that repeats to establish a WebSocket connection until it succeeds.
+
 
 #### Error Handling
 
