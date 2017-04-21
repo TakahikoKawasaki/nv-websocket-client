@@ -238,8 +238,9 @@ interface.
 
 #### Configure WebSocket
 
-Before starting a WebSocket [opening handshake]
-(http://tools.ietf.org/html/rfc6455#section-4) with the server, you can
+Before starting a WebSocket
+[opening handshake](http://tools.ietf.org/html/rfc6455#section-4)
+with the server, you can
 configure the WebSocket instance by using the following methods.
 
 | METHOD              | DESCRIPTION                                             |
@@ -458,8 +459,8 @@ ws.setPingInterval(0);
 ```
 
 Likewise, you can send pong frames periodically by calling `setPongInterval`
-method. "_A Pong frame MAY be sent **unsolicited**._" ([RFC 6455, 5.5.3. Pong]
-(https://tools.ietf.org/html/rfc6455#section-5.5.3))
+method. "_A Pong frame MAY be sent **unsolicited**._"
+([RFC 6455, 5.5.3. Pong](https://tools.ietf.org/html/rfc6455#section-5.5.3))
 
 You can customize payload of ping/pong frames that are sent automatically
 by using `setPingPayloadGenerator()` and `setPongPayloadGenerator()` methods.
@@ -731,8 +732,8 @@ The following is a sample application that connects to the echo server on
 [websocket.org](https://www.websocket.org) (`ws://echo.websocket.org`) and
 repeats to (1) read a line from the standard input, (2) send the read line
 to the server and (3) prints the response from the server, until `exit` is
-entered. The source code can be downloaded from [Gist]
-(https://gist.github.com/TakahikoKawasaki/e79d36bf91bf9508ddd2).
+entered. The source code can be downloaded from
+[Gist](https://gist.github.com/TakahikoKawasaki/e79d36bf91bf9508ddd2).
 
 ```java
 import java.io.*;
