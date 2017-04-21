@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2016 Neo Visionaries Inc.
+ * Copyright (C) 2015-2017 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,13 @@ import java.util.LinkedList;
 import com.neovisionaries.ws.client.StateManager.CloseInitiator;
 
 
-class WritingThread extends Thread
+class WritingThread extends WebSocketThread
 {
     private static final int SHOULD_SEND     = 0;
     private static final int SHOULD_STOP     = 1;
     private static final int SHOULD_CONTINUE = 2;
     private static final int SHOULD_FLUSH    = 3;
     private static final int FLUSH_THRESHOLD = 1000;
-    private final WebSocket mWebSocket;
     private final LinkedList<WebSocketFrame> mFrames;
     private final PerMessageCompressionExtension mPMCE;
     private boolean mStopRequested;
@@ -41,16 +40,15 @@ class WritingThread extends Thread
 
     public WritingThread(WebSocket websocket)
     {
-        super("WritingThread");
+        super("WritingThread", websocket, ThreadType.WRITING_THREAD);
 
-        mWebSocket = websocket;
-        mFrames    = new LinkedList<WebSocketFrame>();
-        mPMCE      = websocket.getPerMessageCompressionExtension();
+        mFrames = new LinkedList<WebSocketFrame>();
+        mPMCE   = websocket.getPerMessageCompressionExtension();
     }
 
 
     @Override
-    public void run()
+    public void runMain()
     {
         try
         {

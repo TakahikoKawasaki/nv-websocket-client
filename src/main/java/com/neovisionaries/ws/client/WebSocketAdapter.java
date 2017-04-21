@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2016 Neo Visionaries Inc.
+ * Copyright (C) 2015-2017 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,6 +175,24 @@ public class WebSocketAdapter implements WebSocketListener
 
     @Override
     public void onSendingHandshake(WebSocket websocket, String requestLine, List<String[]> headers) throws Exception
+    {
+    }
+
+
+    @Override
+    public void onThreadCreated(WebSocket websocket, ThreadType threadType, Thread thread) throws Exception
+    {
+    }
+
+
+    @Override
+    public void onThreadStarted(WebSocket websocket, ThreadType threadType, Thread thread) throws Exception
+    {
+    }
+
+
+    @Override
+    public void onThreadStopping(WebSocket websocket, ThreadType threadType, Thread thread) throws Exception
     {
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2016 Neo Visionaries Inc.
+ * Copyright (C) 2015-2017 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -340,6 +340,18 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *     <tr>
  *       <td>{@link WebSocketListener#onTextMessageError(WebSocket, WebSocketException, byte[]) onTextMessageError}</td>
  *       <td>Called when a text message failed to be constructed.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onThreadCreated(WebSocket, ThreadType, Thread) onThreadCreated}</td>
+ *       <td>Called after a thread was created.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onThreadStarted(WebSocket, ThreadType, Thread) onThreadStarted}</td>
+ *       <td>Called at the beginning of a thread's {@code run()} method.
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onThreadStopping(WebSocket, ThreadType, Thread) onThreadStopping}</td>
+ *       <td>Called at the end of a thread's {@code run()} method.
  *     </tr>
  *     <tr>
  *       <td>{@link WebSocketListener#onUnexpectedError(WebSocket, WebSocketException) onUnexpectedError}</td>
@@ -927,6 +939,92 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * public void {@link WebSocketListener#handleCallbackError(WebSocket, Throwable)
  * handleCallbackError}(WebSocket websocket, Throwable cause) throws Exception {
  *     <span style="color: green;">// Throwables thrown by onXxx() callback methods come here.</span>
+ * }</pre>
+ * </blockquote>
+ *
+ * <h3>Thread Callbacks</h3>
+ *
+ * <p>
+ * Some threads are created internally in the implementation of {@code WebSocket}.
+ * Known threads are as follows.
+ * </p>
+ *
+ * <blockquote>
+ * <table border="1" cellpadding="5" style="border-collapse: collapse;">
+ *   <caption>Internal Threads</caption>
+ *   <thead>
+ *     <tr>
+ *       <th>THREAD TYPE</th>
+ *       <th>DESCRIPTION</th>
+ *     </tr>
+ *   </thead>
+ *   <tbody>
+ *     <tr>
+ *       <td>{@link ThreadType#READING_THREAD READING_THREAD}</td>
+ *       <td>A thread which reads WebSocket frames from the server.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link ThreadType#WRITING_THREAD WRITING_THREAD}</td>
+ *       <td>A thread which sends WebSocket frames to the server.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link ThreadType#CONNECT_THREAD CONNECT_THREAD}</td>
+ *       <td>A thread which calls {@link WebSocket#connect()} asynchronously.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link ThreadType#FINISH_THREAD FINISH_THREAD}</td>
+ *       <td>A thread which does finalization of a {@code WebSocket} instance.</td>
+ *     </tr>
+ *   </tbody>
+ * </table>
+ * </blockquote>
+ *
+ * <p>
+ * The following callback methods of {@link WebSocketListener} are called according
+ * to the life cycle of the threads.
+ * </p>
+ *
+ * <blockquote>
+ * <table border="1" cellpadding="5" style="border-collapse: collapse;">
+ *   <caption>Thread Callbacks</caption>
+ *   <thead>
+ *     <tr>
+ *       <th>METHOD</th>
+ *       <th>DESCRIPTION</th>
+ *     </tr>
+ *   </thead>
+ *   <tbody>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onThreadCreated(WebSocket, ThreadType, Thread) onThreadCreated()}</td>
+ *       <td>Called after a thread was created.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onThreadStarted(WebSocket, ThreadType, Thread) onThreadStarted()}</td>
+ *       <td>Called at the beginning of the thread's {@code run()} method.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link WebSocketListener#onThreadStopping(WebSocket, ThreadType, Thread) onThreadStopping()}</td>
+ *       <td>Called at the end of the thread's {@code run()} method.</td>
+ *     </tr>
+ *   </tbody>
+ * </table>
+ * </blockquote>
+ *
+ * <p>
+ * For example, if you want to change the name of the reading thread,
+ * implement {@link WebSocketListener#onThreadCreated(WebSocket, ThreadType, Thread)
+ * onThreadCreated()} method like below.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: gray;">{@code @}Override</span>
+ * public void {@link WebSocketListener#onThreadCreated(WebSocket, ThreadType, Thread)
+ * onThreadCreated}(WebSocket websocket, {@link ThreadType} type, Thread thread)
+ * {
+ *     if (type == ThreadType.READING_THREAD)
+ *     {
+ *         thread.setName(<span style="color: darkred;">"READING_THREAD"</span>);
+ *     }
  * }</pre>
  * </blockquote>
  *
@@ -2131,7 +2229,17 @@ public class WebSocket
      */
     public WebSocket connectAsynchronously()
     {
-        new ConnectThread(this).start();
+        Thread thread = new ConnectThread(this);
+
+        // Get the reference (just in case)
+        ListenerManager lm = mListenerManager;
+
+        if (lm != null)
+        {
+            lm.callOnThreadCreated(ThreadType.CONNECT_THREAD, thread);
+        }
+
+        thread.start();
 
         return this;
     }
@@ -3136,6 +3244,10 @@ public class WebSocket
             mWritingThread = writingThread;
         }
 
+        // Execute onThreadCreated of the listeners.
+        readingThread.callOnThreadCreated();
+        writingThread.callOnThreadCreated();
+
         readingThread.start();
         writingThread.start();
     }
@@ -3394,7 +3506,7 @@ public class WebSocket
     }
 
 
-    private void finish()
+    void finish()
     {
         // Stop the ping sender and the pong sender.
         mPingSender.stop();
@@ -3430,12 +3542,12 @@ public class WebSocket
      */
     private void finishAsynchronously()
     {
-        new Thread() {
-            @Override
-            public void run() {
-                finish();
-            }
-        }.start();
+        WebSocketThread thread = new FinishThread(this);
+
+        // Execute onThreadCreated() of the listeners.
+        thread.callOnThreadCreated();
+
+        thread.start();
     }
 
 

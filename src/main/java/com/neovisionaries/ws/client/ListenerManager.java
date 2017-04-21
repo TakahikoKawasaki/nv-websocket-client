@@ -423,6 +423,54 @@ class ListenerManager
     }
 
 
+    public void callOnThreadCreated(ThreadType threadType, Thread thread)
+    {
+        for (WebSocketListener listener : getSynchronizedListeners())
+        {
+            try
+            {
+                listener.onThreadCreated(mWebSocket, threadType, thread);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
+            }
+        }
+    }
+
+
+    public void callOnThreadStarted(ThreadType threadType, Thread thread)
+    {
+        for (WebSocketListener listener : getSynchronizedListeners())
+        {
+            try
+            {
+                listener.onThreadStarted(mWebSocket, threadType, thread);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
+            }
+        }
+    }
+
+
+    public void callOnThreadStopping(ThreadType threadType, Thread thread)
+    {
+        for (WebSocketListener listener : getSynchronizedListeners())
+        {
+            try
+            {
+                listener.onThreadStopping(mWebSocket, threadType, thread);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
+            }
+        }
+    }
+
+
     public void callOnError(WebSocketException cause)
     {
         for (WebSocketListener listener : getSynchronizedListeners())

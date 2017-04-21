@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2016 Neo Visionaries Inc.
+ * Copyright (C) 2015-2017 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,8 @@ import java.util.TimerTask;
 import com.neovisionaries.ws.client.StateManager.CloseInitiator;
 
 
-class ReadingThread extends Thread
+class ReadingThread extends WebSocketThread
 {
-    private final WebSocket mWebSocket;
     private boolean mStopRequested;
     private WebSocketFrame mCloseFrame;
     private List<WebSocketFrame> mContinuation = new ArrayList<WebSocketFrame>();
@@ -51,15 +50,14 @@ class ReadingThread extends Thread
 
     public ReadingThread(WebSocket websocket)
     {
-        super("ReadingThread");
+        super("ReadingThread", websocket, ThreadType.READING_THREAD);
 
-        mWebSocket = websocket;
-        mPMCE      = websocket.getPerMessageCompressionExtension();
+        mPMCE = websocket.getPerMessageCompressionExtension();
     }
 
 
     @Override
-    public void run()
+    public void runMain()
     {
         try
         {
