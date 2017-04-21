@@ -4,7 +4,7 @@
 
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>1.32-SNAPSHOT</version>
+    <version>2.0</version>
     <packaging>bundle</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>WebSocket client implementation in Java.</description>
@@ -27,7 +27,7 @@
         <connection>scm:git:git@github.com:TakahikoKawasaki/nv-websocket-client.git</connection>
         <developerConnection>scm:git:git@github.com:TakahikoKawasaki/nv-websocket-client.git</developerConnection>
         <url>git@github.com:TakahikoKawasaki/nv-websocket-client.git</url>
-        <tag>HEAD</tag>
+        <tag>nv-websocket-client-2.0</tag>
     </scm>
 
     <properties>
