@@ -705,7 +705,7 @@ to the life cycle of the threads.
 
 | Method               | Description                                             |
 |:---------------------|:--------------------------------------------------------|
-| `onThreadCreated()`  | Called after a thread is created.                       |
+| `onThreadCreated()`  | Called after a thread was created.                      |
 | `onThreadStarted()`  | Called at the beginning of the thread's `run()` method. |
 | `onThreadStopping()` | Called at the end of the thread's `run()` method.       |
 
