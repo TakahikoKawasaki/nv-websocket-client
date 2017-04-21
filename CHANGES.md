@@ -1,6 +1,15 @@
 CHANGES
 =======
 
+2.0 (2017-04-22)
+----------------
+
+- Added `ThreadType` enum.
+- Added `WebSocketListener.onThreadCreated(WebSocket, ThreadType, Thread)` method.
+- Added `WebSocketListener.onThreadStarted(WebSocket, ThreadType, Thread)` method.
+- Added `WebSocketListener.onThreadStopping(WebSocket, ThreadType, Thread)` method.
+
+
 1.31 (2016-12-25)
 -----------------
 

@@ -34,7 +34,7 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>1.31</version>
+    <version>2.0</version>
 </dependency>
 ```
 
@@ -43,7 +43,7 @@ Gradle
 
 ```Gradle
 dependencies {
-    compile 'com.neovisionaries:nv-websocket-client:1.31'
+    compile 'com.neovisionaries:nv-websocket-client:2.0'
 }
 ```
 
@@ -52,7 +52,7 @@ OSGi
 ----
 
     Bundle-SymbolicName: com.neovisionaries.ws.client
-    Export-Package: com.neovisionaries.ws.client;version="1.31.0"
+    Export-Package: com.neovisionaries.ws.client;version="2.0.0"
 
 
 Source Code
@@ -230,6 +230,9 @@ interface.
 | `onTextFrame`                 | Called when a text frame was received.               |
 | `onTextMessage`               | Called when a text message was received.             |
 | `onTextMessageError`          | Called when a text message failed to be constructed. |
+| `onThreadCreated`             | Called after a thread was created.                   |
+| `onThreadStarted`             | Called at the beginning of a thread's run() method.  |
+| `onThreadStopping`            | Called at the end of a thread's run() method.        |
 | `onUnexpectedError`           | Called when an uncaught throwable was detected.      |
 
 
@@ -681,6 +684,42 @@ passed to `handleCallbackError()` of `WebSocketListener`.
 ```java
 public void handleCallbackError(WebSocket websocket, Throwable cause) throws Exception {
     // Throwables thrown by onXxx() callback methods come here.
+}
+```
+
+
+#### Thread Callbacks
+
+Some threads are created internally in the implementation of `WebSocket`.
+Known threads are as follows.
+
+| Thread Type      | Description                                                 |
+|:-----------------|:------------------------------------------------------------|
+| `READING_THREAD` | A thread which reads WebSocket frames from the server.      |
+| `WRITING_THREAD` | A thread which sends WebSocket frames to the server.        |
+| `CONNECT_THREAD` | A thread which calls `WebSocket.connect()` asynchronously.  |
+| `FINISH_THREAD`  | A thread which does finalization of a `WebSocket` instance. |
+
+The following callack methods of `WebSocketListener` are called according
+to the life cycle of the threads.
+
+| Method               | Description                                             |
+|:---------------------|:--------------------------------------------------------|
+| `onThreadCreated()`  | Called after a thread is created.                       |
+| `onThreadStarted()`  | Called at the beginning of the thread's `run()` method. |
+| `onThreadStopping()` | Called at the end of the thread's `run()` method.       |
+
+For example, if you want to change the name of the reading thread,
+implement `onThreadCreated()` method like below.
+
+```java
+@Override
+public void onThreadCreated(WebSocket ws, ThreadType type, Thread thread)
+{
+    if (type == ThreadType.READING_THREAD)
+    {
+        thread.setName("READING_THREAD");
+    }
 }
 ```
 
