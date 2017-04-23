@@ -55,10 +55,25 @@ public class HostnameUnverifiedException extends WebSocketException
     public HostnameUnverifiedException(SSLSocket socket, String hostname)
     {
         super(WebSocketError.HOSTNAME_UNVERIFIED,
-                String.format("The certificate of the peer does not match the expected hostname (%s)", hostname));
+                String.format("The certificate of the peer%s does not match the expected hostname (%s)",
+                        stringifyPrincipal(socket), hostname));
 
         mSSLSocket = socket;
         mHostname  = hostname;
+    }
+
+
+    private static String stringifyPrincipal(SSLSocket socket)
+    {
+        try
+        {
+            return String.format(" (%s)", socket.getSession().getPeerPrincipal().toString());
+        }
+        catch (Exception e)
+        {
+            // Principal information is not available.
+            return "";
+        }
     }
 
 
