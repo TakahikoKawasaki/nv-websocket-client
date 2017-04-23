@@ -443,6 +443,10 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *     <span style="color: green;">// A violation against the WebSocket protocol was detected</span>
  *     <span style="color: green;">// during the opening handshake.</span>
  * }
+ * catch ({@link HostnameUnverifiedException} e)
+ * {
+ *     <span style="color: green;">// The certificate of the peer does not match the expected hostname.</span>
+ * }
  * catch ({@link WebSocketException} e)
  * {
  *     <span style="color: green;">// Failed to establish a WebSocket connection.</span>
@@ -496,6 +500,12 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *     }
  * }</pre>
  * </blockquote>
+ *
+ * <p>
+ * Also, {@code connect()} method throws {@link HostnameUnverifiedException}
+ * which is a subclass of {@code WebSocketException} (since version 2.1) when
+ * the certificate of the peer does not match the expected hostname.
+ * </p>
  *
  * <h3>Connect To Server Asynchronously</h3>
  *

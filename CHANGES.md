@@ -1,6 +1,16 @@
 CHANGES
 =======
 
+2.1 (2017-04-23)
+----------------
+
+- Added hostname verification (Pull Request #107). Thank you, blunden.
+- Added `DistinguishedNameParser` class and `OkHostnameVerifier` class
+  which were included in the pull request #107. They are from okhttp.
+- Added `WebSocketError.HOSTNAME_UNVERIFIED`.
+- Added `HostnameUnverifiedException` class.
+
+
 2.0 (2017-04-22)
 ----------------
 

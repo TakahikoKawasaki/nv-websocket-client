@@ -34,7 +34,7 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>2.0</version>
+    <version>2.1</version>
 </dependency>
 ```
 
@@ -276,6 +276,10 @@ catch (OpeningHandshakeException e)
     // A violation against the WebSocket protocol was detected
     // during the opening handshake.
 }
+catch (HostnameUnverifiedException e)
+{
+    // The certificate of the peer does not match the expected hostname.
+}
 catch (WebSocketException e)
 {
     // Failed to establish a WebSocket connection.
@@ -325,6 +329,10 @@ catch (OpeningHandshakeException e)
     }
 }
 ```
+
+Also, `connect()` method throws `HostnameUnverifiedException` which is a
+subclass of `WebSocketException` (since version 2.1) when the certificate
+of the peer does not match the expected hostname.
 
 
 #### Connect To Server Asynchronously
@@ -851,6 +859,13 @@ TODO
 - SOCKS support
 - Public Key Pinning support ([RFC 7469](http://tools.ietf.org/html/rfc7469))
 - And other [issues](https://github.com/TakahikoKawasaki/nv-websocket-client/issues)
+
+
+Acknowledgement
+---------------
+
+- PR #107 has incorporated `DistinguishedNameParser` and `OkHostnameVerifier`
+  into this library and they are from [okhttp](https://github.com/square/okhttp).
 
 
 Author
