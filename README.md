@@ -43,7 +43,7 @@ Gradle
 
 ```Gradle
 dependencies {
-    compile 'com.neovisionaries:nv-websocket-client:2.0'
+    compile 'com.neovisionaries:nv-websocket-client:2.1'
 }
 ```
 
@@ -52,7 +52,7 @@ OSGi
 ----
 
     Bundle-SymbolicName: com.neovisionaries.ws.client
-    Export-Package: com.neovisionaries.ws.client;version="2.0.0"
+    Export-Package: com.neovisionaries.ws.client;version="2.1.0"
 
 
 Source Code
