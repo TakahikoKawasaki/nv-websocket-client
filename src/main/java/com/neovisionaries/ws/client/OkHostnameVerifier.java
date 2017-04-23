@@ -35,7 +35,7 @@ import javax.security.auth.x500.X500Principal;
  * A HostnameVerifier consistent with <a
  * href="http://www.ietf.org/rfc/rfc2818.txt">RFC 2818</a>.
  */
-public final class OkHostnameVerifier implements HostnameVerifier {
+final class OkHostnameVerifier implements HostnameVerifier {
   public static final OkHostnameVerifier INSTANCE = new OkHostnameVerifier();
 
   /**
