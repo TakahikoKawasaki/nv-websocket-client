@@ -39,6 +39,12 @@ class Address
     }
 
 
+    String getHostname()
+    {
+        return mHost;
+    }
+
+
     @Override
     public String toString()
     {
