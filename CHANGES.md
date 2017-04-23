@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+2.2 (2017-04-23)
+----------------
+
+- Changed the visibility of `OkHostnameVerifier` class from 'public'
+  to `package private`.
+
+
 2.1 (2017-04-23)
 ----------------
 
