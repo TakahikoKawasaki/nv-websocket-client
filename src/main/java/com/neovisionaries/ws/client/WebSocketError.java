@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2016 Neo Visionaries Inc.
+ * Copyright (C) 2015-2017 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -432,5 +432,24 @@ public enum WebSocketError
      * @since 1.29
      */
     NO_MORE_FRAME,
+
+
+    /**
+     * The certificate of the peer does not match the expected hostname.
+     *
+     * <p>
+     * When {@link WebSocketException#getError()} returns this error code, the
+     * {@link WebSocketException} can be cast to {@link HostnameUnverifiedException}
+     * through which you can get the
+     * </p>
+     *
+     * <p>
+     * See <a href='https://github.com/TakahikoKawasaki/nv-websocket-client/pull/107'
+     * >Verify that certificate is valid for server hostname (#107)</a>.
+     * </p>
+     *
+     * @since 2.1
+     */
+    HOSTNAME_UNVERIFIED,
     ;
 }
