@@ -263,7 +263,7 @@ class ProxyHandshaker
      * To be able to verify the hostname of the certificate received
      * if a connection is made to an https/wss endpoint, access to this
      * hostname is required.
-     * 
+     *
      * @return the hostname of the server the proxy is asked to connect to.
      */
     String getProxiedHostname()
