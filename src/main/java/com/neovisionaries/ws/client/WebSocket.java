@@ -25,6 +25,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -3103,11 +3104,29 @@ public class WebSocket
         // Generate a value for Sec-WebSocket-Key.
         String key = generateWebSocketKey();
 
-        // Send an opening handshake to the server.
-        writeHandshake(output, key);
+        Map<String, List<String>> headers;
 
-        // Read the response from the server.
-        Map<String, List<String>> headers = readHandshake(input, key);
+        try
+        {
+            socket.setSoTimeout(mSocketConnector.getConnectionTimeout());
+
+            // Send an opening handshake to the server.
+            writeHandshake(output, key);
+
+            // Read the response from the server.
+            headers = readHandshake(input, key);
+
+            socket.setSoTimeout(0);
+        }
+        catch (SocketException e)
+        {
+            final String message = String.format("Invalid timeout '%d': %s",
+                                                 mSocketConnector.getConnectionTimeout(),
+                                                 e.getMessage());
+
+            // Raise an exception with OPENING_HANDSHAKE_RESPONSE_FAILURE.
+            throw new WebSocketException(WebSocketError.SOCKET_CONNECT_ERROR, message, e);
+        }
 
         // Keep the input stream and the output stream to pass them
         // to the reading thread and the writing thread later.
