@@ -588,14 +588,11 @@ public class WebSocketFactory
         // Select a socket factory.
         SocketFactory socketFactory = mProxySettings.selectSocketFactory();
 
-        // Let the socket factory create a socket.
-        Socket socket = socketFactory.createSocket();
-
         // The address to connect to.
         Address address = new Address(mProxySettings.getHost(), proxyPort);
 
         // The delegatee for the handshake with the proxy.
-        ProxyHandshaker handshaker = new ProxyHandshaker(socket, host, port, mProxySettings);
+        ProxyHandshaker handshaker = new ProxyHandshaker(host, port, mProxySettings);
 
         // SSLSocketFactory for SSL handshake with the WebSocket endpoint.
         SSLSocketFactory sslSocketFactory = secure ?
@@ -603,7 +600,7 @@ public class WebSocketFactory
 
         // Create an instance that will execute the task to connect to the server later.
         return new SocketConnector(
-                socket, address, timeout, handshaker, sslSocketFactory, host, port);
+                socketFactory, address, timeout, handshaker, sslSocketFactory, host, port);
     }
 
 
@@ -612,14 +609,11 @@ public class WebSocketFactory
         // Select a socket factory.
         SocketFactory factory = mSocketFactorySettings.selectSocketFactory(secure);
 
-        // Let the socket factory create a socket.
-        Socket socket = factory.createSocket();
-
         // The address to connect to.
         Address address = new Address(host, port);
 
         // Create an instance that will execute the task to connect to the server later.
-        return new SocketConnector(socket, address, timeout);
+        return new SocketConnector(factory, address, timeout);
     }
 
 
