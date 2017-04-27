@@ -21,7 +21,13 @@ import java.net.Socket;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SNIServerName;
+import javax.net.ssl.SNIHostName;
+import java.util.List;
+import java.util.ArrayList;
+import javax.net.ssl.SSLException;
+import javax.net.SocketFactory;
 
 /**
  * A class to connect to the server.
@@ -32,6 +38,7 @@ import javax.net.ssl.SSLSocketFactory;
  */
 class SocketConnector
 {
+    private SocketFactory mSocketFactory;
     private Socket mSocket;
     private final Address mAddress;
     private final int mConnectionTimeout;
@@ -41,18 +48,18 @@ class SocketConnector
     private final int mPort;
 
 
-    SocketConnector(Socket socket, Address address, int timeout)
+    SocketConnector(SocketFactory socketFactory, Address address, int timeout)
     {
-        this(socket, address, timeout, null, null, null, 0);
+        this(socketFactory, address, timeout, null, null, null, 0);
     }
 
 
     SocketConnector(
-            Socket socket, Address address, int timeout,
+            SocketFactory socketFactory, Address address, int timeout,
             ProxyHandshaker handshaker, SSLSocketFactory sslSocketFactory,
             String host, int port)
     {
-        mSocket            = socket;
+        mSocketFactory     = socketFactory;
         mAddress           = address;
         mConnectionTimeout = timeout;
         mProxyHandshaker   = handshaker;
@@ -87,8 +94,11 @@ class SocketConnector
 
             try
             {
-                // Close the socket.
-                mSocket.close();
+                if (mSocket != null)
+                {
+                    // Close the socket.
+                    mSocket.close();
+                }
             }
             catch (IOException ioe)
             {
@@ -107,8 +117,10 @@ class SocketConnector
 
         try
         {
-            // Connect to the server (either a proxy or a WebSocket endpoint).
-            mSocket.connect(mAddress.toInetSocketAddress(), mConnectionTimeout);
+            // Connect to the server (either a proxy or a WebSocket endpoint); overlay mSocket
+            // Ignore mConnectionTimeout
+            mSocket = mSocketFactory.createSocket(mAddress.getHostname(), mAddress.toInetSocketAddress().getPort());
+            // mSocket.connect(mAddress.toInetSocketAddress(), mConnectionTimeout);
 
             if (mSocket instanceof SSLSocket)
             {
@@ -137,7 +149,7 @@ class SocketConnector
     }
 
 
-    private void verifyHostname(SSLSocket socket, String hostname) throws HostnameUnverifiedException
+    private void verifyHostname(SSLSocket socket, String hostname) throws HostnameUnverifiedException, WebSocketException
     {
         // Hostname verifier.
         OkHostnameVerifier verifier = OkHostnameVerifier.INSTANCE;
@@ -145,17 +157,22 @@ class SocketConnector
         // The SSL session.
         SSLSession session = socket.getSession();
 
-        // Verify the hostname.
-        if (verifier.verify(hostname, session))
-        {
-            // Verified. No problem.
-            return;
+        try {
+            // Verify the hostname.
+            if (verifier.verifyWithExc(hostname, session))
+            {
+                // Verified. No problem.
+                return;
+            }
+        } catch (SSLException e) {
+            String message = String.format(
+                  "Handshake with the server (%s) failed: %s", hostname, e.getMessage());
+            throw new WebSocketException(WebSocketError.SSL_HANDSHAKE_ERROR, message, e);
         }
 
         // The certificate of the peer does not match the expected hostname.
         throw new HostnameUnverifiedException(socket, hostname);
     }
-
 
     /**
      * Perform proxy handshake and optionally SSL handshake.
@@ -165,7 +182,7 @@ class SocketConnector
         try
         {
             // Perform handshake with the proxy server.
-            mProxyHandshaker.perform();
+            mProxyHandshaker.perform(mSocket);
         }
         catch (IOException e)
         {

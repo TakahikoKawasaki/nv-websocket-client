@@ -68,6 +68,11 @@ final class OkHostnameVerifier implements HostnameVerifier {
     }
   }
 
+  public boolean verifyWithExc(String host, SSLSession session) throws SSLException {
+      Certificate[] certificates = session.getPeerCertificates();
+      return verify(host, (X509Certificate) certificates[0]);
+  }
+
   public boolean verify(String host, X509Certificate certificate) {
     return verifyAsIpAddress(host)
         ? verifyIpAddress(host, certificate)
