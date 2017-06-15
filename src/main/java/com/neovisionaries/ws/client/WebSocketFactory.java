@@ -562,35 +562,6 @@ public class WebSocketFactory
     }
 
 
-    private SocketConnector createProxiedRawSocket(
-            String host, int port, boolean secure, int timeout) throws IOException
-    {
-        // Determine the port number of the proxy server.
-        // Especially, if getPort() returns -1, the value
-        // is converted to 80 or 443.
-        int proxyPort = determinePort(mProxySettings.getPort(), mProxySettings.isSecure());
-
-        // Select a socket factory.
-        SocketFactory socketFactory = mProxySettings.selectSocketFactory();
-
-        // Let the socket factory create a socket.
-        Socket socket = socketFactory.createSocket();
-
-        // The address to connect to.
-        Address address = new Address(mProxySettings.getHost(), proxyPort);
-
-        // The delegatee for the handshake with the proxy.
-        ProxyHandshaker handshaker = new ProxyHandshaker(socket, host, port, mProxySettings);
-
-        // SSLSocketFactory for SSL handshake with the WebSocket endpoint.
-        SSLSocketFactory sslSocketFactory = secure ?
-                (SSLSocketFactory)mSocketFactorySettings.selectSocketFactory(secure) : null;
-
-        // Create an instance that will execute the task to connect to the server later.
-        return new SocketConnector(
-                socket, address, timeout, handshaker, sslSocketFactory, host, port);
-    }
-
 
     private SocketConnector createDirectRawSocket(String host, int port, boolean secure, int timeout) throws IOException
     {

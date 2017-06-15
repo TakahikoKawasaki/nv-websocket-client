@@ -18,9 +18,10 @@ package com.neovisionaries.ws.client;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.net.InetAddress;
+import javax.net.SocketFactory;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 import java.util.concurrent.CountDownLatch;
 
 
