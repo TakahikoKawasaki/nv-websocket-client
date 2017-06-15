@@ -44,6 +44,10 @@ class Address
         return mHost;
     }
 
+    int getPort()
+    {
+        return mPort;
+    }
 
     @Override
     public String toString()

@@ -558,22 +558,7 @@ public class WebSocketFactory
         // it is converted to 80 or 443.
         port = determinePort(port, secure);
 
-        // True if a proxy server should be used.
-        boolean proxied = (mProxySettings.getHost() != null);
-
-        // See "Figure 2 -- Proxy server traversal decision tree" at
-        // http://www.infoq.com/articles/Web-Sockets-Proxy-Servers
-
-        if (proxied)
-        {
-            // Create a connector to connect to the proxy server.
-            return createProxiedRawSocket(host, port, secure, timeout);
-        }
-        else
-        {
-            // Create a connector to connect to the WebSocket endpoint directly.
-            return createDirectRawSocket(host, port, secure, timeout);
-        }
+        return createDirectRawSocket(host, port, secure, timeout);
     }
 
 
@@ -612,14 +597,11 @@ public class WebSocketFactory
         // Select a socket factory.
         SocketFactory factory = mSocketFactorySettings.selectSocketFactory(secure);
 
-        // Let the socket factory create a socket.
-        Socket socket = factory.createSocket();
-
         // The address to connect to.
         Address address = new Address(host, port);
 
         // Create an instance that will execute the task to connect to the server later.
-        return new SocketConnector(socket, address, timeout);
+        return new SocketConnector(socketFactory, address, timeout);
     }
 
 
