@@ -112,7 +112,7 @@ class SocketConnector
                 verifyHostname((SSLSocket)mSocket, mAddress.getHostname());
             }
         }
-        catch (IOException e)
+        catch (Exception e)
         {
             // Failed to connect the server.
             String message = String.format("Failed to connect to %s: %s", mAddress, e.getMessage());
