@@ -558,53 +558,9 @@ public class WebSocketFactory
         // it is converted to 80 or 443.
         port = determinePort(port, secure);
 
-        // True if a proxy server should be used.
-        boolean proxied = (mProxySettings.getHost() != null);
-
-        // See "Figure 2 -- Proxy server traversal decision tree" at
-        // http://www.infoq.com/articles/Web-Sockets-Proxy-Servers
-
-        if (proxied)
-        {
-            // Create a connector to connect to the proxy server.
-            return createProxiedRawSocket(host, port, secure, timeout);
-        }
-        else
-        {
-            // Create a connector to connect to the WebSocket endpoint directly.
-            return createDirectRawSocket(host, port, secure, timeout);
-        }
+        return createDirectRawSocket(host, port, secure, timeout);
     }
 
-
-    private SocketConnector createProxiedRawSocket(
-            String host, int port, boolean secure, int timeout) throws IOException
-    {
-        // Determine the port number of the proxy server.
-        // Especially, if getPort() returns -1, the value
-        // is converted to 80 or 443.
-        int proxyPort = determinePort(mProxySettings.getPort(), mProxySettings.isSecure());
-
-        // Select a socket factory.
-        SocketFactory socketFactory = mProxySettings.selectSocketFactory();
-
-        // Let the socket factory create a socket.
-        Socket socket = socketFactory.createSocket();
-
-        // The address to connect to.
-        Address address = new Address(mProxySettings.getHost(), proxyPort);
-
-        // The delegatee for the handshake with the proxy.
-        ProxyHandshaker handshaker = new ProxyHandshaker(socket, host, port, mProxySettings);
-
-        // SSLSocketFactory for SSL handshake with the WebSocket endpoint.
-        SSLSocketFactory sslSocketFactory = secure ?
-                (SSLSocketFactory)mSocketFactorySettings.selectSocketFactory(secure) : null;
-
-        // Create an instance that will execute the task to connect to the server later.
-        return new SocketConnector(
-                socket, address, timeout, handshaker, sslSocketFactory, host, port);
-    }
 
 
     private SocketConnector createDirectRawSocket(String host, int port, boolean secure, int timeout) throws IOException
@@ -612,14 +568,11 @@ public class WebSocketFactory
         // Select a socket factory.
         SocketFactory factory = mSocketFactorySettings.selectSocketFactory(secure);
 
-        // Let the socket factory create a socket.
-        Socket socket = factory.createSocket();
-
         // The address to connect to.
         Address address = new Address(host, port);
 
         // Create an instance that will execute the task to connect to the server later.
-        return new SocketConnector(socket, address, timeout);
+        return new SocketConnector(factory, address, timeout);
     }
 
 
