@@ -572,7 +572,7 @@ public class WebSocketFactory
         Address address = new Address(host, port);
 
         // Create an instance that will execute the task to connect to the server later.
-        return new SocketConnector(socketFactory, address, timeout);
+        return new SocketConnector(factory, address, timeout);
     }
 
 

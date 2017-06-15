@@ -91,7 +91,7 @@ class SocketConnector
     {
         try
         {
-            InetAddress inetAddresses = InetAddress.getAllByName(mAddress.getHostname());
+            InetAddress[] inetAddresses = InetAddress.getAllByName(mAddress.getHostname());
             mResolvesInProgress = inetAddresses.length;
 
             mSocketConnectionCompleteEvent = new CountDownLatch(1);
