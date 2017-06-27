@@ -36,11 +36,11 @@
  * <span class="tag">&lt;dependency&gt;
  *     &lt;groupId&gt;</span>com.neovisionaries<span class="tag">&lt;/groupId&gt;
  *     &lt;artifactId&gt;</span>nv-websocket-client<span class="tag">&lt;/artifactId&gt;
- *     &lt;version&gt;</span>2.2<span class="tag">&lt;/version&gt;
+ *     &lt;version&gt;</span>2.3<span class="tag">&lt;/version&gt;
  * &lt;/dependency&gt;</span></pre>
  * </blockquote>
  *
- * @version 2.2
+ * @version 2.3
  *
  * @author Takahiko Kawasaki
  */

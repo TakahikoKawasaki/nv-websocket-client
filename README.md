@@ -34,7 +34,7 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>2.2</version>
+    <version>2.3</version>
 </dependency>
 ```
 
@@ -44,7 +44,7 @@ Gradle
 
 ```Gradle
 dependencies {
-    compile 'com.neovisionaries:nv-websocket-client:2.2'
+    compile 'com.neovisionaries:nv-websocket-client:2.3'
 }
 ```
 
@@ -53,7 +53,7 @@ OSGi
 ----
 
     Bundle-SymbolicName: com.neovisionaries.ws.client
-    Export-Package: com.neovisionaries.ws.client;version="2.2.0"
+    Export-Package: com.neovisionaries.ws.client;version="2.3.0"
 
 
 Source Code
@@ -102,6 +102,19 @@ SSLContext context = NaiveSSLContext.getInstance("TLS");
 
 // Set the custom SSL context.
 factory.setSSLContext(context);
+
+// Disable manual hostname verification for NaiveSSLContext.
+//
+// Manual hostname verification has been enabled since the
+// version 2.1. Because the verification is executed manually
+// after Socket.connect(SocketAddress, int) succeeds, the
+// hostname verification is always executed even if you has
+// passed an SSLContext which naively accepts any server
+// certificate. However, this behavior is not desirable in
+// some cases and you may want to disable the hostname
+// verification. You can disable the hostname verification
+// by calling WebSocketFactory.setVerifyHostname(false).
+factory.setVerifyHostname(false);
 ```
 
 [NaiveSSLContext](https://gist.github.com/TakahikoKawasaki/d07de2218b4b81bf65ac)

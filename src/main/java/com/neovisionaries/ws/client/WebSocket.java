@@ -89,7 +89,20 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *
  * <span style="color: green;">// Set the custom SSL context.</span>
  * factory.{@link WebSocketFactory#setSSLContext(javax.net.ssl.SSLContext)
- * setSSLContext}(context);</pre>
+ * setSSLContext}(context);
+ *
+ * <span style="color: green;">// Disable manual hostname verification for NaiveSSLContext.
+ * //
+ * // Manual hostname verification has been enabled since the
+ * // version 2.1. Because the verification is executed manually
+ * // after Socket.connect(SocketAddress, int) succeeds, the
+ * // hostname verification is always executed even if you has
+ * // passed an SSLContext which naively accepts any server
+ * // certificate. However, this behavior is not desirable in
+ * // some cases and you may want to disable the hostname
+ * // verification. You can disable the hostname verification
+ * // by calling WebSocketFactory.setVerifyHostname(false).</span>
+ * factory.{@link WebSocketFactory#setVerifyHostname(boolean) setVerifyHostname}(false);</pre>
  * </blockquote>
  *
  * <p>

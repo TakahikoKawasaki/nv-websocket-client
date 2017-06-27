@@ -226,8 +226,9 @@ public class WebSocketFactory
      *
      * <p>
      * Manual hostname verification has been enabled since the version
-     * 2.1. Because the verification is executed manually after {@link
-     * java.net.Socket#connect(java.net.SocketAddress) Socket.connect()}
+     * 2.1. Because the verification is executed manually after {@code
+     * Socket.}{@link java.net.Socket#connect(java.net.SocketAddress, int)
+     * connect(SocketAddress, int)}
      * succeeds, the hostname verification is always executed even if
      * you has passed an {@link SSLContext} which naively accepts any
      * server certificate (e.g. <code><a href=

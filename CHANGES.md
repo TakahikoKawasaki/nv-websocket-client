@@ -1,10 +1,18 @@
 CHANGES
 =======
 
+2.3 (2017-06-28)
+----------------
+
+- Added `getVerifyHostname()` method and `setVerifyHostname(boolean)`
+  method to `WebSocketFactory` class to cope with the issue reported
+  by the Issue #116.
+
+
 2.2 (2017-04-23)
 ----------------
 
-- Changed the visibility of `OkHostnameVerifier` class from 'public'
+- Changed the visibility of `OkHostnameVerifier` class from `public`
   to `package private`.
 
 
