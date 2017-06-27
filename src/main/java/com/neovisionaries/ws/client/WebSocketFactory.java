@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2016 Neo Visionaries Inc.
+ * Copyright (C) 2015-2017 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ public class WebSocketFactory
     private final SocketFactorySettings mSocketFactorySettings;
     private final ProxySettings mProxySettings;
     private int mConnectionTimeout;
+    private boolean mVerifyHostname = true;
 
 
     public WebSocketFactory()
@@ -195,6 +196,61 @@ public class WebSocketFactory
         }
 
         mConnectionTimeout = timeout;
+
+        return this;
+    }
+
+
+    /**
+     * Get the flag which indicates whether the hostname in the
+     * server's certificate should be verified or not. The default
+     * value is {@code true}. See the description of {@link
+     * #setVerifyHostname(boolean)} to understand what this boolean
+     * flag means.
+     *
+     * @return
+     *         {@code true} if hostname verification is enabled.
+     *
+     * @since 2.3
+     */
+    public boolean getVerifyHostname()
+    {
+        return mVerifyHostname;
+    }
+
+
+    /**
+     * Set the flag which indicates whether the hostname in the
+     * server's certificate should be verified or not. The default
+     * value is {@code true}.
+     *
+     * <p>
+     * Manual hostname verification has been enabled since the version
+     * 2.1. Because the verification is executed manually after {@link
+     * java.net.Socket#connect(java.net.SocketAddress) Socket.connect()}
+     * succeeds, the hostname verification is always executed even if
+     * you has passed an {@link SSLContext} which naively accepts any
+     * server certificate (e.g. <code><a href=
+     * "https://gist.github.com/TakahikoKawasaki/d07de2218b4b81bf65ac"
+     * >NaiveSSLContext</a></code>). However, this behavior is not
+     * desirable in some cases and you may want to disable the hostname
+     * verification. This setter method exists for the purpose and you
+     * can disable hostname verification by passing {@code false} to
+     * this method.
+     * </p>
+     *
+     * @param verifyHostname
+     *         {@code true} to enable hostname verification.
+     *         {@code false} to disable hostname verification.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 2.3
+     */
+    public WebSocketFactory setVerifyHostname(boolean verifyHostname)
+    {
+        mVerifyHostname = verifyHostname;
 
         return this;
     }
@@ -511,7 +567,6 @@ public class WebSocketFactory
     }
 
 
-
     private static boolean isSecureConnectionRequired(String scheme)
     {
         if (scheme == null || scheme.length() == 0)
@@ -603,7 +658,8 @@ public class WebSocketFactory
 
         // Create an instance that will execute the task to connect to the server later.
         return new SocketConnector(
-                socket, address, timeout, handshaker, sslSocketFactory, host, port);
+                socket, address, timeout, handshaker, sslSocketFactory, host, port)
+                .setVerifyHostname(mVerifyHostname);
     }
 
 
@@ -619,7 +675,8 @@ public class WebSocketFactory
         Address address = new Address(host, port);
 
         // Create an instance that will execute the task to connect to the server later.
-        return new SocketConnector(socket, address, timeout);
+        return new SocketConnector(socket, address, timeout)
+                .setVerifyHostname(mVerifyHostname);
     }
 
 

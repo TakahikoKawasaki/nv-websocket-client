@@ -39,6 +39,7 @@ class SocketConnector
     private final SSLSocketFactory mSSLSocketFactory;
     private final String mHost;
     private final int mPort;
+    private boolean mVerifyHostname;
 
 
     SocketConnector(Socket socket, Address address, int timeout)
@@ -100,6 +101,14 @@ class SocketConnector
     }
 
 
+    SocketConnector setVerifyHostname(boolean verifyHostname)
+    {
+        mVerifyHostname = verifyHostname;
+
+        return this;
+    }
+
+
     private void doConnect() throws WebSocketException
     {
         // True if a proxy server is set.
@@ -139,6 +148,12 @@ class SocketConnector
 
     private void verifyHostname(SSLSocket socket, String hostname) throws HostnameUnverifiedException
     {
+        if (mVerifyHostname == false)
+        {
+            // Skip hostname verification.
+            return;
+        }
+
         // Hostname verifier.
         OkHostnameVerifier verifier = OkHostnameVerifier.INSTANCE;
 
