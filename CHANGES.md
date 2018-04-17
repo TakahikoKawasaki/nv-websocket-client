@@ -1,6 +1,17 @@
 CHANGES
 =======
 
+2.4 (2017-04-18)
+----------------
+
+- Added `WebSocketFactory.getServerNames()` method.
+- Added `WebSocketFactory.setServerNames(String[])` method.
+- Added `WebSocketFactory.setServerName(String)` method.
+- Added `ProxySettings.getServerNames()` method.
+- Added `ProxySettings.setServerNames(String[])` method.
+- Added `ProxySettings.setServerName(String)` method.
+
+
 2.3 (2017-06-28)
 ----------------
 

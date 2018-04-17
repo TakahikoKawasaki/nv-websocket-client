@@ -34,7 +34,7 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>2.3</version>
+    <version>2.4</version>
 </dependency>
 ```
 
@@ -44,7 +44,7 @@ Gradle
 
 ```Gradle
 dependencies {
-    compile 'com.neovisionaries:nv-websocket-client:2.3'
+    compile 'com.neovisionaries:nv-websocket-client:2.4'
 }
 ```
 
@@ -53,7 +53,7 @@ OSGi
 ----
 
     Bundle-SymbolicName: com.neovisionaries.ws.client
-    Export-Package: com.neovisionaries.ws.client;version="2.3.0"
+    Export-Package: com.neovisionaries.ws.client;version="2.4.0"
 
 
 Source Code
@@ -123,6 +123,18 @@ naively accepts all certificates without verification. It's enough for testing
 purposes. When you see an error message "unable to find valid certificate path
 to requested target" while testing, try `NaiveSSLContext`.
 
+SNI (Server Name Indication) is supported since version 2.4. To set up server
+names, call either `setServerNames(String[])` method or `setServerName(String)`
+method. If your system has `SSLParameters.setServerNames(List<SNIServerName>)`
+method, the method is called via reflection. Note that `SSLParameters.setServerNames`
+is a relatively new method and it is not available before Java 1.8 and Android
+7.0 (API Level 24).
+
+```java
+// Set a server name for SNI (Server Name Indication).
+factory.setServerName("example.com");
+```
+
 
 #### HTTP Proxy
 
@@ -155,6 +167,18 @@ Basic Authentication.
 ```java
 // Set credentials for authentication at a proxy server.
 settings.setCredentials(id, password);
+```
+
+SNI (Server Name Indication) is supported since version 2.4. To set up server
+names, call either `setServerNames(String[])` method or `setServerName(String)`
+method. If your system has `SSLParameters.setServerNames(List<SNIServerName>)`
+method, the method is called via reflection. Note that `SSLParameters.setServerNames`
+is a relatively new method and it is not available before Java 1.8 and Android
+7.0 (API Level 24).
+
+```java
+// Set a server name for SNI (Server Name Indication).
+settings.setServerName("example.com");
 ```
 
 
