@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 Neo Visionaries Inc.
+ * Copyright (C) 2015-2018 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ public class WebSocketFactory
     private final ProxySettings mProxySettings;
     private int mConnectionTimeout;
     private boolean mVerifyHostname = true;
+    private String[] mServerNames;
 
 
     public WebSocketFactory()
@@ -254,6 +255,65 @@ public class WebSocketFactory
         mVerifyHostname = verifyHostname;
 
         return this;
+    }
+
+
+    /**
+     * Get server names for SNI (Server Name Indication).
+     *
+     * @return
+     *         List of host names.
+     *
+     * @since 2.4
+     */
+    public String[] getServerNames()
+    {
+        return mServerNames;
+    }
+
+
+    /**
+     * Set server names for SNI (Server Name Indication).
+     *
+     * If {@code setServerNames(List<SNIServerName>)} method of
+     * {@link javax.net.ssl.SSLParameters SSLParameters} class is available
+     * in the underlying system, the method is called to set up server names
+     * for SNI (Server Name Indication).
+     *
+     * @param serverNames
+     *         List of host names.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 2.4
+     */
+    public WebSocketFactory setServerNames(String[] serverNames)
+    {
+        mServerNames = serverNames;
+
+        return this;
+    }
+
+
+    /**
+     * Set a server name for SNI (Server Name Indication).
+     *
+     * This method internally creates a String array of size 1 which
+     * contains the given {@code serverName} and calls {@link
+     * #setServerNames(String[])}.
+     *
+     * @param serverName
+     *         A host name.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 2.4
+     */
+    public WebSocketFactory setServerName(String serverName)
+    {
+        return setServerNames(new String[] { serverName });
     }
 
 
@@ -647,6 +707,9 @@ public class WebSocketFactory
         // Let the socket factory create a socket.
         Socket socket = socketFactory.createSocket();
 
+        // Set up server names for SNI as necessary if possible.
+        SNIHelper.setServerNames(socket, mProxySettings.getServerNames());
+
         // The address to connect to.
         Address address = new Address(mProxySettings.getHost(), proxyPort);
 
@@ -671,6 +734,9 @@ public class WebSocketFactory
 
         // Let the socket factory create a socket.
         Socket socket = factory.createSocket();
+
+        // Set up server names for SNI as necessary if possible.
+        SNIHelper.setServerNames(socket, mServerNames);
 
         // The address to connect to.
         Address address = new Address(host, port);

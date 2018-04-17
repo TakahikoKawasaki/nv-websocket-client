@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2016 Neo Visionaries Inc.
+ * Copyright (C) 2015-2018 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.security.SecureRandom;
 import java.util.Collection;
@@ -386,5 +388,67 @@ class Misc
 
         // Return the host part.
         return matcher.group(2);
+    }
+
+
+    public static Constructor<?> getConstructor(String className, Class<?>[] parameterTypes)
+    {
+        try
+        {
+            return Class.forName(className).getConstructor(parameterTypes);
+        }
+        catch (Exception e)
+        {
+            return null;
+        }
+    }
+
+
+    public static Object newInstance(Constructor<?> constructor, Object... parameters)
+    {
+        if (constructor == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return constructor.newInstance(parameters);
+        }
+        catch (Exception e)
+        {
+            return null;
+        }
+    }
+
+
+    public static Method getMethod(String className, String methodName, Class<?>[] parameterTypes)
+    {
+        try
+        {
+            return Class.forName(className).getMethod(methodName, parameterTypes);
+        }
+        catch (Exception e)
+        {
+            return null;
+        }
+    }
+
+
+    public static Object invoke(Method method, Object object, Object... parameters)
+    {
+        if (method == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return method.invoke(object, parameters);
+        }
+        catch (Exception e)
+        {
+            return null;
+        }
     }
 }

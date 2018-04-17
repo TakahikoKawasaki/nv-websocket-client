@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Neo Visionaries Inc.
+ * Copyright (C) 2015-2018 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,7 @@ public class ProxySettings
     private int mPort;
     private String mId;
     private String mPassword;
+    private String[] mServerNames;
 
 
     ProxySettings(WebSocketFactory factory)
@@ -153,6 +154,11 @@ public class ProxySettings
      *       <td>Cleared</td>
      *       <td>Additional HTTP headers passed to the proxy server.</td>
      *     </tr>
+     *     <tr>
+     *       <td>Server Names</td>
+     *       <td>{@code null}</td>
+     *       <td>Server names for SNI (Server Name Indication).</td>
+     *     </tr>
      *   </tbody>
      * </table>
      * </blockquote>
@@ -168,6 +174,7 @@ public class ProxySettings
         mId       = null;
         mPassword = null;
         mHeaders.clear();
+        mServerNames = null;
 
         return this;
     }
@@ -694,5 +701,64 @@ public class ProxySettings
     SocketFactory selectSocketFactory()
     {
         return mSocketFactorySettings.selectSocketFactory(mSecure);
+    }
+
+
+    /**
+     * Get server names for SNI (Server Name Indication).
+     *
+     * @return
+     *         List of host names.
+     *
+     * @since 2.4
+     */
+    public String[] getServerNames()
+    {
+        return mServerNames;
+    }
+
+
+    /**
+     * Set server names for SNI (Server Name Indication).
+     *
+     * If {@code setServerNames(List<SNIServerName>)} method of
+     * {@link javax.net.ssl.SSLParameters SSLParameters} class is available
+     * in the underlying system, the method is called to set up server names
+     * for SNI (Server Name Indication).
+     *
+     * @param serverNames
+     *         List of host names.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 2.4
+     */
+    public ProxySettings setServerNames(String[] serverNames)
+    {
+        mServerNames = serverNames;
+
+        return this;
+    }
+
+
+    /**
+     * Set a server name for SNI (Server Name Indication).
+     *
+     * This method internally creates a String array of size 1 which
+     * contains the given {@code serverName} and calls {@link
+     * #setServerNames(String[])}.
+     *
+     * @param serverName
+     *         A host name.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 2.4
+     */
+    public ProxySettings setServerName(String serverName)
+    {
+        return setServerNames(new String[] { serverName });
     }
 }
