@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2016 Neo Visionaries Inc.
+ * Copyright (C) 2015-2018 Neo Visionaries Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import java.util.TimerTask;
 abstract class PeriodicalFrameSender
 {
     private final WebSocket mWebSocket;
-    private final String mTimerName;
+    private String mTimerName;
     private Timer mTimer;
     private boolean mScheduled;
     private long mInterval;
@@ -95,7 +95,14 @@ abstract class PeriodicalFrameSender
         {
             if (mTimer == null)
             {
-                mTimer = new Timer(mTimerName);
+                if (mTimerName == null)
+                {
+                    mTimer = new Timer();
+                }
+                else
+                {
+                    mTimer = new Timer(mTimerName);
+                }
             }
 
             if (mScheduled == false)
@@ -120,6 +127,21 @@ abstract class PeriodicalFrameSender
         synchronized (this)
         {
             mGenerator = generator;
+        }
+    }
+
+
+    public String getTimerName()
+    {
+        return mTimerName;
+    }
+
+
+    public void setTimerName(String timerName)
+    {
+        synchronized (this)
+        {
+            mTimerName = timerName;
         }
     }
 

@@ -711,6 +711,20 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * generate()} method must not exceed 125.
  * </p>
  *
+ * <p>
+ * You can change the names of the {@link java.util.Timer Timer}s that send ping/pong
+ * frames periodically by using {@link #setPingSenderName(String)} and
+ * {@link #setPongSenderName(String)} methods.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"> <span style="color: green;">// Change the Timers' names.</span>
+ * ws.{@link #setPingSenderName(String)
+ * setPingSenderName}(<span style="color: darkred;">"PING_SENDER"</span>);
+ * ws.{@link #setPongSenderName(String)
+ * setPongSenderName}(<span style="color: darkred;">"PONG_SENDER"</span>);
+ * </blockquote>
+ *
  * <h3>Auto Flush</h3>
  *
  * <p>
@@ -1957,6 +1971,72 @@ public class WebSocket
     public WebSocket setPongPayloadGenerator(PayloadGenerator generator)
     {
         mPongSender.setPayloadGenerator(generator);
+
+        return this;
+    }
+
+
+    /**
+     * Get the name of the {@code Timer} that sends ping frames periodically.
+     *
+     * @return
+     *         The {@code Timer}'s name.
+     *
+     * @since 2.5
+     */
+    public String getPingSenderName()
+    {
+        return mPingSender.getTimerName();
+    }
+
+
+    /**
+     * Set the name of the {@code Timer} that sends ping frames periodically.
+     *
+     * @param name
+     *         A name for the {@code Timer}.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 2.5
+     */
+    public WebSocket setPingSenderName(String name)
+    {
+        mPingSender.setTimerName(name);
+
+        return this;
+    }
+
+
+    /**
+     * Get the name of the {@code Timer} that sends pong frames periodically.
+     *
+     * @return
+     *         The {@code Timer}'s name.
+     *
+     * @since 2.5
+     */
+    public String getPongSenderName()
+    {
+        return mPongSender.getTimerName();
+    }
+
+
+    /**
+     * Set the name of the {@code Timer} that sends pong frames periodically.
+     *
+     * @param name
+     *         A name for the {@code Timer}.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 2.5
+     */
+    public WebSocket setPongSenderName(String name)
+    {
+        mPongSender.setTimerName(name);
 
         return this;
     }
