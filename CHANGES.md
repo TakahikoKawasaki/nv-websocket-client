@@ -1,7 +1,17 @@
 CHANGES
 =======
 
-2.4 (2017-04-18)
+2.5 (2018-06-01)
+----------------
+
+- `WebSocket` class
+    * Added `getPingSenderName()` method.
+    * Added `setPingSenderName(String)` method.
+    * Added `getPongSenderName()` method.
+    * Added `setPongSenderName(String)` method.
+
+
+2.4 (2018-04-18)
 ----------------
 
 - Added `WebSocketFactory.getServerNames()` method.

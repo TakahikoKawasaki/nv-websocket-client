@@ -34,7 +34,7 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>2.4</version>
+    <version>2.5</version>
 </dependency>
 ```
 
@@ -44,7 +44,7 @@ Gradle
 
 ```Gradle
 dependencies {
-    compile 'com.neovisionaries:nv-websocket-client:2.4'
+    compile 'com.neovisionaries:nv-websocket-client:2.5'
 }
 ```
 
@@ -53,7 +53,7 @@ OSGi
 ----
 
     Bundle-SymbolicName: com.neovisionaries.ws.client
-    Export-Package: com.neovisionaries.ws.client;version="2.4.0"
+    Export-Package: com.neovisionaries.ws.client;version="2.5.0"
 
 
 Source Code
@@ -527,6 +527,15 @@ ws.setPingPayloadGenerator(new PayloadGenerator() {
 Note that the maximum payload length of control frames (e.g. ping frames)
 is 125. Therefore, the length of a byte array returned from `generate()`
 method must not exceed 125.
+
+You can change the names of the `Timer`s that send ping/pong frames
+periodically by using `setPingSenderName()` and `setPongSenderName()` methods.
+
+```java
+// Change the Timers' names.
+ws.setPingSenderName("PING_SENDER");
+ws.setPongSenderName("PONG_SENDER");
+```
 
 
 #### Auto Flush
