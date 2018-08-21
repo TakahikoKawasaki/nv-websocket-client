@@ -1146,7 +1146,7 @@ class ReadingThread extends WebSocketThread
     private void scheduleCloseTask()
     {
         mCloseTask  = new CloseTask();
-        mCloseTimer = new Timer("ReadingThreadCloseTimer");
+        mCloseTimer = new Timer("ReadingThreadCloseTimer", true);
         mCloseTimer.schedule(mCloseTask, mCloseDelay);
     }
 
