@@ -644,11 +644,11 @@ When a text message was received, `onTextMessage(WebSocket, String)` is called.
 The implementation internally converts the byte array of the text message into
 a `String` object before calling the listener method. If you want to receive
 the byte array directly without the string conversion, call
-`setDirectTextMessage(boolean)` with `true`, and @onTextMessage(WebSocket, byte[])`
+`setDirectTextMessage(boolean)` with `true`, and `onTextMessage(WebSocket, byte[])`
 will be called instead.
 
 ```java
-// Receive text messages without string conversion.</span>
+// Receive text messages without string conversion.
 ws.setDirectTextMessage(true);
 ```
 
