@@ -359,6 +359,22 @@ class ListenerManager
     }
 
 
+    public void callOnTextMessage(byte[] data)
+    {
+        for (WebSocketListener listener : getSynchronizedListeners())
+        {
+            try
+            {
+                listener.onTextMessage(mWebSocket, data);
+            }
+            catch (Throwable t)
+            {
+                callHandleCallbackError(listener, t);
+            }
+        }
+    }
+
+
     public void callOnBinaryMessage(byte[] message)
     {
         for (WebSocketListener listener : getSynchronizedListeners())

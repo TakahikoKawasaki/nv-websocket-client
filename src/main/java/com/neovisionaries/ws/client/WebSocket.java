@@ -845,6 +845,24 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  * ws.{@link #setMissingCloseFrameAllowed(boolean) setMissingCloseFrameAllowed}(false);</pre>
  * </blockquote>
  *
+ * <h3>Direct Text Message</h3>
+ *
+ * <p>
+ * When a text message was received, {@link WebSocketListener#onTextMessage(WebSocket, String)
+ * onTextMessage(WebSocket, String)} is called. The implementation internally converts
+ * the byte array of the text message into a {@code String} object before calling the
+ * listener method. If you want to receive the byte array directly without the string
+ * conversion, call {@link #setDirectTextMessage(boolean)} with {@code true}, and
+ * {@link WebSocketListener#onTextMessage(WebSocket, byte[]) onTextMessage(WebSocket, byte[])}
+ * will be called instead.
+ * </p>
+ *
+ * <blockquote>
+ * <pre style="border-left: solid 5px lightgray;"><span style="color: green;"
+ * > // Receive text messages without string conversion.</span>
+ * ws.{@link #setDirectTextMessage(boolean) setDirectTextMessage}(true);</pre>
+ * </blockquote>
+ *
  * <h3>Disconnect WebSocket</h3>
  *
  * <p>
@@ -1092,6 +1110,7 @@ public class WebSocket
     private boolean mExtended;
     private boolean mAutoFlush = true;
     private boolean mMissingCloseFrameAllowed = true;
+    private boolean mDirectTextMessage;
     private int mFrameQueueSize;
     private int mMaxPayloadSize;
     private boolean mOnConnectedCalled;
@@ -1192,6 +1211,7 @@ public class WebSocket
         instance.mExtended = mExtended;
         instance.mAutoFlush = mAutoFlush;
         instance.mMissingCloseFrameAllowed = mMissingCloseFrameAllowed;
+        instance.mDirectTextMessage = mDirectTextMessage;
         instance.mFrameQueueSize = mFrameQueueSize;
 
         // Copy listeners.
@@ -1662,6 +1682,61 @@ public class WebSocket
     public WebSocket setMissingCloseFrameAllowed(boolean allowed)
     {
         mMissingCloseFrameAllowed = allowed;
+
+        return this;
+    }
+
+
+    /**
+     * Check if text messages are passed to listeners without string conversion.
+     *
+     * <p>
+     * If this method returns {@code true}, when a text message is received,
+     * {@link WebSocketListener#onTextMessage(WebSocket, byte[])
+     * onTextMessage(WebSocket, byte[])} will be called instead of
+     * {@link WebSocketListener#onTextMessage(WebSocket, String)
+     * onTextMessage(WebSocket, String)}. The purpose of this behavior
+     * is to skip internal string conversion which is performed in the
+     * implementation of {@code ReadingThread}.
+     * </p>
+     *
+     * @return
+     *         {@code true} if text messages are passed to listeners without
+     *         string conversion.
+     *
+     * @since 2.6
+     */
+    public boolean isDirectTextMessage()
+    {
+        return mDirectTextMessage;
+    }
+
+
+    /**
+     * Set whether to receive text messages directly as byte arrays without
+     * string conversion.
+     *
+     * <p>
+     * If {@code true} is set to this property, when a text message is received,
+     * {@link WebSocketListener#onTextMessage(WebSocket, byte[])
+     * onTextMessage(WebSocket, byte[])} will be called instead of
+     * {@link WebSocketListener#onTextMessage(WebSocket, String)
+     * onTextMessage(WebSocket, String)}. The purpose of this behavior
+     * is to skip internal string conversion which is performed in the
+     * implementation of {@code ReadingThread}.
+     * </p>
+     *
+     * @param direct
+     *         {@code true} to receive text messages as byte arrays.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @since 2.6
+     */
+    public WebSocket setDirectTextMessage(boolean direct)
+    {
+        mDirectTextMessage = direct;
 
         return this;
     }

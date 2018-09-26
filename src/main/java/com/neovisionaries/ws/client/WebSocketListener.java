@@ -250,6 +250,12 @@ public interface WebSocketListener
     /**
      * Called when a text message was received.
      *
+     * <p>
+     * When {@link WebSocket#isDirectTextMessage()} returns {@code true},
+     * {@link #onTextMessage(WebSocket, byte[])} will be called instead of
+     * this method (since version 2.6).
+     * </p>
+     *
      * @param websocket
      *         The WebSocket.
      *
@@ -261,6 +267,26 @@ public interface WebSocketListener
      *         The exception is passed to {@link #handleCallbackError(WebSocket, Throwable)}.
      */
     void onTextMessage(WebSocket websocket, String text) throws Exception;
+
+
+    /**
+     * Called when a text message was received instead of
+     * {@link #onTextMessage(WebSocket, String)} when {@link WebSocket#isDirectTextMessage()}
+     * returns {@code true}.
+     *
+     * @param websocket
+     *         The WebSocket.
+     *
+     * @param data
+     *         The UTF-8 byte sequence of the text message.
+     *
+     * @throws Exception
+     *         An exception thrown by an implementation of this method.
+     *         The exception is passed to {@link #handleCallbackError(WebSocket, Throwable)}.
+     *
+     * @since 2.6
+     */
+    void onTextMessage(WebSocket websocket, byte[] data) throws Exception;
 
 
     /**
