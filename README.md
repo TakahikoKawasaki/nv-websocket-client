@@ -34,7 +34,7 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>2.5</version>
+    <version>2.6</version>
 </dependency>
 ```
 
@@ -44,7 +44,7 @@ Gradle
 
 ```Gradle
 dependencies {
-    compile 'com.neovisionaries:nv-websocket-client:2.5'
+    compile 'com.neovisionaries:nv-websocket-client:2.6'
 }
 ```
 
@@ -53,7 +53,7 @@ OSGi
 ----
 
     Bundle-SymbolicName: com.neovisionaries.ws.client
-    Export-Package: com.neovisionaries.ws.client;version="2.5.0"
+    Export-Package: com.neovisionaries.ws.client;version="2.6.0"
 
 
 Source Code
@@ -635,6 +635,21 @@ to `setMissingCloseFrameAllowed` method.
 // Make this library report an error when the end of the input stream
 // of the WebSocket connection is reached before a close frame is read.
 ws.setMissingCloseFrameAllowed(false);
+```
+
+
+#### Direct Text Message
+
+When a text message was received, `onTextMessage(WebSocket, String)` is called.
+The implementation internally converts the byte array of the text message into
+a `String` object before calling the listener method. If you want to receive
+the byte array directly without the string conversion, call
+`setDirectTextMessage(boolean)` with `true`, and @onTextMessage(WebSocket, byte[])`
+will be called instead.
+
+```java
+// Receive text messages without string conversion.</span>
+ws.setDirectTextMessage(true);
 ```
 
 

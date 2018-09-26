@@ -1,6 +1,17 @@
 CHANGES
 =======
 
+2.6 (2018-09-27)
+----------------
+
+- `WebSocket` class
+    * Added `isDirectTextMessage()` method.
+    * Added `setDirectTextMessage(boolean)` method.
+
+- `WebSocketListener` class
+    * Added `onTextMessage(WebSocket, byte[])` method.
+
+
 2.5 (2018-06-01)
 ----------------
 
