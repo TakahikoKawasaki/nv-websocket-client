@@ -102,6 +102,12 @@ public class WebSocketAdapter implements WebSocketListener
 
 
     @Override
+    public void onTextMessage(WebSocket websocket, byte[] data) throws Exception
+    {
+    }
+
+
+    @Override
     public void onBinaryMessage(WebSocket websocket, byte[] binary) throws Exception
     {
     }
