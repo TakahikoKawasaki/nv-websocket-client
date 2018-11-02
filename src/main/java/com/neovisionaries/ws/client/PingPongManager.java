@@ -37,11 +37,29 @@ class PingPongManager {
     }
 
     /**
+     * @see WebSocket#getPingInterval()
+     */
+    long getPingInterval() {
+        synchronized (this) {
+            return pingInterval;
+        }
+    }
+
+    /**
      * @see WebSocket#setPingPayloadGenerator(PayloadGenerator)
      */
-    public void setPayloadGenerator(PayloadGenerator generator) {
+    void setPayloadGenerator(PayloadGenerator generator) {
         synchronized (this) {
             this.generator = generator;
+        }
+    }
+
+    /**
+     * @see WebSocket#getPingPayloadGenerator()
+     */
+    PayloadGenerator getPayloadGenerator() {
+        synchronized (this) {
+            return generator;
         }
     }
 

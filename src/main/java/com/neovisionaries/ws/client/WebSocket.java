@@ -16,11 +16,8 @@
 package com.neovisionaries.ws.client;
 
 
-import static com.neovisionaries.ws.client.WebSocketState.CLOSED;
-import static com.neovisionaries.ws.client.WebSocketState.CLOSING;
-import static com.neovisionaries.ws.client.WebSocketState.CONNECTING;
-import static com.neovisionaries.ws.client.WebSocketState.CREATED;
-import static com.neovisionaries.ws.client.WebSocketState.OPEN;
+import com.neovisionaries.ws.client.StateManager.CloseInitiator;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -32,7 +29,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
-import com.neovisionaries.ws.client.StateManager.CloseInitiator;
+
+import static com.neovisionaries.ws.client.WebSocketState.*;
 
 
 /**
@@ -1097,7 +1095,6 @@ public class WebSocket
     private final StateManager mStateManager;
     private HandshakeBuilder mHandshakeBuilder;
     private final ListenerManager mListenerManager;
-    private final PingSender mPingSender;
     private final PongSender mPongSender;
     private final Object mThreadsLock = new Object();
     private WebSocketInputStream mInput;
@@ -1132,7 +1129,6 @@ public class WebSocket
         mStateManager      = new StateManager();
         mHandshakeBuilder  = new HandshakeBuilder(secure, userInfo, host, path);
         mListenerManager   = new ListenerManager(this);
-        mPingSender        = new PingSender(this, new CounterPayloadGenerator());
         mPongSender        = new PongSender(this, new CounterPayloadGenerator());
         mPingPongManager   = new PingPongManager(this, new CounterPayloadGenerator());
     }
@@ -1899,7 +1895,7 @@ public class WebSocket
      */
     public long getPingInterval()
     {
-        return mPingSender.getInterval();
+        return mPingPongManager.getPingInterval();
     }
 
 
@@ -1925,7 +1921,7 @@ public class WebSocket
      */
     public WebSocket setPingInterval(long interval)
     {
-        mPingSender.setInterval(interval);
+        mPingPongManager.setPingInterval(interval);
 
         return this;
     }
@@ -2002,7 +1998,7 @@ public class WebSocket
      */
     public PayloadGenerator getPingPayloadGenerator()
     {
-        return mPingSender.getPayloadGenerator();
+        return mPingPongManager.getPayloadGenerator();
     }
 
 
@@ -2016,7 +2012,7 @@ public class WebSocket
      */
     public WebSocket setPingPayloadGenerator(PayloadGenerator generator)
     {
-        mPingSender.setPayloadGenerator(generator);
+        mPingPongManager.setPayloadGenerator(generator);
 
         return this;
     }
@@ -2059,10 +2055,11 @@ public class WebSocket
      *         The {@code Timer}'s name.
      *
      * @since 2.5
+     * @deprecated This timer was removed, so the exception will be throwed
      */
     public String getPingSenderName()
     {
-        return mPingSender.getTimerName();
+        throw new IllegalStateException("This method is deprecated now, don't use it at all!");
     }
 
 
@@ -2076,11 +2073,11 @@ public class WebSocket
      *         {@code this} object.
      *
      * @since 2.5
+     * @deprecated
      */
     public WebSocket setPingSenderName(String name)
     {
-        mPingSender.setTimerName(name);
-
+        // just ignore
         return this;
     }
 
@@ -3621,11 +3618,8 @@ public class WebSocket
      */
     private void onThreadsStarted()
     {
-        // Start sending ping frames periodically.
+        // Start sending pong frames periodically.
         // If the interval is zero, this call does nothing.
-        mPingSender.start();
-
-        // Likewise, start the pong sender.
         mPongSender.start();
     }
 
@@ -3687,10 +3681,8 @@ public class WebSocket
 
     void finish()
     {
-        // Stop the ping sender and the pong sender.
-        mPingSender.stop();
+        // Stop the ping-pong manager and the pong sender.
         mPongSender.stop();
-
         mPingPongManager.stop();
 
         try
