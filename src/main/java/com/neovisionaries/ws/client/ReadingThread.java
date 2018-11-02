@@ -46,12 +46,14 @@ class ReadingThread extends WebSocketThread
     private CloseTask mCloseTask;
     private long mCloseDelay;
     private boolean mNotWaitForCloseFrame;
+    private final PingPongManager mPingPongManager;
 
 
-    public ReadingThread(WebSocket websocket)
+    public ReadingThread(WebSocket websocket, PingPongManager pingPongManager)
     {
         super("ReadingThread", websocket, ThreadType.READING_THREAD);
 
+        this.mPingPongManager = pingPongManager;
         mPMCE = websocket.getPerMessageCompressionExtension();
     }
 
@@ -1077,6 +1079,8 @@ class ReadingThread extends WebSocketThread
 
     private boolean handlePongFrame(WebSocketFrame frame)
     {
+        mPingPongManager.processPongFrame(frame);
+
         // Notify the listeners that a pong frame was received.
         callOnPongFrame(frame);
 

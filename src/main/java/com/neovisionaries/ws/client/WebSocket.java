@@ -1122,7 +1122,7 @@ public class WebSocket
     private WebSocketFrame mServerCloseFrame;
     private WebSocketFrame mClientCloseFrame;
     private PerMessageCompressionExtension mPerMessageCompressionExtension;
-
+    private PingPongManager mPingPongManager;
 
     WebSocket(WebSocketFactory factory, boolean secure, String userInfo,
             String host, String path, SocketConnector connector)
@@ -1134,6 +1134,7 @@ public class WebSocket
         mListenerManager   = new ListenerManager(this);
         mPingSender        = new PingSender(this, new CounterPayloadGenerator());
         mPongSender        = new PongSender(this, new CounterPayloadGenerator());
+        mPingPongManager   = new PingPongManager(this, new CounterPayloadGenerator());
     }
 
 
@@ -3413,7 +3414,7 @@ public class WebSocket
      */
     private void startThreads()
     {
-        ReadingThread readingThread = new ReadingThread(this);
+        ReadingThread readingThread = new ReadingThread(this, mPingPongManager);
         WritingThread writingThread = new WritingThread(this);
 
         synchronized (mThreadsLock)
@@ -3689,6 +3690,8 @@ public class WebSocket
         // Stop the ping sender and the pong sender.
         mPingSender.stop();
         mPongSender.stop();
+
+        mPingPongManager.stop();
 
         try
         {
