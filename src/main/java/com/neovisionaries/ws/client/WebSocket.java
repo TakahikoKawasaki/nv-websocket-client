@@ -2057,6 +2057,7 @@ public class WebSocket
      * @since 2.5
      * @deprecated This timer was removed, so the exception will be throwed
      */
+    @Deprecated
     public String getPingSenderName()
     {
         throw new IllegalStateException("This method is deprecated now, don't use it at all!");
@@ -2075,6 +2076,7 @@ public class WebSocket
      * @since 2.5
      * @deprecated
      */
+    @Deprecated
     public WebSocket setPingSenderName(String name)
     {
         // just ignore
