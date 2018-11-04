@@ -31,6 +31,7 @@ class PingPongManager {
                 stop();
             } else if (pingInterval > 0) {
                 if (isStarted) stop();
+                this.pingInterval = pingInterval;
                 startPingPong();
             }
         }
