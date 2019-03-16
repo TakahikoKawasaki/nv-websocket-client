@@ -132,7 +132,11 @@ class ListenerManager
             }
 
             mListeners.clear();
-            mSyncNeeded = true;
+
+            if (mCopiedListeners != null)
+            {
+                mCopiedListeners.clear();
+            }
         }
     }
 
