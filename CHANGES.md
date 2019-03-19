@@ -1,12 +1,20 @@
 CHANGES
 =======
 
+2.8 (2019-03-19)
+----------------
+
+- `ListenerManager` class
+    * Modified `clearListeners()` method in `ListenerManager` class to
+      avoid synchronization issues (Issue #180).
+
+
 2.7 (2019-03-16)
 ----------------
 
 - `ListenerManager` class
     * Modified `clearListeners()` method in `ListenerManager` class to
-      release references held in an internal list (Issue #65).
+      release references held in an internal list (Issue #180).
 
 
 2.6 (2018-09-27)
