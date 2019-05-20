@@ -28,32 +28,30 @@ import java.util.Map;
 class ProxyHandshaker
 {
     private static final String RN = "\r\n";
-    private final Socket mSocket;
     private final String mHost;
     private final int mPort;
     private final ProxySettings mSettings;
 
 
-    public ProxyHandshaker(Socket socket, String host, int port, ProxySettings settings)
+    public ProxyHandshaker(String host, int port, ProxySettings settings)
     {
-        mSocket   = socket;
         mHost     = host;
         mPort     = port;
         mSettings = settings;
     }
 
 
-    public void perform() throws IOException
+    public void perform(Socket socket) throws IOException
     {
         // Send a CONNECT request to the proxy server.
-        sendRequest();
+        sendRequest(socket);
 
         // Receive a response.
-        receiveResponse();
+        receiveResponse(socket);
     }
 
 
-    private void sendRequest() throws IOException
+    private void sendRequest(Socket socket) throws IOException
     {
         // Build a CONNECT request.
         String request = buildRequest();
@@ -62,7 +60,7 @@ class ProxyHandshaker
         byte[] requestBytes = Misc.getBytesUTF8(request);
 
         // Get the stream to send data to the proxy server.
-        OutputStream output = mSocket.getOutputStream();
+        OutputStream output = socket.getOutputStream();
 
         // Send the request to the proxy server.
         output.write(requestBytes);
@@ -140,10 +138,10 @@ class ProxyHandshaker
     }
 
 
-    private void receiveResponse() throws IOException
+    private void receiveResponse(Socket socket) throws IOException
     {
         // Get the stream to read data from the proxy server.
-        InputStream input = mSocket.getInputStream();
+        InputStream input = socket.getInputStream();
 
         // Read the status line.
         readStatusLine(input);

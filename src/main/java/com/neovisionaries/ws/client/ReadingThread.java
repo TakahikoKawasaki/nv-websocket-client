@@ -1190,7 +1190,10 @@ class ReadingThread extends WebSocketThread
             try
             {
                 Socket socket = mWebSocket.getSocket();
-                socket.close();
+                if (socket != null)
+                {
+                    socket.close();
+                }
             }
             catch (Throwable t)
             {

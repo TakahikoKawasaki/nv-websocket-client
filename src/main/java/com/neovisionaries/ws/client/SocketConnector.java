@@ -17,7 +17,14 @@ package com.neovisionaries.ws.client;
 
 
 import java.io.IOException;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.Comparator;
+
+import javax.net.SocketFactory;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -32,40 +39,38 @@ import javax.net.ssl.SSLSocketFactory;
  */
 class SocketConnector
 {
-    private Socket mSocket;
+    private final SocketFactory mSocketFactory;
     private final Address mAddress;
     private final int mConnectionTimeout;
+    private final String[] mServerNames;
     private final ProxyHandshaker mProxyHandshaker;
     private final SSLSocketFactory mSSLSocketFactory;
     private final String mHost;
     private final int mPort;
+    private DualStackMode mDualStackMode = DualStackMode.BOTH;
+    private int mDualStackFallbackDelay = 250;
     private boolean mVerifyHostname;
+    private Socket mSocket;
 
-
-    SocketConnector(Socket socket, Address address, int timeout)
+    SocketConnector(SocketFactory socketFactory, Address address, int timeout, String[] serverNames)
     {
-        this(socket, address, timeout, null, null, null, 0);
+        this(socketFactory, address, timeout, serverNames, null, null, null, 0);
     }
 
 
     SocketConnector(
-            Socket socket, Address address, int timeout,
+            SocketFactory socketFactory, Address address, int timeout, String[] serverNames,
             ProxyHandshaker handshaker, SSLSocketFactory sslSocketFactory,
             String host, int port)
     {
-        mSocket            = socket;
+        mSocketFactory     = socketFactory;
         mAddress           = address;
         mConnectionTimeout = timeout;
+        mServerNames       = serverNames;
         mProxyHandshaker   = handshaker;
         mSSLSocketFactory  = sslSocketFactory;
         mHost              = host;
         mPort              = port;
-    }
-
-
-    public Socket getSocket()
-    {
-        return mSocket;
     }
 
 
@@ -75,29 +80,145 @@ class SocketConnector
     }
 
 
-    public void connect() throws WebSocketException
+    public Socket getSocket()
+    {
+        return mSocket;
+    }
+
+
+    public Socket getConnectedSocket() throws WebSocketException
+    {
+        // Connect lazily.
+        if (mSocket == null)
+        {
+            connectSocket();
+        }
+
+        return mSocket;
+    }
+
+
+    private void connectSocket() throws WebSocketException
+    {
+        // Create socket initiator.
+        SocketInitiator socketInitiator = new SocketInitiator(
+                mSocketFactory, mAddress, mConnectionTimeout, mServerNames,
+                mDualStackMode, mDualStackFallbackDelay);
+
+        // Resolve hostname to IP addresses
+        InetAddress[] addresses = resolveHostname();
+
+        // Let the sockets race until one has been established, following
+        // RFC 6555 (*happy eyeballs*).
+        try
+        {
+            mSocket = socketInitiator.establish(addresses);
+        }
+        catch (Exception e)
+        {
+            // True if a proxy server is set.
+            boolean proxied = mProxyHandshaker != null;
+
+            // Failed to connect the server.
+            String message = String.format("Failed to connect to %s'%s': %s",
+                    (proxied ? "the proxy " : ""), mAddress, e.getMessage());
+
+            // Raise an exception with SOCKET_CONNECT_ERROR.
+            throw new WebSocketException(WebSocketError.SOCKET_CONNECT_ERROR, message, e);
+        }
+    }
+
+
+    private InetAddress[] resolveHostname() throws WebSocketException
+    {
+        InetAddress[] addresses = null;
+        UnknownHostException exception = null;
+
+        try
+        {
+            // Resolve hostname to IP addresses.
+            addresses = InetAddress.getAllByName(mAddress.getHostname());
+
+            // Sort addresses: IPv6 first, then IPv4.
+            Arrays.sort(addresses, new Comparator<InetAddress>() {
+                public int compare(InetAddress left, InetAddress right) {
+                    if (left.getClass() == right.getClass())
+                    {
+                        return 0;
+                    }
+                    if (left instanceof Inet6Address)
+                    {
+                        return -1;
+                    }
+                    else
+                    {
+                        return 1;
+                    }
+                }
+            });
+        }
+        catch (UnknownHostException e)
+        {
+            exception = e;
+        }
+
+        // Return the ordered IP addresses (if any), otherwise raise the exception.
+        if (addresses != null && addresses.length > 0)
+        {
+            return addresses;
+        }
+
+        if (exception == null)
+        {
+            exception = new UnknownHostException("No IP addresses found");
+        }
+
+        // Failed to resolve hostname to IP address.
+        String message = String.format("Failed to resolve hostname %s: %s",
+                mAddress, exception.getMessage());
+
+        // Raise an exception with SOCKET_CONNECT_ERROR.
+        throw new WebSocketException(WebSocketError.SOCKET_CONNECT_ERROR, message, exception);
+    }
+
+
+    public Socket connect() throws WebSocketException
     {
         try
         {
             // Connect to the server (either a proxy or a WebSocket endpoint).
             doConnect();
+            assert mSocket != null;
+            return mSocket;
         }
         catch (WebSocketException e)
         {
             // Failed to connect the server.
 
-            try
+            if (mSocket != null)
             {
-                // Close the socket.
-                mSocket.close();
-            }
-            catch (IOException ioe)
-            {
-                // Ignore any error raised by close().
+                try
+                {
+                    // Close the socket.
+                    mSocket.close();
+                }
+                catch (IOException ioe)
+                {
+                    // Ignore any error raised by close().
+                }
             }
 
             throw e;
         }
+    }
+
+
+    SocketConnector setDualStackSettings(DualStackMode mode, int fallbackDelay)
+    {
+        mDualStackMode          = mode;
+        mDualStackFallbackDelay = fallbackDelay;
+
+        return this;
     }
 
 
@@ -114,26 +235,15 @@ class SocketConnector
         // True if a proxy server is set.
         boolean proxied = mProxyHandshaker != null;
 
-        try
-        {
-            // Connect to the server (either a proxy or a WebSocket endpoint).
-            mSocket.connect(mAddress.toInetSocketAddress(), mConnectionTimeout);
+        // Establish a socket associated to one of the resolved IP addresses
+        connectSocket();
+        assert mSocket != null;
 
-            if (mSocket instanceof SSLSocket)
-            {
-                // Verify that the hostname matches the certificate here since
-                // this is not automatically done by the SSLSocket.
-                verifyHostname((SSLSocket)mSocket, mAddress.getHostname());
-            }
-        }
-        catch (IOException e)
+        if (mSocket instanceof SSLSocket)
         {
-            // Failed to connect the server.
-            String message = String.format("Failed to connect to %s'%s': %s",
-                (proxied ? "the proxy " : ""), mAddress, e.getMessage());
-
-            // Raise an exception with SOCKET_CONNECT_ERROR.
-            throw new WebSocketException(WebSocketError.SOCKET_CONNECT_ERROR, message, e);
+            // Verify that the hostname matches the certificate here since
+            // this is not automatically done by the SSLSocket.
+            verifyHostname((SSLSocket)mSocket, mAddress.getHostname());
         }
 
         // If a proxy server is set.
@@ -177,10 +287,13 @@ class SocketConnector
      */
     private void handshake() throws WebSocketException
     {
+        // Sanity check
+        assert mSocket != null;
+
         try
         {
             // Perform handshake with the proxy server.
-            mProxyHandshaker.perform();
+            mProxyHandshaker.perform(mSocket);
         }
         catch (IOException e)
         {
@@ -218,12 +331,9 @@ class SocketConnector
             // http://docs.oracle.com/javase/7/docs/technotes/guides/security/jsse/samples/sockets/client/SSLSocketClient.java
             ((SSLSocket)mSocket).startHandshake();
 
-            if (mSocket instanceof SSLSocket)
-            {
-                // Verify that the proxied hostname matches the certificate here since
-                // this is not automatically done by the SSLSocket.
-                verifyHostname((SSLSocket)mSocket, mProxyHandshaker.getProxiedHostname());
-            }
+            // Verify that the proxied hostname matches the certificate here since
+            // this is not automatically done by the SSLSocket.
+            verifyHostname((SSLSocket)mSocket, mProxyHandshaker.getProxiedHostname());
         }
         catch (IOException e)
         {
@@ -239,13 +349,16 @@ class SocketConnector
 
     void closeSilently()
     {
-        try
+        if (mSocket != null)
         {
-            mSocket.close();
-        }
-        catch (Throwable t)
-        {
-            // Ignored.
+            try
+            {
+                mSocket.close();
+            }
+            catch (Throwable t)
+            {
+                // Ignored.
+            }
         }
     }
 }

@@ -33,15 +33,14 @@ class Address
     }
 
 
-    InetSocketAddress toInetSocketAddress()
-    {
-        return new InetSocketAddress(mHost, mPort);
-    }
-
-
     String getHostname()
     {
         return mHost;
+    }
+
+    int getPort()
+    {
+        return mPort;
     }
 
 

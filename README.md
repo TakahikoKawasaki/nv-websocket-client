@@ -281,16 +281,17 @@ Before starting a WebSocket
 with the server, you can
 configure the WebSocket instance by using the following methods.
 
-| METHOD              | DESCRIPTION                                             |
-|---------------------|---------------------------------------------------------|
-| `addProtocol`       | Adds an element to `Sec-WebSocket-Protocol`.            |
-| `addExtension`      | Adds an element to `Sec-WebSocket-Extensions`.          |
-| `addHeader`         | Adds an arbitrary HTTP header.                          |
-| `setUserInfo`       | Adds `Authorization` header for Basic Authentication.   |
-| `getSocket`         | Gets the underlying `Socket` instance to configure it.  |
-| `setExtended`       | Disables validity checks on RSV1/RSV2/RSV3 and opcode.  |
-| `setFrameQueueSize` | Set the size of the frame queue for congestion control. |
-| `setMaxPayloadSize` | Set the maximum payload size.                           |
+| METHOD               | DESCRIPTION                                             |
+|----------------------|---------------------------------------------------------|
+| `addProtocol`        | Adds an element to `Sec-WebSocket-Protocol`.            |
+| `addExtension`       | Adds an element to `Sec-WebSocket-Extensions`.          |
+| `addHeader`          | Adds an arbitrary HTTP header.                          |
+| `setUserInfo`        | Adds `Authorization` header for Basic Authentication.   |
+| `getSocket`          | Gets the underlying `Socket` instance to configure it. Note that this may return `null`.  |
+| `getConnectedSocket` | Establishes and gets the underlying `Socket` instance to configure it.  |
+| `setExtended`        | Disables validity checks on RSV1/RSV2/RSV3 and opcode.  |
+| `setFrameQueueSize`  | Set the size of the frame queue for congestion control. |
+| `setMaxPayloadSize`  | Set the maximum payload size.                           |
 | `setMissingCloseFrameAllowed` | Set to whether to allow the server to close the connection without sending a close frame. |
 
 

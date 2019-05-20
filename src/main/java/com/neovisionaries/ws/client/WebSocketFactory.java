@@ -34,6 +34,8 @@ public class WebSocketFactory
     private final SocketFactorySettings mSocketFactorySettings;
     private final ProxySettings mProxySettings;
     private int mConnectionTimeout;
+    private DualStackMode mDualStackMode = DualStackMode.BOTH;
+    private int mDualStackFallbackDelay = 250;
     private boolean mVerifyHostname = true;
     private String[] mServerNames;
 
@@ -197,6 +199,88 @@ public class WebSocketFactory
         }
 
         mConnectionTimeout = timeout;
+
+        return this;
+    }
+
+
+    /**
+     * Get the dual stack mode that will be applied when establishing a socket
+     * connection. The default value is {@link DualStackMode#BOTH}.
+     *
+     * <p>
+     * A hostname may resolve to an arbitrary amount of IPv4 and IPv6 addresses.
+     * This controls which IP address families will be used when establishing
+     * a connection. Note that IPv6 will be preferred, if activated.
+     * </p>
+     *
+     * @return
+     *         The dual stack mode.
+     */
+    public DualStackMode getDualStackMode()
+    {
+        return mDualStackMode;
+    }
+
+
+    /**
+     * Set the dual stack mode that will be applied when establishing a socket
+     * connection.
+     *
+     * @param mode
+     *         The dual stack mode to be applied.
+     *
+     * @return
+     *         {@code this} object.
+     */
+    public WebSocketFactory setDualStackMode(DualStackMode mode)
+    {
+        mDualStackMode = mode;
+
+        return this;
+    }
+
+
+    /**
+     * Get the dual stack fallback delay in milliseconds that will be applied
+     * when establishing a socket connection.
+     *
+     * <p>
+     * A hostname may resolve to an arbitrary amount of IPv4 and IPv6 addresses.
+     * This controls the maximum amount of time that may pass between attempts
+     * to establish a socket connection to an IP addresses before trying the
+     * next one. Note that the previous attempt will not be aborted. The
+     * connections will race until one has been established.
+     * </p>
+     *
+     * @return
+     *         The dual stack fallback delay in milliseconds.
+     */
+    public int getDualStackFallbackDelay()
+    {
+        return mDualStackFallbackDelay;
+    }
+
+
+    /**
+     * Set the dual stack fallback delay in milliseconds that will be applied
+     * when establishing a socket connection.
+     *
+     * @param delay
+     *         The dual stack fallback delay in milliseconds.
+     *
+     * @return
+     *         {@code this} object.
+     */
+    public WebSocketFactory setDualStackFallbackDelay(int delay)
+    {
+
+        if (delay < 0)
+        {
+            throw new IllegalArgumentException("delay value cannot be negative.");
+        }
+
+        mDualStackFallbackDelay = delay;
 
         return this;
     }
@@ -694,7 +778,7 @@ public class WebSocketFactory
 
 
     private SocketConnector createProxiedRawSocket(
-            String host, int port, boolean secure, int timeout) throws IOException
+            String host, int port, boolean secure, int timeout)
     {
         // Determine the port number of the proxy server.
         // Especially, if getPort() returns -1, the value
@@ -702,19 +786,13 @@ public class WebSocketFactory
         int proxyPort = determinePort(mProxySettings.getPort(), mProxySettings.isSecure());
 
         // Select a socket factory.
-        SocketFactory socketFactory = mProxySettings.selectSocketFactory();
-
-        // Let the socket factory create a socket.
-        Socket socket = socketFactory.createSocket();
-
-        // Set up server names for SNI as necessary if possible.
-        SNIHelper.setServerNames(socket, mProxySettings.getServerNames());
+        SocketFactory factory = mProxySettings.selectSocketFactory();
 
         // The address to connect to.
         Address address = new Address(mProxySettings.getHost(), proxyPort);
 
         // The delegatee for the handshake with the proxy.
-        ProxyHandshaker handshaker = new ProxyHandshaker(socket, host, port, mProxySettings);
+        ProxyHandshaker handshaker = new ProxyHandshaker(host, port, mProxySettings);
 
         // SSLSocketFactory for SSL handshake with the WebSocket endpoint.
         SSLSocketFactory sslSocketFactory = secure ?
@@ -722,27 +800,24 @@ public class WebSocketFactory
 
         // Create an instance that will execute the task to connect to the server later.
         return new SocketConnector(
-                socket, address, timeout, handshaker, sslSocketFactory, host, port)
+                factory, address, timeout, mProxySettings.getServerNames(), handshaker,
+                sslSocketFactory, host, port)
+                .setDualStackSettings(mDualStackMode, mDualStackFallbackDelay)
                 .setVerifyHostname(mVerifyHostname);
     }
 
 
-    private SocketConnector createDirectRawSocket(String host, int port, boolean secure, int timeout) throws IOException
+    private SocketConnector createDirectRawSocket(String host, int port, boolean secure, int timeout)
     {
         // Select a socket factory.
         SocketFactory factory = mSocketFactorySettings.selectSocketFactory(secure);
-
-        // Let the socket factory create a socket.
-        Socket socket = factory.createSocket();
-
-        // Set up server names for SNI as necessary if possible.
-        SNIHelper.setServerNames(socket, mServerNames);
 
         // The address to connect to.
         Address address = new Address(host, port);
 
         // Create an instance that will execute the task to connect to the server later.
-        return new SocketConnector(socket, address, timeout)
+        return new SocketConnector(factory, address, timeout, mServerNames)
+                .setDualStackSettings(mDualStackMode, mDualStackFallbackDelay)
                 .setVerifyHostname(mVerifyHostname);
     }
 
