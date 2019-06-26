@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+2.9 (2019-06-27)
+----------------
+
+    * Add RFC 6555 support (Dual Stack / Happy Eyeballs)
+      (Pull Request #183, Issue #112)
+
+
 2.8 (2019-03-19)
 ----------------
 
