@@ -2210,14 +2210,30 @@ public class WebSocket
 
 
     /**
-     * Get the raw socket which this WebSocket uses internally.
+     * Get the raw socket which this WebSocket uses internally if it has been
+     * established, yet.
      *
      * @return
      *         The underlying {@link Socket} instance.
+     *         This may be {@code null} in case the underlying socket has not
+     *         been established, yet.
      */
     public Socket getSocket()
     {
         return mSocketConnector.getSocket();
+    }
+
+
+    /**
+     * Get the raw socket which this WebSocket uses internally. This will
+     * establish a connection to the server if not already done.
+     *
+     * @return
+     *         The underlying {@link Socket} instance.
+     */
+    public Socket getConnectedSocket() throws WebSocketException
+    {
+        return mSocketConnector.getConnectedSocket();
     }
 
 
@@ -2304,10 +2320,10 @@ public class WebSocket
         try
         {
             // Connect to the server.
-            mSocketConnector.connect();
+            Socket socket = mSocketConnector.connect();
 
             // Perform WebSocket handshake.
-            headers = shakeHands();
+            headers = shakeHands(socket);
         }
         catch (WebSocketException e)
         {
@@ -3257,11 +3273,8 @@ public class WebSocket
     /**
      * Perform the opening handshake.
      */
-    private Map<String, List<String>> shakeHands() throws WebSocketException
+    private Map<String, List<String>> shakeHands(Socket socket) throws WebSocketException
     {
-        // The raw socket created by WebSocketFactory.
-        Socket socket = mSocketConnector.getSocket();
-
         // Get the input stream of the socket.
         WebSocketInputStream input = openInputStream(socket);
 
@@ -3690,14 +3703,18 @@ public class WebSocket
         mPingSender.stop();
         mPongSender.stop();
 
-        try
+        // Close the raw socket.
+        Socket socket = mSocketConnector.getSocket();
+        if (socket != null)
         {
-            // Close the raw socket.
-            mSocketConnector.getSocket().close();
-        }
-        catch (Throwable t)
-        {
-            // Ignore any error raised by close().
+            try
+            {
+                socket.close();
+            }
+            catch (Throwable t)
+            {
+                // Ignore any error raised by close().
+            }
         }
 
         synchronized (mStateManager)
