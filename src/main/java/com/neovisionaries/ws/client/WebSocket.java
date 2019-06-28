@@ -2298,6 +2298,10 @@ public class WebSocket
      * WebSocket websocket = ......;
      * websocket.{@link #getSocket() getSocket()}.{@link Socket#setSoTimeout(int)
      * setSoTimeout}(5000);
+     *
+     * <span style="color: green;">// getConnectedSocket() instead of getSocket(), since version 2.9.</span>
+     * websocket.{@link #getConnectedSocket() getConnectedSocket()}.{@link
+     * Socket#setSoTimeout(int) setSoTimeout}(5000);
      * </pre>
      *
      * <p>
