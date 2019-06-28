@@ -4,8 +4,13 @@ CHANGES
 2.9 (2019-06-27)
 ----------------
 
-    * Add RFC 6555 support (Dual Stack / Happy Eyeballs)
-      (Pull Request #183, Issue #112)
+- RFC 6555 support (Dual Stack / Happy Eyeballs) (Pull Request #183, Issue #112)
+
+- `WebSocket` class
+    * Added `getConnectedSocket()` method.
+    * Changed the behavior of `getSocket()` method. It returns null when
+      the underlying socket has not been established yet. Consider using
+      `getConnectedSocket()` method instead as necessary.
 
 
 2.8 (2019-03-19)

@@ -410,7 +410,18 @@ import com.neovisionaries.ws.client.StateManager.CloseInitiator;
  *     </tr>
  *     <tr>
  *       <td>{@link #getSocket() getSocket}</td>
- *       <td>Gets the underlying {@link Socket} instance to configure it.</td>
+ *       <td>
+ *         Gets the underlying {@link Socket} instance to configure it.
+ *         Note that this may return {@code null} since version 2.9.
+ *         Consider using {@link #getConnectedSocket()} as necessary.
+ *       </td>
+ *     </tr>
+ *     <tr>
+ *       <td>{@link #getConnectedSocket() getConnectedSocket}</td>
+ *       <td>
+ *         Establishes and gets the underlying Socket instance to configure it.
+ *         Available since version 2.9.
+ *       </td>
  *     </tr>
  *     <tr>
  *       <td>{@link #setExtended(boolean) setExtended}</td>
@@ -2213,10 +2224,18 @@ public class WebSocket
      * Get the raw socket which this WebSocket uses internally if it has been
      * established, yet.
      *
+     * <p>
+     * Version 2.9 has changed the behavior of this method, and this method may
+     * return {@code null} if the underlying socket has not been established yet.
+     * Consider using {@link #getConnectedSocket()} method as necessary.
+     * </p>
+     *
      * @return
      *         The underlying {@link Socket} instance.
      *         This may be {@code null} in case the underlying socket has not
      *         been established, yet.
+     *
+     * @see #getConnectedSocket()
      */
     public Socket getSocket()
     {
@@ -2230,6 +2249,8 @@ public class WebSocket
      *
      * @return
      *         The underlying {@link Socket} instance.
+     *
+     * @since 2.9
      */
     public Socket getConnectedSocket() throws WebSocketException
     {
@@ -2267,7 +2288,10 @@ public class WebSocket
      * <p>
      * Also, as necessary, {@link #getSocket()} should be used to set up socket
      * parameters before you call this method. For example, you can set the
-     * socket timeout like the following.
+     * socket timeout like the following. Note that, however, because the version
+     * 2.9 changed the behavior of {@link #getSocket()} and the method may return
+     * {@code null} if the underlying socket has not been established yet, you may
+     * need to use {@link #getConnectedSocket()} method instead.
      * </p>
      *
      * <pre>

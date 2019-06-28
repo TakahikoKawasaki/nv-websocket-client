@@ -287,8 +287,8 @@ configure the WebSocket instance by using the following methods.
 | `addExtension`       | Adds an element to `Sec-WebSocket-Extensions`.          |
 | `addHeader`          | Adds an arbitrary HTTP header.                          |
 | `setUserInfo`        | Adds `Authorization` header for Basic Authentication.   |
-| `getSocket`          | Gets the underlying `Socket` instance to configure it. Note that this may return `null`.  |
-| `getConnectedSocket` | Establishes and gets the underlying `Socket` instance to configure it.  |
+| `getSocket`          | Gets the underlying `Socket` instance to configure it. Note that this may return `null` since version 2.9. Consider using `getConnectedSocket()` as necessary. |
+| `getConnectedSocket` | Establishes and gets the underlying `Socket` instance to configure it. Available since version 2.9. |
 | `setExtended`        | Disables validity checks on RSV1/RSV2/RSV3 and opcode.  |
 | `setFrameQueueSize`  | Set the size of the frame queue for congestion control. |
 | `setMaxPayloadSize`  | Set the maximum payload size.                           |
@@ -907,6 +907,14 @@ Limitations
   `client_max_window_bits` parameter with a value that is less than 15), outgoing
   frames are not compressed when the payload size before compression is bigger than
   the agreed sliding window size.
+
+
+Note
+----
+
+* The version 2.9 introduced a change that breaks backward compatibility where
+  `WebSocket.getSocket()` may return null if the underlying socket has not been
+  established yet. Consider using `getConnectedSocket()` method as necessary.
 
 
 See Also
