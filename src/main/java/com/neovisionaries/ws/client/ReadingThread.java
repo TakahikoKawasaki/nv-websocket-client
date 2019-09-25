@@ -1199,6 +1199,17 @@ class ReadingThread extends WebSocketThread
             {
                 // Ignore.
             }
+            finally
+            {
+                synchronized (mCloseLock)
+                {
+                    if (mCloseTimer != null)
+                    {
+                        mCloseTimer.cancel();
+                        mCloseTimer = null;
+                    }
+                }
+            }
         }
     }
 }
