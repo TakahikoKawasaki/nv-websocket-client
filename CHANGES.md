@@ -1,6 +1,19 @@
 CHANGES
 =======
 
+2.10 (2020-07-21)
+-----------------
+
+- `ProxySettings` class
+    * Added `ProxySettings(WebSocketFactory, ProxySettings)` constructor. (PR #202, Issue #201)
+
+- `SocketFactorySettings` class
+    * Added `SocketFactorySettings(SocketFactorySettings)` constructor. (PR #202, Issue #201)
+
+- `WebSocketFactory` class
+    * Added `WebSocketFactory(WebSocketFactory)` constructor. (PR #202, Issue #201)
+
+
 2.9 (2019-06-27)
 ----------------
 

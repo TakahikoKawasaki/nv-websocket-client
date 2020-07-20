@@ -91,6 +91,12 @@ public class ProxySettings
     private String[] mServerNames;
 
 
+    /**
+     * Constructor.
+     *         A {@code WebSocketFactory} instance to be associated with.
+     *
+     * @param factory
+     */
     ProxySettings(WebSocketFactory factory)
     {
         mWebSocketFactory = factory;
@@ -101,15 +107,28 @@ public class ProxySettings
     }
 
 
+    /**
+     * Constructor with settings.
+     *
+     * @param factory
+     *         A {@code WebSocketFactory} instance to be associated with.
+     *
+     * @param settings
+     *         Settings to copy.
+     *
+     * @since 2.10
+     */
     ProxySettings(WebSocketFactory factory, ProxySettings settings)
     {
         this(factory);
+
         mHeaders.putAll(settings.mHeaders);
         mSecure   = settings.mSecure;
         mHost     = settings.mHost;
         mPort     = settings.mPort;
         mId       = settings.mId;
         mPassword = settings.mPassword;
+
         if (settings.mServerNames != null)
         {
             mServerNames = new String[settings.mServerNames.length];

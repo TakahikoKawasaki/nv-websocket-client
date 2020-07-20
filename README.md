@@ -6,18 +6,18 @@ Overview
 
 High-quality WebSocket client implementation in Java which
 
-- complies with [RFC 6455](http://tools.ietf.org/html/rfc6455) (The WebSocket Protocol),
+- complies with [RFC 6455](https://tools.ietf.org/html/rfc6455) (The WebSocket Protocol),
 - works on Java SE 1.5+ and Android,
 - supports all the frame types (continuation, binary, text, close, ping and pong),
 - provides a method to send a fragmented frame in addition to methods for unfragmented frames,
 - provides a method to get the underlying raw socket of a WebSocket to configure it,
-- provides a method for [Basic Authentication](http://tools.ietf.org/html/rfc2617),
+- provides a method for [Basic Authentication](https://tools.ietf.org/html/rfc2617),
 - provides a factory class which utilizes javax.net.SocketFactory interface,
 - provides a rich listener interface to hook WebSocket events,
 - has fine-grained error codes for fine-grained controllability on errors,
 - allows to disable validity checks on RSV1/RSV2/RSV3 bits and opcode of frames,
 - supports HTTP proxy, especially "Secure WebSocket" (`wss`) through "Secure Proxy" (`https`),
-- and supports [RFC 7692](http://tools.ietf.org/html/rfc7692) (Compression Extensions for WebSocket),
+- and supports [RFC 7692](https://tools.ietf.org/html/rfc7692) (Compression Extensions for WebSocket),
   also known as _permessage-deflate_ (not enabled by default).
 
 
@@ -34,7 +34,7 @@ Maven
 <dependency>
     <groupId>com.neovisionaries</groupId>
     <artifactId>nv-websocket-client</artifactId>
-    <version>2.9</version>
+    <version>2.10</version>
 </dependency>
 ```
 
@@ -44,7 +44,7 @@ Gradle
 
 ```Gradle
 dependencies {
-    compile 'com.neovisionaries:nv-websocket-client:2.9'
+    compile 'com.neovisionaries:nv-websocket-client:2.10'
 }
 ```
 
@@ -53,7 +53,7 @@ OSGi
 ----
 
     Bundle-SymbolicName: com.neovisionaries.ws.client
-    Export-Package: com.neovisionaries.ws.client;version="2.9.0"
+    Export-Package: com.neovisionaries.ws.client;version="2.10.0"
 
 
 Source Code
@@ -65,7 +65,7 @@ Source Code
 JavaDoc
 -------
 
-  <code>http://TakahikoKawasaki.github.io/nv-websocket-client/</code>
+  <code>https://TakahikoKawasaki.github.io/nv-websocket-client/</code>
 
 
 Description
@@ -89,7 +89,7 @@ method and `WebSocketFactory.setSSLContext` method. Note that you don't have to
 call a `setSSL*` method at all if you use the default SSL configuration. Also
 note that calling `setSSLSocketFactory` method has no meaning if you have called
 `setSSLContext` method. See the
-[description](http://takahikokawasaki.github.io/nv-websocket-client/com/neovisionaries/ws/client/WebSocketFactory.html#createSocket-java.net.URI-)
+[description](https://takahikokawasaki.github.io/nv-websocket-client/com/neovisionaries/ws/client/WebSocketFactory.html#createSocket-java.net.URI-)
 of `WebSocketFactory.createSocket(URI)` method for details.
 
 The following is an example to set a custom SSL context to a `WebSocketFactory`
@@ -277,7 +277,7 @@ interface.
 #### Configure WebSocket
 
 Before starting a WebSocket
-[opening handshake](http://tools.ietf.org/html/rfc6455#section-4)
+[opening handshake](https://tools.ietf.org/html/rfc6455#section-4)
 with the server, you can
 configure the WebSocket instance by using the following methods.
 
@@ -610,7 +610,7 @@ exceeds the maximum payload size.
 
 #### Compression
 
-The **permessage-deflate** extension ([RFC 7692](http://tools.ietf.org/html/rfc7692))
+The **permessage-deflate** extension ([RFC 7692](https://tools.ietf.org/html/rfc7692))
 has been supported since the version 1.17. To enable the extension, call
 `addExtension` method with `permessage-deflate`.
 
@@ -624,7 +624,7 @@ ws.addExtension(WebSocketExtension.PERMESSAGE_DEFLATE);
 
 Some server implementations close a WebSocket connection without sending a
 close frame to a client in some cases. Strictly speaking, this is a violation
-against the specification ([RFC 6455](http://tools.ietf.org/html/rfc6455)).
+against the specification ([RFC 6455](https://tools.ietf.org/html/rfc6455)).
 However, this library has allowed the behavior by default since the version
 1.29. Even if the end of the input stream of a WebSocket connection were
 reached without a close frame being received, it would trigger neither
@@ -900,7 +900,7 @@ Limitations
 
 * Currently, by default, `permessage-deflate` extension is not enabled.
 
-* As for [RFC 7692](http://tools.ietf.org/html/rfc7692). The current implementation
+* As for [RFC 7692](https://tools.ietf.org/html/rfc7692). The current implementation
   does not support context takeover on the client side. Also, if the agreed size of
   the sliding window on the client side is less than the maximum size allowed by the
   specification (32,768) (this happens when a WebSocket server returns
@@ -920,15 +920,15 @@ Note
 See Also
 --------
 
-- [RFC 6455](http://tools.ietf.org/html/rfc6455) The WebSocket Protocol
-- [RFC 7692](http://tools.ietf.org/html/rfc7692) Compression Extensions for WebSocket
+- [RFC 6455](https://tools.ietf.org/html/rfc6455) The WebSocket Protocol
+- [RFC 7692](https://tools.ietf.org/html/rfc7692) Compression Extensions for WebSocket
 
 
 TODO
 ----
 
 - SOCKS support
-- Public Key Pinning support ([RFC 7469](http://tools.ietf.org/html/rfc7469))
+- Public Key Pinning support ([RFC 7469](https://tools.ietf.org/html/rfc7469))
 - And other [issues](https://github.com/TakahikoKawasaki/nv-websocket-client/issues)
 
 

@@ -40,6 +40,9 @@ public class WebSocketFactory
     private String[] mServerNames;
 
 
+    /**
+     * Constructor.
+     */
     public WebSocketFactory()
     {
         mSocketFactorySettings = new SocketFactorySettings();
@@ -48,13 +51,15 @@ public class WebSocketFactory
 
 
     /**
-     * Creates a WebSocketFactory with settings copied from the provided factory.
+     * Copy constructor.
      *
      * @param other
-     *         A WebSocketFactory to copy
+     *         A {@code WebSocketFactory} instance to copy.
      *
      * @throws IllegalArgumentException
-     *          If the given WebSocketFactory is null.
+     *         If the given {@code WebSocketFactory} instance is null.
+     *
+     * @since 2.10
      */
     public WebSocketFactory(WebSocketFactory other)
     {
@@ -69,6 +74,7 @@ public class WebSocketFactory
         mDualStackMode          = other.mDualStackMode;
         mDualStackFallbackDelay = other.mDualStackFallbackDelay;
         mVerifyHostname         = other.mVerifyHostname;
+
         if (other.mServerNames != null)
         {
             mServerNames = new String[other.mServerNames.length];
