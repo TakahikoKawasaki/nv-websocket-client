@@ -101,6 +101,23 @@ public class ProxySettings
     }
 
 
+    ProxySettings(WebSocketFactory factory, ProxySettings settings)
+    {
+        this(factory);
+        mHeaders.putAll(settings.mHeaders);
+        mSecure   = settings.mSecure;
+        mHost     = settings.mHost;
+        mPort     = settings.mPort;
+        mId       = settings.mId;
+        mPassword = settings.mPassword;
+        if (settings.mServerNames != null)
+        {
+            mServerNames = new String[settings.mServerNames.length];
+            System.arraycopy(settings.mServerNames, 0, mServerNames, 0, mServerNames.length);
+        }
+    }
+
+
     /**
      * Get the associated {@link WebSocketFactory} instance.
      */

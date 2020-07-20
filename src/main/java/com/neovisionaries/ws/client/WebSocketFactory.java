@@ -48,6 +48,36 @@ public class WebSocketFactory
 
 
     /**
+     * Creates a WebSocketFactory with settings copied from the provided factory.
+     *
+     * @param other
+     *         A WebSocketFactory to copy
+     *
+     * @throws IllegalArgumentException
+     *          If the given WebSocketFactory is null.
+     */
+    public WebSocketFactory(WebSocketFactory other)
+    {
+        if (other == null)
+        {
+            throw new IllegalArgumentException("The given WebSocketFactory is null");
+        }
+
+        mSocketFactorySettings  = new SocketFactorySettings(other.mSocketFactorySettings);
+        mProxySettings          = new ProxySettings(this, other.mProxySettings);
+        mConnectionTimeout      = other.mConnectionTimeout;
+        mDualStackMode          = other.mDualStackMode;
+        mDualStackFallbackDelay = other.mDualStackFallbackDelay;
+        mVerifyHostname         = other.mVerifyHostname;
+        if (other.mServerNames != null)
+        {
+            mServerNames = new String[other.mServerNames.length];
+            System.arraycopy(other.mServerNames, 0, mServerNames, 0, mServerNames.length);
+        }
+    }
+
+
+    /**
      * Get the socket factory that has been set by {@link
      * #setSocketFactory(SocketFactory)}.
      *

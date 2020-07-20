@@ -27,6 +27,16 @@ class SocketFactorySettings
     private SSLSocketFactory mSSLSocketFactory;
     private SSLContext mSSLContext;
 
+    public SocketFactorySettings() {}
+
+
+    public SocketFactorySettings(SocketFactorySettings settings)
+    {
+        mSocketFactory = settings.mSocketFactory;
+        mSSLSocketFactory = settings.mSSLSocketFactory;
+        mSSLContext = settings.mSSLContext;
+    }
+
 
     public SocketFactory getSocketFactory()
     {
