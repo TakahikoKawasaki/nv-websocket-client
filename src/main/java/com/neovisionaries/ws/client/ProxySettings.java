@@ -100,13 +100,15 @@ public class ProxySettings
         reset();
     }
 
-    void apply(ProxySettings settings)
+
+    ProxySettings(WebSocketFactory factory, ProxySettings settings)
     {
+        this(factory);
         mHeaders.putAll(settings.mHeaders);
-        mSecure = settings.mSecure;
-        mHost   = settings.mHost;
-        mPort   = settings.mPort;
-        mId     = settings.mId;
+        mSecure   = settings.mSecure;
+        mHost     = settings.mHost;
+        mPort     = settings.mPort;
+        mId       = settings.mId;
         mPassword = settings.mPassword;
         if (settings.mServerNames != null)
         {

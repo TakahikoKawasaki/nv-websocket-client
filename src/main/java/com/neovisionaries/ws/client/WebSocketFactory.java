@@ -46,6 +46,7 @@ public class WebSocketFactory
         mProxySettings         = new ProxySettings(this);
     }
 
+
     /**
      * Creates a WebSocketFactory with settings copied from the provided factory.
      *
@@ -63,12 +64,11 @@ public class WebSocketFactory
         }
 
         mSocketFactorySettings  = new SocketFactorySettings(other.mSocketFactorySettings);
-        mProxySettings          = new ProxySettings(this);
+        mProxySettings          = new ProxySettings(this, other.mProxySettings);
         mConnectionTimeout      = other.mConnectionTimeout;
         mDualStackMode          = other.mDualStackMode;
         mDualStackFallbackDelay = other.mDualStackFallbackDelay;
         mVerifyHostname         = other.mVerifyHostname;
-        mProxySettings.apply(other.mProxySettings);
         if (other.mServerNames != null)
         {
             mServerNames = new String[other.mServerNames.length];
