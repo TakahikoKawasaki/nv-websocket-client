@@ -44,15 +44,16 @@ class HandshakeBuilder
 
     public HandshakeBuilder(boolean secure, String userInfo, String host, String path)
     {
-        mSecure   = secure;
-        mUserInfo = userInfo;
-        mHost     = host;
-        mPath     = path;
 
         // 'host' may contain ':{port}' at its end.
         // 'path' may contain '?{query}' at its end.
         mUri = URI.create(String.format("%s://%s%s",
             (secure ? "wss" : "ws"), host, path));
+
+        mSecure   = secure;
+        mUserInfo = userInfo;
+        mHost     = mUri.getHost();
+        mPath     = path;
     }
 
 
