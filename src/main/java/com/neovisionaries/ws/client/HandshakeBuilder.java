@@ -50,9 +50,11 @@ class HandshakeBuilder
         mUri = URI.create(String.format("%s://%s%s",
             (secure ? "wss" : "ws"), host, path));
 
+        boolean hidePort = ((mSecure && mUri.getPort() == 443) || (!mSecure && mUri.getPort() == 80));
+
         mSecure   = secure;
         mUserInfo = userInfo;
-        mHost     = mUri.getHost();
+        mHost     = hidePort ? mUri.getHost() : mUri.getHost() + ":" + mUri.getPort();
         mPath     = path;
     }
 
