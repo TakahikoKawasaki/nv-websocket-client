@@ -17,10 +17,7 @@ package com.neovisionaries.ws.client;
 
 
 import java.io.IOException;
-import java.net.Inet6Address;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -229,15 +226,38 @@ class SocketConnector
         return this;
     }
 
+    private void setSoTimeout(int timeout) throws WebSocketException
+    {
+        // This should only be called when the socket is already connected
+        assert mSocket != null;
+        try
+        {
+            mSocket.setSoTimeout(timeout);
+        }
+        catch (SocketException e)
+        {
+            // For some reason we cannot set a timeout
+            String message = String.format("Failed to set SO_TIMEOUT: %s",
+                    e.getMessage());
+            throw new WebSocketException(WebSocketError.SOCKET_CONNECT_ERROR, message, e);
+        }
+    }
+
 
     private void doConnect() throws WebSocketException
     {
         // True if a proxy server is set.
         boolean proxied = mProxyHandshaker != null;
+        boolean useTimeout = getConnectionTimeout() != 0;
 
         // Establish a socket associated to one of the resolved IP addresses
         connectSocket();
         assert mSocket != null;
+        if (useTimeout)
+        {
+            // Set a timeout for the handshaking
+            setSoTimeout(getConnectionTimeout());
+        }
 
         if (mSocket instanceof SSLSocket)
         {
@@ -252,6 +272,12 @@ class SocketConnector
             // Perform handshake with the proxy server.
             // SSL handshake is performed as necessary, too.
             handshake();
+        }
+
+        if (useTimeout)
+        {
+            // Reset the socket timeout after finishing the handshake process
+            setSoTimeout(0);
         }
     }
 
