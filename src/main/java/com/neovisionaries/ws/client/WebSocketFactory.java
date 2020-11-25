@@ -34,6 +34,7 @@ public class WebSocketFactory
     private final SocketFactorySettings mSocketFactorySettings;
     private final ProxySettings mProxySettings;
     private int mConnectionTimeout;
+    private int mSocketTimeout;
     private DualStackMode mDualStackMode = DualStackMode.BOTH;
     private int mDualStackFallbackDelay = 250;
     private boolean mVerifyHostname = true;
@@ -71,6 +72,7 @@ public class WebSocketFactory
         mSocketFactorySettings  = new SocketFactorySettings(other.mSocketFactorySettings);
         mProxySettings          = new ProxySettings(this, other.mProxySettings);
         mConnectionTimeout      = other.mConnectionTimeout;
+        mSocketTimeout          = other.mSocketTimeout;
         mDualStackMode          = other.mDualStackMode;
         mDualStackFallbackDelay = other.mDualStackFallbackDelay;
         mVerifyHostname         = other.mVerifyHostname;
@@ -235,6 +237,57 @@ public class WebSocketFactory
         }
 
         mConnectionTimeout = timeout;
+
+        return this;
+    }
+
+
+    /**
+     * Get the timeout value in milliseconds for socket read and write operations.
+     * The default value is 0 and it means an infinite timeout.
+     *
+     * <p>
+     * This can be changed later with {@code getSocket().setSoTimeout(int)}.
+     * </p>
+     *
+     * @return
+     *         The socket timeout value in milliseconds.
+     *
+     * @see   Socket#setSoTimeout(int)
+     */
+    public int getSocketTimeout()
+    {
+        return mSocketTimeout;
+    }
+
+
+    /**
+     * Set the timeout value in milliseconds for socket read and write operations.
+     * A timeout of zero is interpreted as an infinite timeout.
+     *
+     * <p>
+     * This can be changed later with {@code getSocket().setSoTimeout(int)}.
+     * </p>
+     *
+     * @param timeout
+     *         The socket timeout value in milliseconds.
+     *
+     * @return
+     *         {@code this} object.
+     *
+     * @throws IllegalArgumentException
+     *         The given timeout value is negative.
+     *
+     * @see   Socket#setSoTimeout(int)
+     */
+    public WebSocketFactory setSocketTimeout(int timeout)
+    {
+        if (timeout < 0)
+        {
+            throw new IllegalArgumentException("timeout value cannot be negative.");
+        }
+
+        mSocketTimeout = timeout;
 
         return this;
     }
@@ -836,7 +889,7 @@ public class WebSocketFactory
 
         // Create an instance that will execute the task to connect to the server later.
         return new SocketConnector(
-                factory, address, timeout, mProxySettings.getServerNames(), handshaker,
+                factory, address, timeout, mSocketTimeout, mProxySettings.getServerNames(), handshaker,
                 sslSocketFactory, host, port)
                 .setDualStackSettings(mDualStackMode, mDualStackFallbackDelay)
                 .setVerifyHostname(mVerifyHostname);
@@ -852,7 +905,7 @@ public class WebSocketFactory
         Address address = new Address(host, port);
 
         // Create an instance that will execute the task to connect to the server later.
-        return new SocketConnector(factory, address, timeout, mServerNames)
+        return new SocketConnector(factory, address, timeout, mServerNames, mSocketTimeout)
                 .setDualStackSettings(mDualStackMode, mDualStackFallbackDelay)
                 .setVerifyHostname(mVerifyHostname);
     }

@@ -39,6 +39,7 @@ class SocketConnector
     private final SocketFactory mSocketFactory;
     private final Address mAddress;
     private final int mConnectionTimeout;
+    private final int mSocketTimeout;
     private final String[] mServerNames;
     private final ProxyHandshaker mProxyHandshaker;
     private final SSLSocketFactory mSSLSocketFactory;
@@ -49,20 +50,21 @@ class SocketConnector
     private boolean mVerifyHostname;
     private Socket mSocket;
 
-    SocketConnector(SocketFactory socketFactory, Address address, int timeout, String[] serverNames)
+    SocketConnector(SocketFactory socketFactory, Address address, int timeout, String[] serverNames, int socketTimeout)
     {
-        this(socketFactory, address, timeout, serverNames, null, null, null, 0);
+        this(socketFactory, address, timeout, socketTimeout, serverNames, null, null, null, 0);
     }
 
 
     SocketConnector(
-            SocketFactory socketFactory, Address address, int timeout, String[] serverNames,
+            SocketFactory socketFactory, Address address, int timeout, int socketTimeout, String[] serverNames,
             ProxyHandshaker handshaker, SSLSocketFactory sslSocketFactory,
             String host, int port)
     {
         mSocketFactory     = socketFactory;
         mAddress           = address;
         mConnectionTimeout = timeout;
+        mSocketTimeout     = socketTimeout;
         mServerNames       = serverNames;
         mProxyHandshaker   = handshaker;
         mSSLSocketFactory  = sslSocketFactory;
@@ -226,37 +228,20 @@ class SocketConnector
         return this;
     }
 
-    private void setSoTimeout(int timeout) throws WebSocketException
-    {
-        // This should only be called when the socket is already connected
-        assert mSocket != null;
-        try
-        {
-            mSocket.setSoTimeout(timeout);
-        }
-        catch (SocketException e)
-        {
-            // For some reason we cannot set a timeout
-            String message = String.format("Failed to set SO_TIMEOUT: %s",
-                    e.getMessage());
-            throw new WebSocketException(WebSocketError.SOCKET_CONNECT_ERROR, message, e);
-        }
-    }
-
 
     private void doConnect() throws WebSocketException
     {
         // True if a proxy server is set.
         boolean proxied = mProxyHandshaker != null;
-        boolean useTimeout = getConnectionTimeout() != 0;
 
         // Establish a socket associated to one of the resolved IP addresses
         connectSocket();
         assert mSocket != null;
-        if (useTimeout)
+
+        if (mSocketTimeout > 0)
         {
-            // Set a timeout for the handshaking
-            setSoTimeout(getConnectionTimeout());
+            // Set SO_TIMEOUT before starting to read/write anything
+            setSoTimeout(mSocketTimeout);
         }
 
         if (mSocket instanceof SSLSocket)
@@ -273,11 +258,23 @@ class SocketConnector
             // SSL handshake is performed as necessary, too.
             handshake();
         }
+    }
 
-        if (useTimeout)
+
+    private void setSoTimeout(int timeout) throws WebSocketException
+    {
+        // This should only be called when the socket is already connected
+        assert mSocket != null;
+        try
         {
-            // Reset the socket timeout after finishing the handshake process
-            setSoTimeout(0);
+            mSocket.setSoTimeout(timeout);
+        }
+        catch (SocketException e)
+        {
+            // For some reason we cannot set a timeout
+            String message = String.format("Failed to set SO_TIMEOUT: %s",
+                    e.getMessage());
+            throw new WebSocketException(WebSocketError.SOCKET_CONNECT_ERROR, message, e);
         }
     }
 
