@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+2.11 (2021-01-22)
+
+- Performance improvement of write operation. (PR #217)
+
 2.10 (2020-07-21)
 -----------------
 
