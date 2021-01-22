@@ -16,12 +16,12 @@
 package com.neovisionaries.ws.client;
 
 
-import java.io.FilterOutputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
 
-class WebSocketOutputStream extends FilterOutputStream
+class WebSocketOutputStream extends BufferedOutputStream
 {
     public WebSocketOutputStream(OutputStream out)
     {
@@ -94,6 +94,7 @@ class WebSocketOutputStream extends FilterOutputStream
     private void writeFrameExtendedPayloadLength(WebSocketFrame frame) throws IOException
     {
         int len = frame.getPayloadLength();
+        byte buf[];
 
         if (len <= 125)
         {
@@ -102,28 +103,25 @@ class WebSocketOutputStream extends FilterOutputStream
 
         if (len <= 65535)
         {
+            buf = new byte[2];
             // 2-byte in network byte order.
-            write((len >> 8) & 0xFF);
-            write((len     ) & 0xFF);
-            return;
+            buf[1] = (byte) (len & 0xFF);
+            buf[0] = (byte) ((len >> 8) & 0xFF);
+        } else {
+            buf = new byte[8];
+            for (int i = 7; i >= 0; i--) {
+                buf[i] = (byte) (len & 0xFF);
+                len >>>= 8;
+            }
         }
-
-        // In this implementation, the maximum payload length is (2^31 - 1).
-        // So, the first 4 bytes are 0.
-        write(0);
-        write(0);
-        write(0);
-        write(0);
-        write((len >> 24) & 0xFF);
-        write((len >> 16) & 0xFF);
-        write((len >>  8) & 0xFF);
-        write((len      ) & 0xFF);
+        write(buf);
     }
 
 
     private void writeFramePayload(WebSocketFrame frame, byte[] maskingKey) throws IOException
     {
         byte[] payload = frame.getPayload();
+        byte[] masked = new byte[payload.length];
 
         if (payload == null)
         {
@@ -133,10 +131,9 @@ class WebSocketOutputStream extends FilterOutputStream
         for (int i = 0; i < payload.length; ++i)
         {
             // Mask
-            int b = (payload[i] ^ maskingKey[i % 4]) & 0xFF;
-
-            // Write
-            write(b);
+            masked[i] = (byte)((payload[i] ^ maskingKey[i % 4]) & 0xFF);
         }
+        // Write
+        write(masked);
     }
 }
