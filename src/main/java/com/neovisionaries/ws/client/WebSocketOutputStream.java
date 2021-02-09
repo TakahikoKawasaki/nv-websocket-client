@@ -121,12 +121,13 @@ class WebSocketOutputStream extends BufferedOutputStream
     private void writeFramePayload(WebSocketFrame frame, byte[] maskingKey) throws IOException
     {
         byte[] payload = frame.getPayload();
-        byte[] masked = new byte[payload.length];
 
         if (payload == null)
         {
             return;
         }
+
+        byte[] masked = new byte[payload.length];
 
         for (int i = 0; i < payload.length; ++i)
         {
