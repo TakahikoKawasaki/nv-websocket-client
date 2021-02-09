@@ -1,9 +1,17 @@
 CHANGES
 =======
 
+2.12 (2021-02-10)
+-----------------
+
+- PR #222 that fixes bugs reported by #220 and #221.
+
+
 2.11 (2021-01-22)
+-----------------
 
 - Performance improvement of write operation. (PR #217)
+
 
 2.10 (2020-07-21)
 -----------------
