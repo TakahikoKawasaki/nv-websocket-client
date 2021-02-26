@@ -99,6 +99,23 @@ class SNIHelper
             return;
         }
 
+        //Android versions below Nougat (Version 7/SDK 24) require setHostname() to be invoked on the socket object
+        //before the connection is established in order to properly enable SNI.
+        int androidSDKVersion = getAndroidSDKVersion();
+        if (androidSDKVersion > 0 && androidSDKVersion < 24)
+        {
+            try
+            {
+                Method method = socket.getClass().getMethod("setHostname", String.class);
+                method.invoke(socket, hostnames[0]);
+            }
+            catch (Exception e)
+            {
+                System.err.println("SNI configuration failed: " + e.getMessage());
+            }
+            return;
+        }
+
         SSLParameters parameters = ((SSLSocket)socket).getSSLParameters();
         if (parameters == null)
         {
@@ -107,5 +124,24 @@ class SNIHelper
 
         // Call SSLParameters.setServerNames(List<SNIServerName>) method.
         setServerNames(parameters, hostnames);
+    }
+
+    public static int getAndroidSDKVersion()
+    {
+        try
+        {
+            return Class.forName("android.os.Build$VERSION").getField("SDK_INT").getInt(null);
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                return Integer.parseInt((String) Class.forName("android.os.Build$VERSION").getField("SDK").get(null));
+            }
+            catch (Exception ex1)
+            {
+                return 0;
+            }
+        }
     }
 }
