@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+2.13 (2021-02-27)
+-----------------
+
+- PR #225 : Fixed SSL handshake failure on Android versions below Nougat (Version 7/SDK 24)
+  when connecting to WSS endpoints
+
+
 2.12 (2021-02-10)
 -----------------
 
