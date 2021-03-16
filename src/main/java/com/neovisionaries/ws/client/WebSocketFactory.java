@@ -254,6 +254,8 @@ public class WebSocketFactory
      *         The socket timeout value in milliseconds.
      *
      * @see   Socket#setSoTimeout(int)
+     *
+     * @since 2.14
      */
     public int getSocketTimeout()
     {
@@ -279,6 +281,8 @@ public class WebSocketFactory
      *         The given timeout value is negative.
      *
      * @see   Socket#setSoTimeout(int)
+     *
+     * @since 2.14
      */
     public WebSocketFactory setSocketTimeout(int timeout)
     {

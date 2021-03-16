@@ -1,6 +1,14 @@
 CHANGES
 =======
 
+2.14 (2021-03-16)
+-----------------
+
+- `WebSocketFactory` class
+    * Added `getSocketTimeout()` method. (PR #214)
+    * Added `setSocketTimeout(int)` method. (PR #214)
+
+
 2.13 (2021-02-27)
 -----------------
 
