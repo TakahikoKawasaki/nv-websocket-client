@@ -17,10 +17,7 @@ package com.neovisionaries.ws.client;
 
 
 import java.io.IOException;
-import java.net.Inet6Address;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -42,6 +39,7 @@ class SocketConnector
     private final SocketFactory mSocketFactory;
     private final Address mAddress;
     private final int mConnectionTimeout;
+    private final int mSocketTimeout;
     private final String[] mServerNames;
     private final ProxyHandshaker mProxyHandshaker;
     private final SSLSocketFactory mSSLSocketFactory;
@@ -52,20 +50,21 @@ class SocketConnector
     private boolean mVerifyHostname;
     private Socket mSocket;
 
-    SocketConnector(SocketFactory socketFactory, Address address, int timeout, String[] serverNames)
+    SocketConnector(SocketFactory socketFactory, Address address, int timeout, String[] serverNames, int socketTimeout)
     {
-        this(socketFactory, address, timeout, serverNames, null, null, null, 0);
+        this(socketFactory, address, timeout, socketTimeout, serverNames, null, null, null, 0);
     }
 
 
     SocketConnector(
-            SocketFactory socketFactory, Address address, int timeout, String[] serverNames,
+            SocketFactory socketFactory, Address address, int timeout, int socketTimeout, String[] serverNames,
             ProxyHandshaker handshaker, SSLSocketFactory sslSocketFactory,
             String host, int port)
     {
         mSocketFactory     = socketFactory;
         mAddress           = address;
         mConnectionTimeout = timeout;
+        mSocketTimeout     = socketTimeout;
         mServerNames       = serverNames;
         mProxyHandshaker   = handshaker;
         mSSLSocketFactory  = sslSocketFactory;
@@ -239,6 +238,12 @@ class SocketConnector
         connectSocket();
         assert mSocket != null;
 
+        if (mSocketTimeout > 0)
+        {
+            // Set SO_TIMEOUT before starting to read/write anything
+            setSoTimeout(mSocketTimeout);
+        }
+
         if (mSocket instanceof SSLSocket)
         {
             // Verify that the hostname matches the certificate here since
@@ -252,6 +257,24 @@ class SocketConnector
             // Perform handshake with the proxy server.
             // SSL handshake is performed as necessary, too.
             handshake();
+        }
+    }
+
+
+    private void setSoTimeout(int timeout) throws WebSocketException
+    {
+        // This should only be called when the socket is already connected
+        assert mSocket != null;
+        try
+        {
+            mSocket.setSoTimeout(timeout);
+        }
+        catch (SocketException e)
+        {
+            // For some reason we cannot set a timeout
+            String message = String.format("Failed to set SO_TIMEOUT: %s",
+                    e.getMessage());
+            throw new WebSocketException(WebSocketError.SOCKET_CONNECT_ERROR, message, e);
         }
     }
 
