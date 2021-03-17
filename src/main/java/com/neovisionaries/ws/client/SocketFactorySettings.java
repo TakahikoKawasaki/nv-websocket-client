@@ -16,9 +16,19 @@
 package com.neovisionaries.ws.client;
 
 
+import com.neovisionaries.ws.client.pinning.KeyStoreProvider;
+import com.neovisionaries.ws.client.pinning.PinningException;
+import com.neovisionaries.ws.client.pinning.PinningKeyStore;
+import com.neovisionaries.ws.client.pinning.PinningParams;
+import com.neovisionaries.ws.client.pinning.PinningTrustManager;
+
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 
 
 class SocketFactorySettings
@@ -73,6 +83,23 @@ class SocketFactorySettings
         mSSLContext = context;
     }
 
+    public void setKeyStoreProvider(KeyStoreProvider keyStoreProvider, PinningParams params) {
+        if (mSSLSocketFactory == null) {
+            throw new IllegalArgumentException("KeyStore provider can be passed only SSLSocket facotry is provided");
+        }
+
+	    final String[] pins = params.getPins().toArray(new String[params.getPins().size()]);
+	    int pinningEnforceTimeout = params.getPinningEnforceTimeout();
+
+	    try {
+		    mSSLContext = SSLContext.getDefault();
+		    mSSLContext.init(null, new TrustManager[]{new PinningTrustManager(PinningKeyStore.getInstance(keyStoreProvider), pins, pinningEnforceTimeout)}, new SecureRandom());
+	    } catch (KeyManagementException e) {
+		    throw new PinningException(e);
+	    } catch (NoSuchAlgorithmException e) {
+		    throw new PinningException(e);
+	    }
+    }
 
     public SocketFactory selectSocketFactory(boolean secure)
     {
