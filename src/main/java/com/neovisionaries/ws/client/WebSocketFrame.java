@@ -745,9 +745,8 @@ public class WebSocketFrame
             return;
         }
 
-        for (int i = 0; i < mPayload.length; ++i)
-        {
-            builder.append(String.format("%02X ", (0xFF & mPayload[i])));
+        for (byte b : mPayload) {
+            builder.append(String.format("%02X ", (0xFF & b)));
         }
 
         if (mPayload.length != 0)
@@ -1199,7 +1198,8 @@ public class WebSocketFrame
 
         // Generate the first frame using the existing WebSocketFrame instance.
         // Note that the reserved bit 1 and the opcode are untouched.
-        byte[] payload = Arrays.copyOf(originalPayload, maxPayloadSize);
+        byte[] payload = new byte[maxPayloadSize];
+        System.arraycopy(originalPayload, 0, payload, 0, Math.min(originalPayload.length, maxPayloadSize));
         frame.setFin(false).setPayload(payload);
         frames.add(frame);
 
@@ -1207,7 +1207,8 @@ public class WebSocketFrame
         {
             // Prepare the payload of the next continuation frame.
             int to  = Math.min(from + maxPayloadSize, originalPayload.length);
-            payload = Arrays.copyOfRange(originalPayload, from, to);
+            assert (to - from) >= 0;
+            System.arraycopy(originalPayload, from, payload, 0, Math.min(originalPayload.length - from, to - from));
 
             // Create a continuation frame.
             WebSocketFrame cont = WebSocketFrame.createContinuationFrame(payload);

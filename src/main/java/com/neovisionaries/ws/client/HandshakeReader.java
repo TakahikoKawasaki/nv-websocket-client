@@ -438,7 +438,7 @@ class HandshakeReader
             return;
         }
 
-        if (expected.equals(actual) == false)
+        if (expected != null && !expected.equals(actual))
         {
             // The value of 'Sec-WebSocket-Accept' header is different from the expected one.
             throw new OpeningHandshakeException(

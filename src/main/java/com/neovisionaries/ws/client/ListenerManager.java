@@ -151,10 +151,7 @@ class ListenerManager
             List<WebSocketListener> copiedListeners =
                     new ArrayList<WebSocketListener>(mListeners.size());
 
-            for (WebSocketListener listener : mListeners)
-            {
-                copiedListeners.add(listener);
-            }
+            copiedListeners.addAll(mListeners);
 
             // Synchronize.
             mCopiedListeners = copiedListeners;

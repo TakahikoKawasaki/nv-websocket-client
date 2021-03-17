@@ -251,11 +251,9 @@ class Misc
     {
         int min = Integer.MAX_VALUE;
 
-        for (int i = 0; i < values.length; ++i)
-        {
-            if (values[i] < min)
-            {
-                min = values[i];
+        for (int value : values) {
+            if (value < min) {
+                min = value;
             }
         }
 
@@ -270,11 +268,9 @@ class Misc
     {
         int max = Integer.MIN_VALUE;
 
-        for (int i = 0; i < values.length; ++i)
-        {
-            if (max < values[i])
-            {
-                max = values[i];
+        for (int value : values) {
+            if (max < value) {
+                max = value;
             }
         }
 

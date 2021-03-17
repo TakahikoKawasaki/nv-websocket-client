@@ -43,7 +43,7 @@ class Huffman
 
         // Create a table to convert code values int symbols.
         int[] codeValsFromCodeLen = (int[])out[0];
-        int maxCodeVal = ((Integer)out[1]).intValue();
+        int maxCodeVal = (Integer) out[1];
         mSymsFromCodeVal = createSymsFromCodeVal(codeLensFromSym, codeValsFromCodeLen, maxCodeVal);
     }
 
@@ -70,9 +70,7 @@ class Huffman
 
         // Count the number of entries for each code length.
         // This corresponds to the step 1 in 3.2.2. of RFC 1951.
-        for (int symbol = 0; symbol < codeLensFromSym.length; ++symbol)
-        {
-            int codeLength = codeLensFromSym[symbol];
+        for (int codeLength : codeLensFromSym) {
             ++countsFromCodeLen[codeLength];
         }
 
@@ -106,7 +104,7 @@ class Huffman
         }
 
         out[0] = codeValsFromCodeLen;
-        out[1] = Integer.valueOf(maxCodeVal);
+        out[1] = maxCodeVal;
 
         return maxCodeValsFromCodeLen;
     }
