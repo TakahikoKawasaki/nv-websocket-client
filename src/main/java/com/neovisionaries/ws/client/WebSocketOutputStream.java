@@ -45,7 +45,7 @@ class WebSocketOutputStream extends BufferedOutputStream
         writeFrameExtendedPayloadLength(frame);
 
         // Generate a random masking key.
-        byte[] maskingKey = Misc.nextBytes(4);
+        byte[] maskingKey = Security.getInstance().nextBytes(4);
 
         // Write the masking key.
         write(maskingKey);
