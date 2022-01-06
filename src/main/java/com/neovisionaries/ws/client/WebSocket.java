@@ -3395,7 +3395,7 @@ public class WebSocket
         byte[] data = new byte[16];
 
         // "randomly selected"
-        Misc.nextBytes(data);
+        Security.getInstance().nextBytes(data);
 
         // "base64-encoded"
         return Base64.encode(data);

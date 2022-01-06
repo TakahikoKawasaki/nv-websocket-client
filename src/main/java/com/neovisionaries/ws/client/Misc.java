@@ -29,7 +29,6 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.security.SecureRandom;
 import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,9 +36,6 @@ import java.util.regex.Pattern;
 
 class Misc
 {
-    private static final SecureRandom sRandom = new SecureRandom();
-
-
     private Misc()
     {
     }
@@ -104,28 +100,6 @@ class Misc
         {
             return null;
         }
-    }
-
-
-    /**
-     * Fill the given buffer with random bytes.
-     */
-    public static byte[] nextBytes(byte[] buffer)
-    {
-        sRandom.nextBytes(buffer);
-
-        return buffer;
-    }
-
-
-    /**
-     * Create a buffer of the given size filled with random bytes.
-     */
-    public static byte[] nextBytes(int nBytes)
-    {
-        byte[] buffer = new byte[nBytes];
-
-        return nextBytes(buffer);
     }
 
 
