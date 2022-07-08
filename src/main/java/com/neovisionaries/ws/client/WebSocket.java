@@ -1142,11 +1142,19 @@ public class WebSocket
         mSocketConnector   = connector;
         mStateManager      = new StateManager();
         mHandshakeBuilder  = new HandshakeBuilder(secure, userInfo, host, path);
-        mListenerManager   = new ListenerManager(this);
+        mListenerManager   = instantiateListenerManager();
         mPingSender        = new PingSender(this, new CounterPayloadGenerator());
         mPongSender        = new PongSender(this, new CounterPayloadGenerator());
     }
 
+    /**
+     * (Internal) Method intended to facilitate custom functionality for subclasses
+     *
+     * @return ListenerManager for this WebSocket
+     */
+    protected ListenerManager instantiateListenerManager() {
+        return new ListenerManager(this);
+    }
 
     /**
      * Create a new {@code WebSocket} instance that has the same settings
