@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ThreadFactory;
+
 import com.neovisionaries.ws.client.StateManager.CloseInitiator;
 
 
@@ -48,9 +50,9 @@ class ReadingThread extends WebSocketThread
     private boolean mNotWaitForCloseFrame;
 
 
-    public ReadingThread(WebSocket websocket)
+    public ReadingThread(ThreadFactory factory, WebSocket websocket)
     {
-        super("ReadingThread", websocket, ThreadType.READING_THREAD);
+        super(factory, "ReadingThread", websocket, ThreadType.READING_THREAD);
 
         mPMCE = websocket.getPerMessageCompressionExtension();
     }
@@ -137,7 +139,7 @@ class ReadingThread extends WebSocketThread
         // interrupt() here may not work. interrupt() in Java is different
         // from signal-based interruption in C which unblocks a read() system
         // call. Anyway, let's mark this thread as interrupted.
-        interrupt();
+        getThread().interrupt();
 
         // To surely unblock a read() call, Socket.close() needs to be called.
         // Or, shutdownInterrupt() may work, but it is not explicitly stated
@@ -361,7 +363,7 @@ class ReadingThread extends WebSocketThread
         }
         catch (IOException e)
         {
-            if (mStopRequested && isInterrupted())
+            if (mStopRequested && getThread().isInterrupted())
             {
                 // Socket.close() interrupted a blocking socket read operation.
                 // This thread has been interrupted intentionally.
@@ -1125,7 +1127,7 @@ class ReadingThread extends WebSocketThread
                 break;
             }
 
-            if (isInterrupted())
+            if (getThread().isInterrupted())
             {
                 break;
             }

@@ -21,6 +21,7 @@ import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.concurrent.ThreadFactory;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -39,6 +40,7 @@ public class WebSocketFactory
     private int mDualStackFallbackDelay = 250;
     private boolean mVerifyHostname = true;
     private String[] mServerNames;
+    private ThreadFactory mThreadFactory;
 
 
     /**
@@ -82,6 +84,39 @@ public class WebSocketFactory
             mServerNames = new String[other.mServerNames.length];
             System.arraycopy(other.mServerNames, 0, mServerNames, 0, mServerNames.length);
         }
+    }
+
+    /**
+     * Get the thread factory that has been set by {@link
+     * #setThreadFactory(ThreadFactory)}.
+     *
+     * @return
+     *         The thread factory.
+     */
+    public ThreadFactory getThreadFactory()
+    {
+        return this.mThreadFactory;
+    }
+
+
+    /**
+     * Set a thread factory.
+     * The thread name is overwritten after creation.
+     *
+     * <p>
+     * Use {@link WebSocketListener#onThreadCreated(WebSocket, ThreadType, Thread)} for further configuration.
+     * </p>
+     *
+     * @param factory
+     *         A thread factory.
+     *
+     * @return
+     *         {@code this} instance.
+     */
+    public WebSocketFactory setThreadFactory(ThreadFactory factory)
+    {
+        this.mThreadFactory = factory;
+        return this;
     }
 
 

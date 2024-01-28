@@ -16,11 +16,13 @@
 package com.neovisionaries.ws.client;
 
 
+import java.util.concurrent.ThreadFactory;
+
 class FinishThread extends WebSocketThread
 {
-    public FinishThread(WebSocket ws)
+    public FinishThread(ThreadFactory factory, WebSocket ws)
     {
-        super("FinishThread", ws, ThreadType.FINISH_THREAD);
+        super(factory, "FinishThread", ws, ThreadType.FINISH_THREAD);
     }
 
 
