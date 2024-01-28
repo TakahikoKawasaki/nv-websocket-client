@@ -16,22 +16,36 @@
 package com.neovisionaries.ws.client;
 
 
-abstract class WebSocketThread extends Thread
+import java.util.concurrent.ThreadFactory;
+
+abstract class WebSocketThread implements Runnable
 {
     protected final WebSocket mWebSocket;
     private final ThreadType mThreadType;
+    private final Thread mThread;
 
 
-    WebSocketThread(String name, WebSocket ws, ThreadType type)
+    WebSocketThread(ThreadFactory factory, String name, WebSocket ws, ThreadType type)
     {
-        super(name);
-
         mWebSocket  = ws;
         mThreadType = type;
+        mThread = factory == null ? new Thread(this) : factory.newThread(this);
+        mThread.setName(name);
     }
 
 
-    @Override
+    public Thread getThread()
+    {
+        return mThread;
+    }
+
+
+    public void start()
+    {
+        mThread.start();
+    }
+
+
     public void run()
     {
         ListenerManager lm = mWebSocket.getListenerManager();
@@ -39,7 +53,7 @@ abstract class WebSocketThread extends Thread
         if (lm != null)
         {
             // Execute onThreadStarted() of the listeners.
-            lm.callOnThreadStarted(mThreadType, this);
+            lm.callOnThreadStarted(mThreadType, getThread());
         }
 
         runMain();
@@ -47,7 +61,7 @@ abstract class WebSocketThread extends Thread
         if (lm != null)
         {
             // Execute onThreadStopping() of the listeners.
-            lm.callOnThreadStopping(mThreadType, this);
+            lm.callOnThreadStopping(mThreadType, getThread());
         }
     }
 
@@ -58,7 +72,7 @@ abstract class WebSocketThread extends Thread
 
         if (lm != null)
         {
-            lm.callOnThreadCreated(mThreadType, this);
+            lm.callOnThreadCreated(mThreadType, getThread());
         }
     }
 

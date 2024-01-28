@@ -28,10 +28,8 @@ import java.net.Socket;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.*;
+
 import com.neovisionaries.ws.client.StateManager.CloseInitiator;
 
 
@@ -1104,6 +1102,7 @@ public class WebSocket
 {
     private static final long DEFAULT_CLOSE_DELAY = 10 * 1000L;
     private final WebSocketFactory mWebSocketFactory;
+    private final ThreadFactory mThreadFactory;
     private final SocketConnector mSocketConnector;
     private final StateManager mStateManager;
     private HandshakeBuilder mHandshakeBuilder;
@@ -1139,6 +1138,7 @@ public class WebSocket
             String host, String path, SocketConnector connector)
     {
         mWebSocketFactory  = factory;
+        mThreadFactory     = factory.getThreadFactory();
         mSocketConnector   = connector;
         mStateManager      = new StateManager();
         mHandshakeBuilder  = new HandshakeBuilder(secure, userInfo, host, path);
@@ -2451,14 +2451,14 @@ public class WebSocket
      */
     public WebSocket connectAsynchronously()
     {
-        Thread thread = new ConnectThread(this);
+        WebSocketThread thread = new ConnectThread(mThreadFactory, this);
 
         // Get the reference (just in case)
         ListenerManager lm = mListenerManager;
 
         if (lm != null)
         {
-            lm.callOnThreadCreated(ThreadType.CONNECT_THREAD, thread);
+            lm.callOnThreadCreated(ThreadType.CONNECT_THREAD, thread.getThread());
         }
 
         thread.start();
@@ -3454,8 +3454,8 @@ public class WebSocket
      */
     private void startThreads()
     {
-        ReadingThread readingThread = new ReadingThread(this);
-        WritingThread writingThread = new WritingThread(this);
+        ReadingThread readingThread = new ReadingThread(mThreadFactory, this);
+        WritingThread writingThread = new WritingThread(mThreadFactory, this);
 
         synchronized (mThreadsLock)
         {
@@ -3765,7 +3765,7 @@ public class WebSocket
      */
     private void finishAsynchronously()
     {
-        WebSocketThread thread = new FinishThread(this);
+        WebSocketThread thread = new FinishThread(mThreadFactory, this);
 
         // Execute onThreadCreated() of the listeners.
         thread.callOnThreadCreated();

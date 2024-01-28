@@ -16,11 +16,13 @@
 package com.neovisionaries.ws.client;
 
 
+import java.util.concurrent.ThreadFactory;
+
 class ConnectThread extends WebSocketThread
 {
-    public ConnectThread(WebSocket ws)
+    public ConnectThread(ThreadFactory factory, WebSocket ws)
     {
-        super("ConnectThread", ws, ThreadType.CONNECT_THREAD);
+        super(factory, "ConnectThread", ws, ThreadType.CONNECT_THREAD);
     }
 
 
